@@ -18,8 +18,10 @@ export default defineEventHandler(async (event) => {
       headers: {
         // 传递原始请求的 headers（用于 fingerprint）
         'User-Agent': getHeader(event, 'user-agent') || '',
+        'X-Real-IP': getHeader(event, 'x-forwarded-for') || getHeader(event, 'x-real-ip') || '',
         'X-Forwarded-For': getHeader(event, 'x-forwarded-for') || getHeader(event, 'x-real-ip') || '',
-        'Cookie': getHeader(event, 'cookie') || ''
+        'Cookie': getHeader(event, 'cookie') || '',
+        
       }
     })
 

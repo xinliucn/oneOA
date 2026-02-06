@@ -7,7 +7,7 @@
 <script setup>
 // 全局应用配置
 useHead({
-  title: 'SuperApp - Nuxt Module',
+  title: 'One OA',
   meta: [
     { charset: 'utf-8' },
     { name: 'viewport', content: 'width=device-width, initial-scale=1' }

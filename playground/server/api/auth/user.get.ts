@@ -14,7 +14,9 @@ export default defineEventHandler(async (event) => {
       headers: {
         ...(cookieHeader && { cookie: cookieHeader }),
         ...(userAgent && { 'user-agent': userAgent }),
-        ...(referer && { referer: referer })
+        ...(referer && { referer: referer }),
+        'X-Real-IP': getHeader(event, 'x-forwarded-for') || getHeader(event, 'x-real-ip') || '',
+        'X-Forwarded-For': getHeader(event, 'x-forwarded-for') || getHeader(event, 'x-real-ip') || '',
       }
     })
 

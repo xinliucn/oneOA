@@ -66,8 +66,37 @@ export const useAuth = () => {
       }
 
       // 调用 Nitro 代理接口（不是直接调用 Windmill API）
-      const userData:any = await $fetch<User>('/api/auth/user')
-
+      // const userData:any = await $fetch<User>('/api/auth/user')
+      const userData = {
+        "code": 1,
+        "user": {
+          "name": "Xin LIU",
+          "email": "xinliu@dchbi.com",
+          "roles": [
+            "default-roles-weaver",
+            "offline_access",
+            "uma_authorization",
+            "admin",
+            "read-token",
+            "manage-account",
+            "manage-account-links",
+            "view-profile"
+          ],
+          "user_id": "48529189-aa93-48dd-9d11-dd6f2fe08c63",
+          "username": "xinliu@dchbi.com",
+          "token_verified": true
+        },
+        "login_at": 1770366316843,
+        "session_id": "938e5fca47bb4e6eb4654ecdc95fa38d",
+        "token_valid": true,
+        "authenticated": true,
+        "logged_in_for": 185,
+        "token_expired": false,
+        "session_rotated": false,
+        "token_refreshed": false,
+        "token_expires_at": 1770366616000,
+        "token_expires_in": 113
+      }
       if (userData.code == 1) {
         isLoggedIn.value = true
         user.value = userData.user
@@ -90,7 +119,7 @@ export const useAuth = () => {
   const logout = async () => {
     try {
       // 调用 Nitro 代理接口登出
-      const response = await $fetch<{ code: number;  logout_url?: string ; message: string }>('/api/auth/logout', {
+      const response = await $fetch<{ code: number; logout_url?: string; message: string }>('/api/auth/logout', {
         method: 'POST'
       })
 
