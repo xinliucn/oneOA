@@ -1,4 +1,9 @@
 export default defineNuxtRouteMiddleware(async (to) => {
+  // 只在客户端执行中间件
+  if (import.meta.server) {
+    return
+  }
+
   const { checkAuth } = useAuth()
 
   // 如果访问的是登录页面，直接放行
