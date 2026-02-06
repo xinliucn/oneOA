@@ -1,11 +1,11 @@
-export default defineNuxtRouteMiddleware((to, from) => {
+export default defineNuxtRouteMiddleware((to, _from) => {
   // 只在客户端执行设备重定向
   if (import.meta.server) {
     return
   }
 
-  // 如果是登录页，不进行设备重定向
-  if (to.path === '/') {
+  // 如果是登录页或错误页面，不进行设备重定向
+  if (to.path === '/' || to.path.match(/^\/(403|404|500)$/)) {
     return
   }
 

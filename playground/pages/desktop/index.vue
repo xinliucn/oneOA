@@ -54,7 +54,6 @@ const userName = computed(() => user.value?.name || user.value?.username || user
 }
 
 .desktop__banner {
-    height: 320px;
     background-size: cover;
     background-position: center;
     display: flex;
