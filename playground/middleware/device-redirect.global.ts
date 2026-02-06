@@ -4,6 +4,11 @@ export default defineNuxtRouteMiddleware((to, from) => {
     return
   }
 
+  // 如果是登录页，不进行设备重定向
+  if (to.path === '/') {
+    return
+  }
+
   const userAgent = navigator.userAgent
 
   const isMobile = /mobile|android|iphone|ipad|phone/i.test(userAgent || '')

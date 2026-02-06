@@ -18,7 +18,4 @@ export default defineNuxtRouteMiddleware(async (to) => {
     // 未登录，重定向到登录页面
     return navigateTo('/')
   }
-
-  // 已登录，允许访问
-  return
 })
