@@ -114,7 +114,7 @@
   </div>
 </template>
 
-<script setup lang="ts">
+<script setup >
 import { markRaw } from 'vue'
 import {
   OfficeBuilding,
@@ -135,11 +135,12 @@ import {
 
 definePageMeta({
   layout: 'default',
+  middleware: ['auth']
 })
 
 // 使用 useBanner composable 获取 banner 数据
 const { banners: apiBanners, loading: bannersLoading, error: bannersError, fetchBanners , fetchBannersFromCms } = useBanner()
-const { checkAuth, login, user } = useAuth()
+const { user } = useAuth()
 
 // 使用水印功能
 const { createWatermark, removeWatermark } = useWatermark({
@@ -153,35 +154,30 @@ const { createWatermark, removeWatermark } = useWatermark({
 
 // 页面加载时获取 banner 数据和创建水印
 onMounted(async () => {
-  try {
-    const isLoggedIn = await checkAuth()
-    if (isLoggedIn) {
-        await fetchBanners()
-        await fetchBannersFromCms()
-        // 创建用户水印
-        if (user.value) {
-          // 获取用户信息，构建水印文本
-          const nameParts = (user.value.name || '用户').split(' ')
-          const firstname = nameParts[0] || '用户'
-          const lastname = nameParts[1] || ''
-          const email = user.value.email || 'N/A'
+  // 中间件已经确保用户已登录，直接获取数据
+  await fetchBanners()
+  await fetchBannersFromCms()
 
-          // 格式化当前日期时间为 yyyy-mm-dd hh:ii:ss
-          const now = new Date()
-          const year = now.getFullYear()
-          const month = String(now.getMonth() + 1).padStart(2, '0')
-          const day = String(now.getDate()).padStart(2, '0')
-          const hours = String(now.getHours()).padStart(2, '0')
-          const minutes = String(now.getMinutes()).padStart(2, '0')
-          const seconds = String(now.getSeconds()).padStart(2, '0')
-          const datetime = `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`
+  // 创建用户水印
+  if (user.value) {
+    // 获取用户信息，构建水印文本
+    const nameParts = (user.value.name || '用户').split(' ')
+    const firstname = nameParts[0] || '用户'
+    const lastname = nameParts[1] || ''
+    const email = user.value.email || 'N/A'
 
-          const watermarkText = `${firstname}, ${lastname}, ${email}\n${datetime}`
-          createWatermark(watermarkText)
-        } 
-    }
-  } catch (err) {
-    await login()
+    // 格式化当前日期时间为 yyyy-mm-dd hh:ii:ss
+    const now = new Date()
+    const year = now.getFullYear()
+    const month = String(now.getMonth() + 1).padStart(2, '0')
+    const day = String(now.getDate()).padStart(2, '0')
+    const hours = String(now.getHours()).padStart(2, '0')
+    const minutes = String(now.getMinutes()).padStart(2, '0')
+    const seconds = String(now.getSeconds()).padStart(2, '0')
+    const datetime = `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`
+
+    const watermarkText = `${firstname}, ${lastname}, ${email}\n${datetime}`
+    createWatermark(watermarkText)
   }
 })
 
@@ -238,7 +234,7 @@ const applications = ref([
 ])
 
 // 点击应用图标
-const handleAppClick = (app: any) => {
+const handleAppClick = (app) => {
   if (app.url) {
     window.open(app.url, '_blank')
   } else {
@@ -254,7 +250,7 @@ const portals = ref([
 ])
 
 // 点击门户图标
-const handlePortalClick = (portal: any) => {
+const handlePortalClick = (portal) => {
   if (portal.url) {
     window.open(portal.url, '_blank')
   } else {
@@ -282,7 +278,7 @@ const shops = ref([
 ])
 
 // 点击商店图标
-const handleShopClick = (shop: any) => {
+const handleShopClick = (shop) => {
   if (shop.url) {
     window.open(shop.url, '_blank')
   } else {

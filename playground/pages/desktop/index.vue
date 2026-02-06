@@ -41,8 +41,8 @@ definePageMeta({
 })
 import desktopBanner from '~/assets/images/desktop-banner.jpg'
 
-// 获取用户信息
-const { data: user } = await useFetch('/api/auth/user')
+// 获取用户信息 - 中间件已经验证登录，直接使用 useAuth 的状态
+const { user } = useAuth()
 const userName = computed(() => user.value?.name || user.value?.username || user.value?.displayName)
 </script>
 

@@ -8,6 +8,10 @@ export const useAuth = () => {
   // 使用 useState 创建响应式状态
   const user = useState<User | null>('auth:user', () => null)
   const isLoggedIn = useState<boolean>('auth:isLoggedIn', () => false)
+  const lastCheckTime = useState<number>('auth:lastCheckTime', () => 0)
+
+  // 缓存有效期：5分钟
+  const CACHE_DURATION = 5 * 60 * 1000
 
   // 登录函数 - 获取登录 URL 并跳转
   const login = async () => {
@@ -53,22 +57,31 @@ export const useAuth = () => {
   }
 
   // 检查登录状态 - 通过调用 API 验证 cookie
-  const checkAuth = async () => {
+  const checkAuth = async (forceRefresh = false) => {
     try {
-      // 调用 Nitro 代理接口（不是直接调用 Windmill API）
-      const userData:any = await $fetch<User>('/api/auth/user')
-      
-      if (userData.code == 1) {
-        isLoggedIn.value = true
-        user.value = userData.user
+      // 如果有缓存且未过期，直接返回缓存结果
+      const now = Date.now()
+      if (!forceRefresh && isLoggedIn.value && (now - lastCheckTime.value < CACHE_DURATION)) {
         return true
       }
 
+      // 调用 Nitro 代理接口（不是直接调用 Windmill API）
+      const userData:any = await $fetch<User>('/api/auth/user')
+
+      if (userData.code == 1) {
+        isLoggedIn.value = true
+        user.value = userData.user
+        lastCheckTime.value = now
+        return true
+      }
+
+      lastCheckTime.value = 0
       return false
     } catch (error) {
       // 401 错误表示未登录
       user.value = null
       isLoggedIn.value = false
+      lastCheckTime.value = 0
       return false
     }
   }
