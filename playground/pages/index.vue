@@ -25,6 +25,7 @@ definePageMeta({
 })
 
 const { checkAuth, login } = useAuth()
+const { getDeviceRoute } = useDevice()
 const loadingText = ref('正在检查登录状态...')
 
 const loginInit = async () => {
@@ -36,7 +37,7 @@ const loginInit = async () => {
     if (isLoggedIn) {
       // 已登录，跳转到首页
       loadingText.value = '登录成功！'
-      await navigateTo('/home')
+      await navigateTo(getDeviceRoute())
     } else {
       // 未登录，获取登录 URL 并跳转
       loadingText.value = '正在跳转到登录页面...'

@@ -11,9 +11,7 @@
                 <el-button circle class="action-btn">
                     <IconCustom name="search" :size="20" />
                 </el-button>
-                <el-button circle class="action-btn">
-                    <IconCustom name="bell" :size="20" />
-                </el-button>
+                <NotificationBell />
                 <el-dropdown @command="handleCommand">
                     <span class="avatar-dropdown">
                         <el-avatar :size="40" src="/path/to/avatar.jpg" />
@@ -162,11 +160,11 @@ onBeforeUnmount(() => {
     }
 
     .desktop_header_actions {
-        width: 180px;
+        width: auto;
         height: 40px;
         display: flex;
         align-items: center;
-        justify-content: space-between;
+        gap: 8px;
 
         .action-btn {
             height: 40px;
