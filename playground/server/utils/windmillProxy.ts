@@ -1,5 +1,4 @@
 import type { H3Event } from 'h3'
-import type { FetchOptions } from 'ofetch'
 
 export const getForwardHeaders = (event: H3Event): Record<string, string> => {
   const cookieHeader = getRequestHeader(event, 'cookie')
@@ -39,13 +38,16 @@ export const getNotificationApiPrefix = () => {
 export const proxyWindmill = async <T>(
   event: H3Event,
   path: string,
-  options: FetchOptions<'json'> = {},
+  options: { method?: string; body?: BodyInit | Record<string, any> | null; headers?: Record<string, string> } = {},
 ): Promise<T> => {
   const config = useRuntimeConfig()
   const apiBase = config.public.apiBase
 
+  type HttpMethod = 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH' | 'HEAD' | 'OPTIONS' | 'TRACE' | 'CONNECT'
+
   const response = await $fetch.raw<T>(`${apiBase}${path}`, {
     ...options,
+    method: options.method as HttpMethod | undefined,
     headers: {
       ...getForwardHeaders(event),
       ...((options.headers || {}) as Record<string, string>),

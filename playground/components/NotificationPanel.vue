@@ -51,9 +51,11 @@
     </div>
 
     <div class="notification-panel__footer">
-      上次同步：{{ lastSyncText }}
-      <span v-if="status === 'subscribed'" class="notification-panel__push-status"> · 推送已开启</span>
-      <span v-if="errorMessage" class="notification-panel__push-error"> · {{ errorMessage }}</span>
+      <ClientOnly fallback="上次同步：尚未同步">
+        上次同步：{{ lastSyncText }}
+        <span v-if="status === 'subscribed'" class="notification-panel__push-status"> · 推送已开启</span>
+        <span v-if="errorMessage" class="notification-panel__push-error"> · {{ errorMessage }}</span>
+      </ClientOnly>
     </div>
   </div>
 </template>

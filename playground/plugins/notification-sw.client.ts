@@ -3,7 +3,7 @@ export default defineNuxtPlugin((nuxtApp) => {
     return
   }
 
-  const { bootstrap, handleServiceWorkerMessage } = useNotification()
+  const { bootstrap, handleServiceWorkerMessage, startPolling, stopPolling } = useNotification()
 
   const registerServiceWorker = async () => {
     await bootstrap()
@@ -25,5 +25,10 @@ export default defineNuxtPlugin((nuxtApp) => {
 
   nuxtApp.hook('app:mounted', () => {
     void registerServiceWorker()
+    startPolling()
+  })
+
+  nuxtApp.hook('app:beforeMount', () => {
+    stopPolling()
   })
 })

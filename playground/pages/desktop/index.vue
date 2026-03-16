@@ -2,7 +2,7 @@
     <div class="desktop">
         <div class="desktop__banner" :style="{ backgroundImage: `url(${desktopBanner})` }">
             <div class="desktop__greeting">
-                Good morning, {{ userName || 'Guest' }}
+                Good morning, <ClientOnly>{{ userName || 'Guest' }}<template #fallback>Guest</template></ClientOnly>
             </div>
             <div class="desktop__widgets">
                 <ClockWidget />

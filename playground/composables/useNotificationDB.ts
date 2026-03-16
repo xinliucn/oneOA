@@ -92,7 +92,7 @@ export const useNotificationDB = () => {
 
     store.clear()
     for (const notification of notifications) {
-      store.put(notification)
+      store.put(toRaw(notification))
     }
 
     await waitForTransaction(tx)
@@ -105,7 +105,7 @@ export const useNotificationDB = () => {
     }
 
     const tx = db.transaction(STORE_NOTIFICATIONS, 'readwrite')
-    tx.objectStore(STORE_NOTIFICATIONS).put(notification)
+    tx.objectStore(STORE_NOTIFICATIONS).put(toRaw(notification))
     await waitForTransaction(tx)
   }
 

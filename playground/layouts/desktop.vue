@@ -27,7 +27,7 @@
         </header>
         <div class="desktop_layout_content">
             <div class="desktop__sidebar">
-                <el-menu default-active="2" class="el-menu-vertical-demo" @open="handleOpen" @close="handleClose"
+                <el-menu :default-active="activeMenu" class="el-menu-vertical-demo" @select="handleMenuSelect"
                     background-color="#D9D9D9" text-color="#000000" active-text-color="#000000">
                     <el-menu-item index="1">
                         <template #title>
@@ -50,7 +50,7 @@
                     <el-menu-item index="4">
                         <template #title>
                             <IconCustom name="apps" :size="26" />
-                            Corporate Apps
+                            Applications
                         </template>
                     </el-menu-item>
                     <el-menu-item index="5">
@@ -67,11 +67,17 @@
                     </el-menu-item>
                     <el-menu-item index="7">
                         <template #title>
+                            <IconCustom name="document" :size="26" />
+                            To-Do
+                        </template>
+                    </el-menu-item>
+                    <el-menu-item index="8">
+                        <template #title>
                             <IconCustom name="education" :size="26" />
                             eLearning
                         </template>
                     </el-menu-item>
-                    <el-menu-item index="8">
+                    <el-menu-item index="9">
                         <template #title>
                             <IconCustom name="shop" :size="26" />
                             eShop
@@ -90,12 +96,28 @@
 import { createUserWatermark, removeWatermark } from '~/utils/watermark'
 
 const { logout, user } = useAuth()
+const route = useRoute()
 
-const handleOpen = (): any => {
-    console.log(1);
+const menuRoutes: Record<string, string> = {
+    '1': '/desktop/news',
+    '2': '/desktop/company-information',
+    '3': '/desktop/company-documents',
+    '4': '/desktop/applications',
+    '5': '/desktop/department-intranets',
+    '6': '/desktop/dashboards',
+    '7': '/desktop/todo',
+    '8': '/desktop/elearning',
+    '9': '/desktop/eshop',
 }
-const handleClose = (): any => {
-    console.log(2);
+
+const activeMenu = computed(() => {
+    const matched = Object.entries(menuRoutes).find(([, path]) => route.path.startsWith(path))
+    return matched?.[0] ?? '1'
+})
+
+const handleMenuSelect = (index: string) => {
+    const path = menuRoutes[index]
+    if (path) navigateTo(path)
 }
 
 const handleCommand = async (command: string) => {

@@ -24,10 +24,11 @@ import ShopIcon from './icons/svg/ShopIcon.vue'
 import MenuIcon from './icons/svg/MenuIcon.vue'
 import ShareIcon from './icons/svg/ShareIcon.vue'
 import ChevronRightIcon from './icons/svg/ChevronRightIcon.vue'
+import TodoIcon from './icons/svg/TodoIcon.vue'
 
 const props = withDefaults(
   defineProps<{
-    name: 'globe' | 'search' | 'bell' | 'document' | 'info' | 'download' | 'apps' | 'building' | 'dashboard' | 'education' | 'shop' | 'menu' | 'share' | 'chevron-right'
+    name: 'globe' | 'search' | 'bell' | 'document' | 'info' | 'download' | 'apps' | 'building' | 'dashboard' | 'education' | 'shop' | 'menu' | 'share' | 'chevron-right' | 'todo'
     size?: number | string
     color?: string
     className?: string
@@ -57,7 +58,8 @@ const iconMap: Record<string, any> = {
   shop: ShopIcon,
   menu: MenuIcon,
   share: ShareIcon,
-  'chevron-right': ChevronRightIcon
+  'chevron-right': ChevronRightIcon,
+  todo: TodoIcon
 }
 
 // 动态获取图标组件

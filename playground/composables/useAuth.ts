@@ -72,11 +72,26 @@ export const useAuth = () => {
       isLoggedIn.value = false
       lastCheckTime.value = 0
       return false
-    } catch (error) {
+    } catch (error: any) {
       user.value = null
       isLoggedIn.value = false
       lastCheckTime.value = 0
+
+      if (error?.statusCode === 403 || error?.status === 403) {
+        await clearLocalData()
+        if (import.meta.client) await navigateTo('/')
+      }
+
       return false
+    }
+  }
+
+  const clearLocalData = async () => {
+    if (import.meta.client) {
+      const { stopPolling } = useNotification()
+      const db = useNotificationDB()
+      stopPolling()
+      await db.clearAll()
     }
   }
 
@@ -89,6 +104,7 @@ export const useAuth = () => {
       user.value = null
       isLoggedIn.value = false
       lastCheckTime.value = 0
+      await clearLocalData()
 
       if (response?.code === 1 && response?.logout_url) {
         if (import.meta.client) {
@@ -102,6 +118,7 @@ export const useAuth = () => {
       user.value = null
       isLoggedIn.value = false
       lastCheckTime.value = 0
+      await clearLocalData()
       throw error
     }
   }
@@ -112,6 +129,7 @@ export const useAuth = () => {
     login,
     logout,
     handleCallback,
-    checkAuth
+    checkAuth,
+    clearLocalData,
   }
 }
