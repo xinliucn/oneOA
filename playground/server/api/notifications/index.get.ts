@@ -34,7 +34,7 @@ export default defineEventHandler(async (event) => {
     if (keyword) params.set('keyword', keyword)
 
     const path = `${getNotificationApiPrefix()}/list?${params.toString()}`
-    const response = await proxyWindmill<any>(event, path, { method: 'GET' })
+    const response = await proxyWindmill<any>(event, path, { method: 'GET', skipCookies: true })
 
     return normalizeNotificationList(response, page, pageSize)
   } catch (error: any) {

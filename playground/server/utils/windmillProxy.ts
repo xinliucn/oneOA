@@ -38,19 +38,23 @@ export const getNotificationApiPrefix = () => {
 export const proxyWindmill = async <T>(
   event: H3Event,
   path: string,
-  options: { method?: string; body?: BodyInit | Record<string, any> | null; headers?: Record<string, string> } = {},
+  options: { method?: string; body?: BodyInit | Record<string, any> | null; headers?: Record<string, string>; skipCookies?: boolean } = {},
 ): Promise<T> => {
   const config = useRuntimeConfig()
   const apiBase = config.public.apiBase
 
   type HttpMethod = 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH' | 'HEAD' | 'OPTIONS' | 'TRACE' | 'CONNECT'
-  console.log('`${apiBase}${path}`',`${apiBase}${path}`);
-  
+
+  const forwardHeaders = getForwardHeaders(event)
+  if (options.skipCookies) {
+    delete forwardHeaders.cookie
+  }
+
   const response = await $fetch.raw<T>(`${apiBase}${path}`, {
     ...options,
     method: options.method as HttpMethod | undefined,
     headers: {
-      ...getForwardHeaders(event),
+      ...forwardHeaders,
       ...((options.headers || {}) as Record<string, string>),
     },
   })
