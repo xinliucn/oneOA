@@ -111,7 +111,7 @@ export const useNotification = () => {
     }
 
     try {
-      const response = await $fetch<NotificationListResponse>('/notification/list', {
+      const response = await $fetch<NotificationListResponse>('/api/notifications', {
         method: 'GET',
         query: {
           page: targetPage,

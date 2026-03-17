@@ -7,8 +7,8 @@ export default defineNuxtConfig({
     port: 5173
   },
   runtimeConfig: {
-    authMockEnabled: process.env.NUXT_AUTH_MOCK_ENABLED ?? 'true',
-    notificationMockEnabled: process.env.NUXT_NOTIFICATION_MOCK_ENABLED ?? 'true',
+    authMockEnabled: process.env.NUXT_AUTH_MOCK_ENABLED ?? 'false',
+    notificationMockEnabled: process.env.NUXT_NOTIFICATION_MOCK_ENABLED ?? 'false',
     vapidPrivateKey: process.env.NUXT_VAPID_PRIVATE_KEY || '',
     vapidSubject: process.env.NUXT_VAPID_SUBJECT || '',
     public: {
