@@ -111,11 +111,15 @@ export const useNotification = () => {
     }
 
     try {
+      const { user } = useAuth()
       const response = await $fetch<NotificationListResponse>('/api/notifications', {
         method: 'GET',
         query: {
           page: targetPage,
           pageSize: pageSize.value,
+          user_id: 'anonymous',
+          is_read: 0,
+          category: 'order',
         },
       })
 
