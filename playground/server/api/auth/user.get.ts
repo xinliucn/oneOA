@@ -10,7 +10,7 @@ export default defineEventHandler(async (event) => {
     return normalized !== 'false' && normalized !== '0'
   })()
 
-  if (authMockEnabled) {
+  if (!authMockEnabled) {
     return {
       code: 1,
       user: {

@@ -13,7 +13,7 @@ export default defineNuxtConfig({
     vapidSubject: process.env.NUXT_VAPID_SUBJECT || '',
     public: {
       apiBase: process.env.NUXT_PUBLIC_API_BASE || 'https://windmill-uat.dchbi.app',
-      notificationApiPrefix: process.env.NUXT_PUBLIC_NOTIFICATION_API_PREFIX || '/api/r/weaver/notifications',
+      notificationApiPrefix: process.env.NUXT_PUBLIC_NOTIFICATION_API_PREFIX || '/api/r/notification',
       vapidPublicKey: process.env.NUXT_PUBLIC_VAPID_PUBLIC_KEY || '',
     }
   },
