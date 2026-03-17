@@ -111,12 +111,12 @@ export const useNotification = () => {
     }
 
     try {
-      const response = await $fetch<NotificationListResponse>('/notification/list', {
+      const response = await $fetch<NotificationListResponse>('/api/notifications', {
         method: 'GET',
-        // query: {
-        //   page: targetPage,
-        //   pageSize: pageSize.value,
-        // },
+        query: {
+          page: targetPage,
+          pageSize: pageSize.value,
+        },
       })
 
       if (!response || !Array.isArray(response.items)) {
