@@ -17,8 +17,15 @@ export default defineEventHandler(async (event) => {
       return getMockNotificationDetail(id)
     }
 
-    const path = `${getNotificationApiPrefix()}/${encodeURIComponent(id)}`
-    const response = await proxyWindmill<any>(event, path, { method: 'GET' })
+    const query = getQuery(event)
+    const userId = typeof query.user_id === 'string' && query.user_id.trim() ? query.user_id.trim() : 'anonymous'
+    const params = new URLSearchParams({
+      user_id: userId,
+      id,
+    })
+
+    const path = `${getNotificationApiPrefix()}/detail?${params.toString()}`
+    const response = await proxyWindmill<any>(event, path, { method: 'GET', skipCookies: true })
     const candidate = response?.data?.item || response?.data || response?.item || response
 
     return {

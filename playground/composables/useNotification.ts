@@ -225,7 +225,7 @@ export const useNotification = () => {
     }
 
     const fallback = `/desktop/notification/${encodeURIComponent(item.id)}`
-    await navigateTo( fallback)
+    await navigateTo(targetLink || fallback)
   }
 
   /**
