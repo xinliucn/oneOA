@@ -25,10 +25,11 @@ import MenuIcon from './icons/svg/MenuIcon.vue'
 import ShareIcon from './icons/svg/ShareIcon.vue'
 import ChevronRightIcon from './icons/svg/ChevronRightIcon.vue'
 import TodoIcon from './icons/svg/TodoIcon.vue'
+import PersonnelIcon from './icons/svg/PersonnelIcon.vue'
 
 const props = withDefaults(
   defineProps<{
-    name: 'globe' | 'search' | 'bell' | 'document' | 'info' | 'download' | 'apps' | 'building' | 'dashboard' | 'education' | 'shop' | 'menu' | 'share' | 'chevron-right' | 'todo'
+    name: 'globe' | 'search' | 'bell' | 'document' | 'info' | 'download' | 'apps' | 'building' | 'dashboard' | 'education' | 'shop' | 'menu' | 'share' | 'chevron-right' | 'todo' | 'personnel'
     size?: number | string
     color?: string
     className?: string
@@ -59,7 +60,8 @@ const iconMap: Record<string, any> = {
   menu: MenuIcon,
   share: ShareIcon,
   'chevron-right': ChevronRightIcon,
-  todo: TodoIcon
+  todo: TodoIcon,
+  personnel: PersonnelIcon
 }
 
 // 动态获取图标组件

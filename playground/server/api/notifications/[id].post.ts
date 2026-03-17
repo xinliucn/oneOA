@@ -18,14 +18,15 @@ export default defineEventHandler(async (event) => {
       return markMockNotificationAsRead(id, typeof body.readAt === 'string' ? body.readAt : undefined)
     }
 
-    const path = `${getNotificationApiPrefix()}/${encodeURIComponent(id)}`
+    const path = `${getNotificationApiPrefix()}/mark-read`
 
     const response = await proxyWindmill<any>(event, path, {
       method: 'POST',
       body: {
-        read: true,
-        ...body,
+        user_id: 'anonymous',
+        id: Number(id),
       },
+      skipCookies: true,
     })
 
     return {

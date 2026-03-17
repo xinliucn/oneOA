@@ -35,6 +35,40 @@ export default defineEventHandler(async (event) => {
 
     const path = `${getNotificationApiPrefix()}/list?${params.toString()}`
     const response = await proxyWindmill<any>(event, path, { method: 'GET', skipCookies: true })
+    // const response = {
+    //   "items": [
+    //     {
+    //       "id": "169",
+    //       "title": "通知标题",
+    //       "content": "通知正文",
+    //       "summary": "",
+    //       "link": "",
+    //       "source": "",
+    //       "category": "order",
+    //       "createdAt": "2026-03-16T17:56:20.065Z",
+    //       "readAt": null,
+    //       "payload": null
+    //     },
+    //     {
+    //       "id": "167",
+    //       "title": "通知标题",
+    //       "content": "通知正文",
+    //       "summary": "",
+    //       "link": "",
+    //       "source": "",
+    //       "category": "order",
+    //       "createdAt": "2026-03-16T17:56:18.994Z",
+    //       "readAt": null,
+    //       "payload": null
+    //     }
+    //   ],
+    //   "total": 2,
+    //   "page": 1,
+    //   "pageSize": 20,
+    //   "unreadCount": 2,
+    //   "hasMore": false,
+    //   "syncedAt": 1773716103078
+    // }
 
     return normalizeNotificationList(response, page, pageSize)
   } catch (error: any) {

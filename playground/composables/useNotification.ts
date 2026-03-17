@@ -198,10 +198,7 @@ export const useNotification = () => {
       try {
         await $fetch(`/api/notifications/${encodeURIComponent(id)}`, {
           method: 'POST',
-          body: {
-            read: true,
-            readAt,
-          },
+          body: {"user_id": "anonymous", "id": id},
         })
       } catch (error) {
         console.error('Mark notification as read failed:', error)
@@ -227,8 +224,8 @@ export const useNotification = () => {
       }
     }
 
-    const fallback = `/desktop?notificationId=${encodeURIComponent(item.id)}`
-    await navigateTo(targetLink || fallback)
+    const fallback = `/desktop/notification/${encodeURIComponent(item.id)}`
+    await navigateTo( fallback)
   }
 
   /**
