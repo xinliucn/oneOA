@@ -6,7 +6,7 @@ export default defineEventHandler(async (event) => {
     if (typeof raw === 'boolean') {
       return raw
     }
-    const normalized = String(raw ?? 'true').toLowerCase()
+    const normalized = String(raw ?? 'false').toLowerCase()
     return normalized !== 'false' && normalized !== '0'
   })()
 
