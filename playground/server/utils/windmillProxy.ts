@@ -44,7 +44,8 @@ export const proxyWindmill = async <T>(
   const apiBase = config.public.apiBase
 
   type HttpMethod = 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH' | 'HEAD' | 'OPTIONS' | 'TRACE' | 'CONNECT'
-
+  console.log('`${apiBase}${path}`',`${apiBase}${path}`);
+  
   const response = await $fetch.raw<T>(`${apiBase}${path}`, {
     ...options,
     method: options.method as HttpMethod | undefined,

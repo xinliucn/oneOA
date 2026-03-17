@@ -11,6 +11,9 @@ export default defineEventHandler(async (event) => {
 
   try {
     const keyword = typeof query.keyword === 'string' ? query.keyword : ''
+    const userId = typeof query.user_id === 'string' ? query.user_id : ''
+    const isRead = typeof query.is_read === 'string' ? query.is_read : ''
+    const category = typeof query.category === 'string' ? query.category : ''
 
     if (isNotificationMockEnabled()) {
       return listMockNotifications({
@@ -22,12 +25,13 @@ export default defineEventHandler(async (event) => {
 
     const params = new URLSearchParams({
       page: String(page),
-      pageSize: String(pageSize),
+      page_size: String(pageSize),
     })
 
-    if (keyword) {
-      params.set('keyword', keyword)
-    }
+    if (userId) params.set('user_id', userId)
+    if (isRead !== '') params.set('is_read', isRead)
+    if (category) params.set('category', category)
+    if (keyword) params.set('keyword', keyword)
 
     const path = `${getNotificationApiPrefix()}/list?${params.toString()}`
     const response = await proxyWindmill<any>(event, path, { method: 'GET' })
