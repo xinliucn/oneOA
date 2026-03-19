@@ -73,9 +73,7 @@ const handleClick = (news) => {
 <style scoped>
 .group-news {
   background: white;
-  border-radius: 12px;
   padding: 24px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
 .group-news__header {
@@ -106,7 +104,7 @@ const handleClick = (news) => {
 
 .group-news__grid {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(2, 1fr);
   gap: 16px;
 }
 

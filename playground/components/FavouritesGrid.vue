@@ -19,16 +19,14 @@
 import { ref } from 'vue'
 
 const apps = ref([
-  // { id: 1, icon: 'document', label: 'ePolicy', color: '#FFC0CB', url:"" },
-  // { id: 2, icon: 'info', label: 'eClaim', color: '#FFB6C1', url:"" },
-  // { id: 3, icon: 'apps', label: 'eTravel', color: '#FFC0CB', url:"" },
-  // { id: 4, icon: 'education', label: 'eLearning', color: '#FFB6C1', url:"" },
-  { id: 1, icon: 'document', label: 'GLC Portal', color: '#FFC0CB', url: 'https://dchappsdev.dchbi.com/wui/cas-entrance.jsp?path=https://dchappsdev.dchbi.com/mobilemode/mobile/view.html?appid=1' },
-  { id: 2, icon: 'info', label: 'CCA 手機申請', color: '#FFB6C1', url: 'https://dchappsdev.dchbi.com/wui/cas-entrance.jsp?path=https://dchappsdev.dchbi.com/mobilemode/mobile/view.html?appHomepageId=4' },
-  { id: 3, icon: 'apps', label: 'CCA 審批/查看', color: '#FFC0CB', url: 'https://dchappsdev.dchbi.com/wui/cas-entrance.jsp?path=https://dchappsdev.dchbi.com/mobilemode/mobile/view.html?appHomepageId=3' },
-  { id: 4, icon: 'education', label: 'CCA 合同列表', color: '#FFB6C1', url: 'https://dchappsdev.dchbi.com/wui/cas-entrance.jsp?path=https://dchappsdev.dchbi.com/mobilemode/mobile/view.html?appHomepageId=2' },
-  { id: 5, icon: 'building', label: 'Admin Portal', color: '#FFC0CB', url: "" },
-  { id: 6, icon: 'dashboard', label: 'Dashboards', color: '#FFB6C1', url: "" }
+  { id: 1, icon: 'document', label: 'ePolicy', url: '' },
+  { id: 2, icon: 'info', label: 'eClaim', url: '' },
+  { id: 3, icon: 'apps', label: 'eTravel', url: '' },
+  { id: 4, icon: 'users', label: 'HR Intranet', url: '' },
+  { id: 5, icon: 'education', label: 'eLearning', url: '' },
+  { id: 6, icon: 'building', label: 'Admin Portal', url: '' },
+  { id: 7, icon: 'dashboard', label: 'Dashboards', url: '' },
+  { id: 8, icon: 'shop', label: 'eShop', url: '' },
 ])
 
 const handleClick = (app) => {
@@ -74,7 +72,7 @@ const handleClick = (app) => {
 
 .favourites-grid__items {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(4, 1fr);
   gap: 16px;
 }
 

@@ -116,7 +116,8 @@ onMounted(async () => {
 
 <style scoped>
 .notification-panel {
-  width: 360px;
+  width: 100%;
+  max-width: 360px;
   max-height: 500px;
   display: flex;
   flex-direction: column;

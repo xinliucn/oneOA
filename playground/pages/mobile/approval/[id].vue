@@ -1,0 +1,605 @@
+<script setup lang="ts">
+import type { ApprovalAction, ApprovalItem } from '~/types/approval'
+
+definePageMeta({
+  layout: false,
+  middleware: 'auth',
+})
+
+const route = useRoute()
+const { bootstrap, ensureApproval, getApprovalById, submitApprovalAction } = useApprovals()
+const approvalId = computed(() => String(route.params.id || ''))
+const approval = computed<ApprovalItem | null>(() => getApprovalById(approvalId.value))
+
+const showAllApprovers = ref(false)
+const selectedAction = ref<ApprovalAction | ''>('')
+const actionComment = ref('')
+
+const visibleApprovers = computed(() => {
+  if (!approval.value) {
+    return []
+  }
+
+  return showAllApprovers.value ? approval.value.approvers : approval.value.approvers.slice(0, 2)
+})
+
+const statusClass = computed(() => {
+  return approval.value ? `is-${approval.value.status.toLowerCase()}` : 'is-pending'
+})
+
+const getApproverStatusClass = (action: string) => {
+  const normalized = action.toLowerCase()
+  if (normalized.includes('approve')) {
+    return 'is-approved'
+  }
+
+  if (normalized.includes('reject')) {
+    return 'is-rejected'
+  }
+
+  return 'is-pending'
+}
+
+const handleBack = () => navigateTo('/mobile')
+
+const selectAction = (action: ApprovalAction) => {
+  selectedAction.value = action
+}
+
+const handleConfirm = () => {
+  if (!selectedAction.value) {
+    return
+  }
+
+  void submitApprovalAction(approvalId.value, selectedAction.value, actionComment.value)
+  selectedAction.value = ''
+  actionComment.value = ''
+  navigateTo('/mobile')
+}
+
+onMounted(async () => {
+  await bootstrap()
+  await ensureApproval(approvalId.value)
+})
+</script>
+
+<template>
+  <div class="mobile-approval" v-if="approval">
+    <header class="mobile-approval__header">
+      <button class="mobile-approval__back" type="button" @click="handleBack">
+        <IconCustom name="chevron-right" :size="18" :rotate="180" />
+      </button>
+      <h1 class="mobile-approval__header-title">My Approvals</h1>
+      <div class="mobile-approval__header-spacer" />
+    </header>
+
+    <main class="mobile-approval__content">
+      <section class="mobile-approval__sheet">
+        <div class="mobile-approval__meta">
+          <span class="mobile-approval__ref">{{ approval.referenceNo }}</span>
+          <span class="mobile-approval__status-text" :class="statusClass">{{ approval.status }}</span>
+        </div>
+
+        <h2 class="mobile-approval__title">{{ approval.title }}</h2>
+
+        <div class="mobile-approval__submitter">
+          <div class="mobile-approval__submitter-avatar">
+            <IconCustom name="personnel" :size="18" color="#ffffff" />
+          </div>
+          <div class="mobile-approval__submitter-info">
+            <span class="mobile-approval__submitter-label">Submitted by</span>
+            <span class="mobile-approval__submitter-name">{{ approval.submittedBy }}</span>
+          </div>
+          <span class="mobile-approval__submitter-date">{{ approval.submittedDate }}</span>
+        </div>
+
+        <div class="mobile-approval__progress">
+          <div class="mobile-approval__progress-bar" :class="statusClass">{{ approval.status }}</div>
+          <div class="mobile-approval__timeline">
+            <div
+              v-for="(approver, index) in visibleApprovers"
+              :key="`${approver.name}-${index}`"
+              class="mobile-approval__timeline-item"
+            >
+              <div class="mobile-approval__timeline-marker">
+                <div class="mobile-approval__timeline-avatar" :class="getApproverStatusClass(approver.action)">
+                  <IconCustom name="personnel" :size="14" color="#ffffff" />
+                </div>
+                <div
+                  v-if="index < visibleApprovers.length - 1"
+                  class="mobile-approval__timeline-line"
+                />
+              </div>
+              <div class="mobile-approval__timeline-info">
+                <span class="mobile-approval__timeline-name">{{ approver.name }}</span>
+                <span class="mobile-approval__timeline-date">
+                  {{ approver.action }}<template v-if="approver.date"> {{ approver.date }}</template>
+                </span>
+              </div>
+            </div>
+            <button
+              v-if="approval.approvers.length > 2"
+              type="button"
+              class="mobile-approval__show-more"
+              @click="showAllApprovers = !showAllApprovers"
+            >
+              {{ showAllApprovers ? 'Show less' : 'Show more' }}
+            </button>
+          </div>
+        </div>
+
+        <div v-if="approval.attachments.length" class="mobile-approval__attachments">
+          <span
+            v-for="attachment in approval.attachments"
+            :key="attachment.name"
+            class="mobile-approval__attachment"
+          >
+            <IconCustom name="document" :size="14" color="#5a78a5" />
+            {{ attachment.name }}
+          </span>
+        </div>
+
+        <div class="mobile-approval__fields">
+          <div
+            v-for="field in approval.fields"
+            :key="field.label"
+            class="mobile-approval__field"
+          >
+            <span class="mobile-approval__field-label">{{ field.label }}</span>
+            <span class="mobile-approval__field-value">{{ field.value }}</span>
+          </div>
+        </div>
+
+        <div v-if="approval.latestComment" class="mobile-approval__field mobile-approval__field--comment">
+          <span class="mobile-approval__field-label">Latest Comment</span>
+          <span class="mobile-approval__field-value">{{ approval.latestComment }}</span>
+        </div>
+
+        <button type="button" class="mobile-approval__link">
+          {{ approval.detailLinkLabel }} &gt;
+        </button>
+      </section>
+    </main>
+
+    <footer class="mobile-approval__footer">
+      <textarea
+        v-model="actionComment"
+        class="mobile-approval__comment"
+        placeholder="Add a comment..."
+      />
+      <div class="mobile-approval__actions">
+        <button
+          type="button"
+          class="mobile-approval__action mobile-approval__action--approve"
+          :class="{ active: selectedAction === 'Approve' }"
+          @click="selectAction('Approve')"
+        >
+          Approve
+        </button>
+        <button
+          type="button"
+          class="mobile-approval__action mobile-approval__action--reject"
+          :class="{ active: selectedAction === 'Reject' }"
+          @click="selectAction('Reject')"
+        >
+          Reject
+        </button>
+        <button
+          type="button"
+          class="mobile-approval__action mobile-approval__action--more"
+          :class="{ active: selectedAction === 'Return' }"
+          @click="selectAction('Return')"
+        >
+          ...
+        </button>
+      </div>
+      <button
+        type="button"
+        class="mobile-approval__confirm"
+        :disabled="!selectedAction"
+        @click="handleConfirm"
+      >
+        Confirm
+      </button>
+    </footer>
+  </div>
+
+  <div v-else class="mobile-approval__empty">
+    <p class="mobile-approval__empty-title">Approval not found</p>
+    <button type="button" class="mobile-approval__empty-back" @click="handleBack">Back to list</button>
+  </div>
+</template>
+
+<style scoped>
+.mobile-approval {
+  min-height: 100vh;
+  background: #ffffff;
+  display: flex;
+  flex-direction: column;
+}
+
+.mobile-approval__header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 18px 18px 12px;
+  color: #3d2f2f;
+}
+
+.mobile-approval__back {
+  width: 32px;
+  height: 32px;
+  border: none;
+  border-radius: 999px;
+  background: #ffffff;
+  color: #7a454f;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 8px 16px rgba(166, 10, 58, 0.12);
+}
+
+.mobile-approval__header-title {
+  font-size: 14px;
+  font-weight: 600;
+  flex: 1;
+  margin: 0;
+}
+
+.mobile-approval__header-spacer {
+  width: 32px;
+  height: 32px;
+}
+
+.mobile-approval__content {
+  flex: 1;
+  padding: 0;
+}
+
+.mobile-approval__sheet {
+  background: #ffffff;
+  border-radius: 0;
+  padding: 8px 16px 18px;
+  min-height: auto;
+  box-shadow: none;
+}
+
+.mobile-approval__meta {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 8px;
+  flex-wrap: wrap;
+}
+
+.mobile-approval__ref,
+.mobile-approval__status-text {
+  font-size: 11px;
+}
+
+.mobile-approval__ref {
+  color: #3d3d3d;
+}
+
+.mobile-approval__status-text {
+  font-weight: 600;
+}
+
+.mobile-approval__title {
+  margin: 0 0 14px;
+  font-size: 24px;
+  line-height: 1.18;
+  color: #181818;
+}
+
+.mobile-approval__submitter {
+  display: grid;
+  grid-template-columns: 32px 1fr auto;
+  gap: 10px;
+  align-items: center;
+  margin-bottom: 14px;
+}
+
+.mobile-approval__submitter-avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 999px;
+  background: #d9d9d9;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.mobile-approval__submitter-info {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.mobile-approval__submitter-label,
+.mobile-approval__submitter-date {
+  font-size: 10px;
+  color: #a2a2a2;
+}
+
+.mobile-approval__submitter-name {
+  font-size: 12px;
+  color: #343434;
+}
+
+.mobile-approval__submitter-date {
+  text-align: right;
+}
+
+.mobile-approval__progress {
+  margin-bottom: 14px;
+}
+
+.mobile-approval__progress-bar {
+  padding: 6px 10px;
+  border-radius: 8px 8px 0 0;
+  color: #ffffff;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.mobile-approval__timeline {
+  background: #f2f2f2;
+  border-radius: 0 0 10px 10px;
+  padding: 10px 12px 12px;
+}
+
+.mobile-approval__timeline-item {
+  display: flex;
+  gap: 10px;
+}
+
+.mobile-approval__timeline-marker {
+  width: 24px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+.mobile-approval__timeline-avatar {
+  width: 24px;
+  height: 24px;
+  border-radius: 999px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.mobile-approval__timeline-line {
+  width: 0;
+  flex: 1;
+  border-left: 2px dotted #b8b8b8;
+  margin: 4px 0;
+}
+
+.mobile-approval__timeline-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding-bottom: 10px;
+}
+
+.mobile-approval__timeline-name {
+  font-size: 12px;
+  font-weight: 600;
+  color: #1f1f1f;
+}
+
+.mobile-approval__timeline-date {
+  font-size: 10px;
+  color: #7a7a7a;
+}
+
+.mobile-approval__show-more {
+  margin-top: 2px;
+  padding: 0;
+  background: transparent;
+  border: none;
+  color: #a60a3a;
+  font-size: 12px;
+  text-align: left;
+}
+
+.mobile-approval__attachments {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 16px;
+}
+
+.mobile-approval__attachment {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 10px;
+  border-radius: 999px;
+  background: #f3f5f8;
+  color: #506070;
+  font-size: 11px;
+}
+
+.mobile-approval__fields {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.mobile-approval__field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.mobile-approval__field--comment {
+  margin-top: 12px;
+  padding: 12px;
+  border-radius: 12px;
+  background: #f7f7f7;
+}
+
+.mobile-approval__field-label {
+  font-size: 11px;
+  color: #858585;
+}
+
+.mobile-approval__field-value {
+  font-size: 13px;
+  color: #171717;
+  line-height: 1.4;
+}
+
+.mobile-approval__link {
+  margin-top: 16px;
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: #d14b60;
+  font-size: 12px;
+  text-align: left;
+}
+
+.mobile-approval__footer {
+  padding: 12px 12px calc(14px + env(safe-area-inset-bottom, 0px));
+  background: #ffffff;
+  border-top: 1px solid #efefef;
+  box-shadow: none;
+}
+
+.mobile-approval__comment {
+  width: 100%;
+  min-height: 72px;
+  border: none;
+  border-radius: 10px;
+  background: #f5f5f5;
+  padding: 12px;
+  resize: none;
+  font-size: 13px;
+  color: #222222;
+  margin-bottom: 10px;
+}
+
+.mobile-approval__actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr 40px;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.mobile-approval__action {
+  border: none;
+  border-radius: 6px;
+  padding: 10px 8px;
+  font-size: 12px;
+  font-weight: 600;
+  transition: background-color 0.2s ease, color 0.2s ease, opacity 0.2s ease;
+}
+
+.mobile-approval__action--approve {
+  background: #dff4dc;
+  color: #2d8c38;
+}
+
+.mobile-approval__action--reject {
+  background: #f3f3f3;
+  color: #a0a0a0;
+}
+
+.mobile-approval__action--more {
+  background: #fff6f8;
+  color: #a60a3a;
+}
+
+.mobile-approval__action.active {
+  outline: none;
+}
+
+.mobile-approval__action--approve.active {
+  background: #199d34;
+  color: #ffffff;
+}
+
+.mobile-approval__action--reject.active {
+  background: #d04848;
+  color: #ffffff;
+}
+
+.mobile-approval__action--more.active {
+  background: #a60a3a;
+  color: #ffffff;
+}
+
+.mobile-approval__confirm {
+  width: 100%;
+  border: none;
+  border-radius: 10px;
+  padding: 12px;
+  background: #efefef;
+  color: #8f8f8f;
+  font-size: 13px;
+  font-weight: 600;
+  transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+.mobile-approval__confirm:not(:disabled) {
+  background: #efd4dc;
+  color: #a60a3a;
+}
+
+.mobile-approval__empty {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  background: #111111;
+  color: #ffffff;
+}
+
+.mobile-approval__empty-title {
+  font-size: 16px;
+  margin: 0;
+}
+
+.mobile-approval__empty-back {
+  border: none;
+  border-radius: 999px;
+  padding: 10px 16px;
+  background: #a60a3a;
+  color: #ffffff;
+  font-size: 13px;
+}
+
+.mobile-approval__status-text.is-pending {
+  color: #d48d00;
+}
+
+.mobile-approval__status-text.is-approved {
+  color: #2f8d3a;
+}
+
+.mobile-approval__status-text.is-rejected {
+  color: #d04848;
+}
+
+.mobile-approval__progress-bar.is-pending,
+.mobile-approval__timeline-avatar.is-pending {
+  background-color: #d79e00;
+}
+
+.mobile-approval__progress-bar.is-approved,
+.mobile-approval__timeline-avatar.is-approved {
+  background-color: #199d34;
+}
+
+.mobile-approval__progress-bar.is-rejected,
+.mobile-approval__timeline-avatar.is-rejected {
+  background-color: #d04848;
+}
+</style>

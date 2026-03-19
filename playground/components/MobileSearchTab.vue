@@ -2,70 +2,47 @@
   <div class="mobile-search">
     <div class="mobile-search__header">
       <div class="search-bar">
-        <IconCustom name="search" :size="20" class="search-bar__icon" />
+        <IconCustom name="search" :size="18" class="search-bar__icon" />
         <input
           v-model="searchQuery"
           type="text"
           class="search-bar__input"
-          placeholder="Search apps, documents, contacts..."
-          @input="handleSearch"
+          placeholder="Search Intranet"
+          @keyup.enter="handleSearch"
         />
-        <button
-          v-if="searchQuery"
-          class="search-bar__clear"
-          @click="clearSearch"
-        >
-          <IconCustom name="x" :size="16" />
+        <button class="search-bar__ai-btn">
+          AI <span class="ai-star">★</span>
         </button>
       </div>
     </div>
 
-    <div v-if="!searchQuery" class="mobile-search__suggestions">
-      <h3 class="suggestions__title">Recent Searches</h3>
-      <div class="suggestions__list">
-        <div
-          v-for="item in recentSearches"
-          :key="item.id"
-          class="suggestion-item"
-          @click="selectSuggestion(item.query)"
-        >
-          <IconCustom name="clock" :size="18" class="suggestion-item__icon" />
-          <span class="suggestion-item__text">{{ item.query }}</span>
-        </div>
-      </div>
-
-      <h3 class="suggestions__title">Popular Searches</h3>
-      <div class="suggestions__tags">
-        <button
-          v-for="tag in popularSearches"
-          :key="tag"
-          class="tag-btn"
-          @click="selectSuggestion(tag)"
-        >
-          {{ tag }}
-        </button>
+    <!-- 默认：最近搜索 -->
+    <div v-if="!searchQuery" class="mobile-search__recent">
+      <div
+        v-for="item in recentSearches"
+        :key="item.id"
+        class="recent-item"
+        @click="selectRecent(item.query)"
+      >
+        <IconCustom name="clock" :size="18" class="recent-item__icon" />
+        <span class="recent-item__text">{{ item.query }}</span>
       </div>
     </div>
 
+    <!-- 搜索结果 -->
     <div v-else class="mobile-search__results">
       <div v-if="searchResults.length === 0" class="no-results">
-        <IconCustom name="search" :size="48" />
         <p>No results found for "{{ searchQuery }}"</p>
       </div>
-      <div v-else class="results-list">
+      <div v-else>
         <div
           v-for="result in searchResults"
           :key="result.id"
           class="result-item"
           @click="handleResultClick(result)"
         >
-          <div class="result-item__icon">
-            <IconCustom :name="result.icon" :size="24" />
-          </div>
-          <div class="result-item__content">
-            <div class="result-item__title">{{ result.title }}</div>
-            <div class="result-item__type">{{ result.type }}</div>
-          </div>
+          <div class="result-item__title">{{ result.title }}</div>
+          <div class="result-item__desc">{{ result.description }}</div>
         </div>
       </div>
     </div>
@@ -78,50 +55,28 @@ import { ref, computed } from 'vue'
 const searchQuery = ref('')
 
 const recentSearches = ref([
-  { id: 1, query: 'Project reports' },
-  { id: 2, query: 'Team calendar' },
-  { id: 3, query: 'Budget 2026' }
+  { id: 1, query: 'ESG Report 2025' },
+  { id: 2, query: 'OA Contract' },
+  { id: 3, query: 'Competency Framework' },
+  { id: 4, query: 'DCH AI Training Material' },
 ])
 
-const popularSearches = ref([
-  'Documents',
-  'Calendar',
-  'Contacts',
-  'Reports',
-  'Settings'
-])
-
-const allItems = ref([
-  { id: 1, title: 'Documents', type: 'Application', icon: 'document' },
-  { id: 2, title: 'Calendar', type: 'Application', icon: 'calendar' },
-  { id: 3, title: 'Email', type: 'Application', icon: 'mail' },
-  { id: 4, title: 'Contacts', type: 'Application', icon: 'users' },
-  { id: 5, title: 'Analytics', type: 'Application', icon: 'chart' },
-  { id: 6, title: 'Settings', type: 'Application', icon: 'settings' },
-  { id: 7, title: 'Q4 Report 2025', type: 'Document', icon: 'file' },
-  { id: 8, title: 'Budget Planning', type: 'Document', icon: 'file' },
-  { id: 9, title: 'Team Meeting Notes', type: 'Document', icon: 'file' }
+const allResults = ref([
+  { id: 1, title: 'Search Result 1', description: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim v...' },
+  { id: 2, title: 'Search Result 2', description: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim v...' },
+  { id: 3, title: 'Search Result 3', description: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim v...' },
+  { id: 4, title: 'Search Result 4', description: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim v...' },
+  { id: 5, title: 'Search Result 5', description: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim v...' },
 ])
 
 const searchResults = computed(() => {
   if (!searchQuery.value) return []
-
-  const query = searchQuery.value.toLowerCase()
-  return allItems.value.filter(item =>
-    item.title.toLowerCase().includes(query) ||
-    item.type.toLowerCase().includes(query)
-  )
+  return allResults.value
 })
 
-const handleSearch = () => {
-  // Search is handled by computed property
-}
+const handleSearch = () => {}
 
-const clearSearch = () => {
-  searchQuery.value = ''
-}
-
-const selectSuggestion = (query) => {
+const selectRecent = (query) => {
   searchQuery.value = query
 }
 
@@ -139,17 +94,17 @@ const handleResultClick = (result) => {
 }
 
 .mobile-search__header {
-  padding: 16px;
+  padding: 12px 16px;
   background: white;
-  margin-bottom: 8px;
 }
 
 .search-bar {
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 12px 16px;
-  background: #F5F5F5;
+  padding: 10px 14px;
+  background: white;
+  border: 1px solid #E0E0E0;
   border-radius: 24px;
 }
 
@@ -171,156 +126,96 @@ const handleResultClick = (result) => {
   color: #999999;
 }
 
-.search-bar__clear {
-  width: 24px;
-  height: 24px;
-  border-radius: 50%;
-  background: #CCCCCC;
-  border: none;
+.search-bar__ai-btn {
   display: flex;
   align-items: center;
-  justify-content: center;
-  cursor: pointer;
+  gap: 3px;
+  padding: 5px 12px;
+  background: #A60A3A;
   color: white;
+  border: none;
+  border-radius: 16px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
   flex-shrink: 0;
 }
 
-.mobile-search__suggestions {
+.ai-star {
+  font-size: 11px;
+}
+
+/* 最近搜索 */
+.mobile-search__recent {
   flex: 1;
   overflow-y: auto;
-  padding: 16px;
+  background: white;
+  margin-top: 8px;
 }
 
-.suggestions__title {
-  font-size: 14px;
-  font-weight: 600;
-  color: #666666;
-  margin: 0 0 12px 0;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-}
-
-.suggestions__list {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  margin-bottom: 24px;
-}
-
-.suggestion-item {
+.recent-item {
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 12px;
-  background: white;
-  border-radius: 12px;
+  gap: 14px;
+  padding: 16px;
+  border-bottom: 1px solid #F0F0F0;
   cursor: pointer;
-  transition: all 0.3s;
 }
 
-.suggestion-item:active {
-  transform: scale(0.98);
+.recent-item:active {
+  background: #F5F5F5;
 }
 
-.suggestion-item__icon {
+.recent-item__icon {
   color: #999999;
+  flex-shrink: 0;
 }
 
-.suggestion-item__text {
+.recent-item__text {
   font-size: 15px;
   color: #000000;
 }
 
-.suggestions__tags {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-}
-
-.tag-btn {
-  padding: 8px 16px;
-  background: white;
-  border: 1px solid #E0E0E0;
-  border-radius: 20px;
-  font-size: 14px;
-  color: #666666;
-  cursor: pointer;
-  transition: all 0.3s;
-}
-
-.tag-btn:active {
-  background: #A60A3A;
-  color: white;
-  border-color: #A60A3A;
-}
-
+/* 搜索结果 */
 .mobile-search__results {
   flex: 1;
   overflow-y: auto;
-  padding: 16px;
+  background: white;
+  margin-top: 8px;
 }
 
 .no-results {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
   padding: 48px 24px;
   text-align: center;
   color: #999999;
-}
-
-.no-results p {
-  margin-top: 16px;
   font-size: 15px;
 }
 
-.results-list {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
 .result-item {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 12px;
-  background: white;
-  border-radius: 12px;
+  padding: 16px;
+  border-bottom: 1px solid #F0F0F0;
   cursor: pointer;
-  transition: all 0.3s;
 }
 
 .result-item:active {
-  transform: scale(0.98);
-}
-
-.result-item__icon {
-  width: 48px;
-  height: 48px;
-  border-radius: 12px;
-  background: #A60A3A26;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: #A60A3A;
-  flex-shrink: 0;
-}
-
-.result-item__content {
-  flex: 1;
+  background: #F5F5F5;
 }
 
 .result-item__title {
   font-size: 15px;
-  font-weight: 500;
-  color: #000000;
-  margin-bottom: 2px;
+  font-weight: 600;
+  color: #A60A3A;
+  margin-bottom: 6px;
 }
 
-.result-item__type {
-  font-size: 12px;
+.result-item__desc {
+  font-size: 13px;
   color: #666666;
+  line-height: 1.5;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
 }
 </style>

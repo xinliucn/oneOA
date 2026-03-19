@@ -1,37 +1,37 @@
 export default defineEventHandler(async (event) => {
   const config = useRuntimeConfig()
   const apiBase = config.public.apiBase
-  // const authMockEnabled = (() => {
-  //   const raw = config.authMockEnabled
-  //   if (typeof raw === 'boolean') {
-  //     return raw
-  //   }
-  //   const normalized = String(raw ?? 'false').toLowerCase()
-  //   return normalized !== 'false' && normalized !== '0'
-  // })()
+  const authMockEnabled = (() => {
+    const raw = config.authMockEnabled
+    if (typeof raw === 'boolean') {
+      return raw
+    }
+    const normalized = String(raw ?? 'false').toLowerCase()
+    return normalized !== 'false' && normalized !== '0'
+  })()
 
-  // if (!authMockEnabled) {
-  //   return {
-  //     code: 1,
-  //     user: {
-  //       name: 'Mock User',
-  //       email: 'mock.user@dchbi.app',
-  //       username: 'mock.user@dchbi.app',
-  //       token_verified: true,
-  //       roles: ['mock-user', 'admin'],
-  //     },
-  //     login_at: Date.now(),
-  //     session_id: 'mock-session-id',
-  //     token_valid: true,
-  //     authenticated: true,
-  //     logged_in_for: 0,
-  //     token_expired: false,
-  //     session_rotated: false,
-  //     token_refreshed: false,
-  //     token_expires_at: Date.now() + 30 * 60 * 1000,
-  //     token_expires_in: 30 * 60,
-  //   }
-  // }
+  if (!authMockEnabled) {
+    return {
+      code: 1,
+      user: {
+        name: 'Mock User',
+        email: 'mock.user@dchbi.app',
+        username: 'mock.user@dchbi.app',
+        token_verified: true,
+        roles: ['mock-user', 'admin'],
+      },
+      login_at: Date.now(),
+      session_id: 'mock-session-id',
+      token_valid: true,
+      authenticated: true,
+      logged_in_for: 0,
+      token_expired: false,
+      session_rotated: false,
+      token_refreshed: false,
+      token_expires_at: Date.now() + 30 * 60 * 1000,
+      token_expires_in: 30 * 60,
+    }
+  }
 
   try {
     // 获取客户端的所有请求头

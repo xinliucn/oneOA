@@ -1,3 +1,5 @@
+import { detectMobileDevice } from '~/utils/device'
+
 export default defineNuxtRouteMiddleware((to, _from) => {
   // 只在客户端执行设备重定向
   if (import.meta.server) {
@@ -9,15 +11,15 @@ export default defineNuxtRouteMiddleware((to, _from) => {
     return
   }
 
-  const userAgent = navigator.userAgent
-
-  const isMobile = /mobile|android|iphone|ipad|phone/i.test(userAgent || '')
-  // 根据设备类型重定向到对应的路由
-  if (isMobile && !to.path.startsWith('/mobile')) {
-    return navigateTo('/mobile')
+  // 用户已经明确进入 mobile/desktop 路径时，不再二次纠正，避免首屏 hydration 时 layout 串位。
+  if (to.path.startsWith('/mobile') || to.path.startsWith('/desktop')) {
+    return
   }
 
-  if (!isMobile && !to.path.startsWith('/desktop')) {
-    return navigateTo('/desktop')
-  }
+  const isMobile = detectMobileDevice({
+    userAgent: navigator.userAgent,
+    viewportWidth: window.innerWidth,
+  })
+
+  return navigateTo(isMobile ? '/mobile' : '/desktop')
 })

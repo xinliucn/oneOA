@@ -8,16 +8,19 @@
                 </div>
             </div>
             <div class="mobile__header-right">
-                
                 <el-button circle class="action-btn active-btn">
                     <IconCustom name="share" :size="20" />
                 </el-button>
-                 <el-button circle class="action-btn active-btn">
+                <el-button circle class="action-btn active-btn">
                     <IconCustom name="globe" :size="20" />
                 </el-button>
-                <el-button circle class="action-btn active-btn">
-                    <IconCustom name="bell" :size="20" />
-                </el-button>
+                <NotificationBell
+                    placement="bottom"
+                    :popover-width="320"
+                    :button-size="36"
+                    :icon-size="20"
+                    popover-class="notification-bell-popover--mobile"
+                />
                 <el-avatar :size="40" src="/path/to/avatar.jpg" />
             </div>
         </header>
@@ -143,6 +146,14 @@ onBeforeUnmount(() => {
 .mobile__main {
     flex: 1;
     overflow: hidden;
+}
+
+:deep(.notification-bell-popover--mobile) {
+    max-width: calc(100vw - 24px);
+}
+
+:deep(.notification-bell-popover--mobile .el-popper__arrow) {
+    display: none;
 }
 
 .mobile__footer {

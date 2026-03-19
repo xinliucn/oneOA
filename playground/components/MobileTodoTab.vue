@@ -15,6 +15,8 @@
     </div>
 
     <div class="mobile-todo__list">
+      <div v-if="loading && filteredTasks.length === 0" class="mobile-todo__state">加载中...</div>
+      <div v-else-if="!loading && filteredTasks.length === 0" class="mobile-todo__state">暂无消息</div>
       <div v-for="task in filteredTasks" :key="task.id" class="todo-item" @click="handleTaskClick(task)">
         <div class="todo-item__content">
           <div class="todo-item__header">
@@ -38,93 +40,44 @@
   </div>
 </template>
 
-<script setup>
-import { ref, computed } from 'vue'
+<script setup lang="ts">
+import { computed, ref } from 'vue'
+import type { ApprovalItem } from '~/types/approval'
 
 const activeFilter = ref('all')
+const { approvals, loading, bootstrap } = useApprovals()
 
-const filters = [
-  { label: 'All', value: 'all', count: null },
-  { label: 'IT', value: 'it', count: 14 },
-  { label: 'BU', value: 'bu', count: 3 },
-  { label: 'Legal', value: 'legal', count: 20 },
-  { label: 'Pending', value: 'pending', count: 2 },
-  { label: 'Approved', value: 'approved', count: 8 }
-]
+const filters = computed(() => {
+  const countBy = (matcher: (task: ApprovalItem) => boolean) => approvals.value.filter(matcher).length
 
-const tasks = ref([
-  {
-    id: 1,
-    code: 'CCA20250095',
-    status: 'Pending',
-    title: 'ICHBI Order Approval',
-    subtitle: 'Cheng Lam To Ian',
-    date: '2025-10-24',
-    badge: null
-  },
-  {
-    id: 2,
-    code: 'CCA20250094',
-    status: 'Pending',
-    title: 'Felix Test Process-Developer 1-2025-...',
-    subtitle: 'Developer 1',
-    date: '2025-10-24',
-    badge: '402 × 0'
-  },
-  {
-    id: 3,
-    code: 'CCA20250093',
-    status: 'Approved',
-    title: 'ICSA BU Group Summary Report Sub...',
-    subtitle: 'Developer 1',
-    date: '2025-10-24',
-    badge: null
-  },
-  {
-    id: 4,
-    code: 'CCA20250092',
-    status: 'Approved',
-    title: 'ICSA BU Group Summary Report Sub...',
-    subtitle: 'Developer 1',
-    date: '2025-10-24',
-    badge: null
-  },
-  {
-    id: 5,
-    code: 'CCA20250091',
-    status: 'Rejected',
-    title: 'ICSA Main Process-Developer 1-2025-...',
-    subtitle: 'Developer 1',
-    date: '2025-10-24',
-    badge: null
-  },
-  {
-    id: 6,
-    code: 'CCA20250090',
-    status: 'Approved',
-    title: 'ICHBI Order Approval',
-    subtitle: 'Developer 1',
-    date: '2025-10-24',
-    badge: null
-  }
-])
+  return [
+    { label: 'All', value: 'all', count: null },
+    { label: 'IT', value: 'it', count: countBy((task) => task.category.toLowerCase() === 'it') },
+    { label: 'BU', value: 'bu', count: countBy((task) => task.category.toLowerCase() === 'bu') },
+    { label: 'Legal', value: 'legal', count: countBy((task) => task.category.toLowerCase() === 'legal') },
+    { label: 'Pending', value: 'pending', count: countBy((task) => task.status.toLowerCase() === 'pending') },
+    { label: 'Approved', value: 'approved', count: countBy((task) => task.status.toLowerCase() === 'approved') },
+  ]
+})
 
 const filteredTasks = computed(() => {
   if (activeFilter.value === 'all') {
-    return tasks.value
+    return approvals.value
   }
-  // 根据过滤器值筛选任务
-  return tasks.value.filter(task => {
+
+  return approvals.value.filter((task) => {
     const filterValue = activeFilter.value.toLowerCase()
-    return task.status.toLowerCase() === filterValue ||
-      task.title.toLowerCase().includes(filterValue) ||
-      task.subtitle.toLowerCase().includes(filterValue)
+    return task.status.toLowerCase() === filterValue || task.category.toLowerCase() === filterValue
   })
 })
 
-const handleTaskClick = (task) => {
-  console.log('Task clicked:', task.code)
+const handleTaskClick = (task: ApprovalItem) => {
+  return navigateTo(`/mobile/approval/${encodeURIComponent(task.code)}`)
 }
+
+onMounted(async () => {
+  await bootstrap()
+})
 </script>
 
 <style scoped>
@@ -232,6 +185,13 @@ const handleTaskClick = (task) => {
         display: none;
         /* Chrome, Safari, Opera */
     }
+}
+
+.mobile-todo__state {
+  padding: 32px 16px;
+  text-align: center;
+  font-size: 13px;
+  color: #999999;
 }
 
 .todo-item {

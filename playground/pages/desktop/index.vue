@@ -1,35 +1,31 @@
 <template>
     <div class="desktop">
         <div class="desktop__banner" :style="{ backgroundImage: `url(${desktopBanner})` }">
-            <div class="desktop__greeting">
-                Good morning, <ClientOnly>{{ userName || 'Guest' }}<template #fallback>Guest</template></ClientOnly>
-            </div>
-            <div class="desktop__widgets">
-                <ClockWidget />
-                <WeatherWidget />
-                <MeetingWidget />
+            <div class="desktop__banner-left">
+                <div class="desktop__date">{{ formattedDate }}</div>
+                <div class="desktop__time">{{ formattedTime }}</div>
+                <div class="desktop__greeting">
+                    Good morning, <ClientOnly>{{ userName || 'Guest' }}<template #fallback>Guest</template></ClientOnly>
+                </div>
+                <div class="desktop__search-bar">
+                    <IconCustom name="search" :size="18" class="desktop__search-icon" />
+                    <input type="text" class="desktop__search-input" placeholder="Search" />
+                    <button class="desktop__ai-btn">AI <span>★</span></button>
+                </div>
             </div>
         </div>
+
         <div class="desktop__content">
-            <div class="desktop__row">
-                <div class="desktop__col">
-                    <FavouritesGrid />
-                </div>
-                <div class="desktop__col">
-                    <CalendarWidget />
-                </div>
-            </div>
-            <div class="desktop__row">
-                <div class="desktop__col">
-                    <GroupNews />
-                </div>
-                <div class="desktop__col">
-                    <TasksList />
-                </div>
+            <FavouritesGrid />
+            <DesktopApplications />
+            <div class="desktop__bottom-row">
+                <GroupNews />
+                <TasksList />
             </div>
         </div>
+
         <footer class="desktop__footer">
-            Copyright © 2026 Dah Chong Hong Holdings Limited. All rights reserved.
+            Copyright © 2026 Dah Chong Hong Holdings Limited. All rights reserved.
         </footer>
     </div>
 </template>
@@ -39,65 +35,121 @@ definePageMeta({
     layout: 'desktop',
     middleware: 'auth'
 })
+import { ref, computed, onMounted, onUnmounted } from 'vue'
 import desktopBanner from '~/assets/images/desktop-banner.jpg'
 
-// 获取用户信息 - 中间件已经验证登录，直接使用 useAuth 的状态
 const { user } = useAuth()
 const userName = computed(() => user.value?.name || user.value?.username || user.value?.displayName)
+
+const currentTime = ref(new Date())
+let timer = null
+
+const formattedDate = computed(() => {
+    const d = currentTime.value
+    const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']
+    const months = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December']
+    return `${days[d.getDay()]}, ${months[d.getMonth()]} ${d.getDate()}, ${d.getFullYear()}`
+})
+
+const formattedTime = computed(() => {
+    const d = currentTime.value
+    return `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`
+})
+
+onMounted(() => { timer = setInterval(() => { currentTime.value = new Date() }, 1000) })
+onUnmounted(() => { if (timer) clearInterval(timer) })
 </script>
 
 <style>
 .desktop {
     display: flex;
     flex-direction: column;
-    justify-content: space-between;
 }
 
 .desktop__banner {
     background-size: cover;
     background-position: center;
+    padding: 32px 48px 40px;
+    min-height: 220px;
     display: flex;
-    justify-content: space-between;
-    padding: 120px 64px 0px 80px;
-     /* 上内边距足够大以将问候语推到下方 */
+    align-items: flex-end;
+}
+
+.desktop__banner-left {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.desktop__date {
+    font-size: 13px;
+    color: rgba(255, 255, 255, 0.85);
+}
+
+.desktop__time {
+    font-size: 48px;
+    font-weight: 700;
+    color: #FFFFFF;
+    line-height: 1;
 }
 
 .desktop__greeting {
-    font-size: 48px;
+    font-size: 22px;
+    font-weight: 600;
     color: #FFFFFF;
-    
-    width: 320px;
-    height: 120px;
+    margin-bottom: 12px;
 }
 
-.desktop__widgets {
+.desktop__search-bar {
     display: flex;
-    gap: 16px;
-    padding: 20px;
-    align-items: flex-start;
+    align-items: center;
+    gap: 8px;
+    background: white;
+    border-radius: 24px;
+    padding: 10px 10px 10px 16px;
+    width: 340px;
+}
+
+.desktop__search-icon {
+    color: #999999;
+    flex-shrink: 0;
+}
+
+.desktop__search-input {
+    flex: 1;
+    border: none;
+    outline: none;
+    font-size: 14px;
+    color: #333;
+    background: transparent;
+}
+
+.desktop__search-input::placeholder {
+    color: #999999;
+}
+
+.desktop__ai-btn {
+    background: #A60A3A;
+    color: white;
+    border: none;
+    border-radius: 16px;
+    padding: 5px 12px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    flex-shrink: 0;
 }
 
 .desktop__content {
-    padding: 32px;
+    padding: 0;
     display: flex;
     flex-direction: column;
-    gap: 24px;
 }
 
-.desktop__row {
+.desktop__bottom-row {
     display: grid;
-    grid-template-columns: 2fr 1fr;
-    gap: 24px;
-    align-items: stretch;
-}
-
-.desktop__col {
-    min-width: 0;
-    display: flex;
-}
-
-.desktop__col > * {
-    flex: 1;
+    grid-template-columns: 3fr 2fr;
+    gap: 0;
 }
 
 .desktop__footer {
@@ -105,5 +157,6 @@ const userName = computed(() => user.value?.name || user.value?.username || user
     padding: 20px;
     background-color: #A60A3A;
     color: #FFFFFF;
+    font-size: 13px;
 }
 </style>
