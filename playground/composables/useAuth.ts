@@ -69,8 +69,6 @@ export const useAuth = () => {
         // 登录成功后自动检查浏览器里是否已有推送订阅。
         // 这里只做静默恢复，不会主动弹权限框创建新订阅。
         if (import.meta.client) {
-          console.log('++++触发注册接口',import.meta.client);
-          
           const { init } = usePushSubscription()
           await init()
         }
