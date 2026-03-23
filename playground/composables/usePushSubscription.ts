@@ -119,13 +119,15 @@ export const usePushSubscription = () => {
     
     const config = await $fetch<NotificationSubscribeResponse>('/api/notifications/subscribe', {
       method: 'POST',
+      body: TEMP_SUBSCRIBE_PAYLOAD,
     })
+console.log(config);
 
-    if (!config.vapidPublicKey) {
-      throw new Error('服务端未配置 VAPID 公钥')
-    }
+    // if (!config.vapidPublicKey) {
+    //   throw new Error('服务端未配置 VAPID 公钥')
+    // }
 
-    return config.vapidPublicKey
+    // return config.vapidPublicKey
   }
 
   const createSubscription = async (registration: ServiceWorkerRegistration) => {
