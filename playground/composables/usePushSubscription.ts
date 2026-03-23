@@ -160,7 +160,7 @@ export const usePushSubscription = () => {
       console.log('++++++1',existing);
       // 如果用户之前已经授权通知，但浏览器里还没有 subscription，
       // 则在登录后自动补建订阅，不额外弹权限框。
-      if (!existing && Notification.permission === 'granted') {
+      if (!existing) {
         existing = await createSubscription(registration)
       }
 
