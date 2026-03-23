@@ -151,8 +151,10 @@ export const usePushSubscription = () => {
     try {
       // 初始化时优先读取浏览器里已有的 Push Subscription，用于恢复订阅状态
       const registration = await ensureServiceWorkerRegistration()
+      console.log('+++++++',registration);
+      
       let existing = await registration.pushManager.getSubscription()
-
+ console.log('++++++1',existing);
       // 如果用户之前已经授权通知，但浏览器里还没有 subscription，
       // 则在登录后自动补建订阅，不额外弹权限框。
       if (!existing && Notification.permission === 'granted') {
