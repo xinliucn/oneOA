@@ -115,6 +115,8 @@ export const usePushSubscription = () => {
   }
 
   const fetchVapidPublicKey = async () => {
+    console.log('+++++++',2);
+    
     const config = await $fetch<NotificationSubscribeResponse>('/api/notifications/subscribe', {
       method: 'POST',
     })
@@ -136,15 +138,15 @@ export const usePushSubscription = () => {
   }
 
   const init = async () => {
-    // if (!import.meta.client || !isSupported.value) {
-    //   status.value = 'unsupported'
-    //   return
-    // }
+    if (!import.meta.client || !isSupported.value) {
+      status.value = 'unsupported'
+      return
+    }
 
-    // if (Notification.permission === 'denied') {
-    //   status.value = 'denied'
-    //   return
-    // }
+    if (Notification.permission === 'denied') {
+      status.value = 'denied'
+      return
+    }
     console.log('++++++1');
     
 
