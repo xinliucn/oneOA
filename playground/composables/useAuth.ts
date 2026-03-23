@@ -65,6 +65,14 @@ export const useAuth = () => {
         }
         isLoggedIn.value = true
         lastCheckTime.value = now
+
+        // 登录成功后自动检查浏览器里是否已有推送订阅。
+        // 这里只做静默恢复，不会主动弹权限框创建新订阅。
+        if (import.meta.client) {
+          const { init } = usePushSubscription()
+          await init()
+        }
+
         return true
       }
 
@@ -89,8 +97,13 @@ export const useAuth = () => {
   const clearLocalData = async () => {
     if (import.meta.client) {
       const { stopPolling } = useNotification()
+      const { unsubscribe } = usePushSubscription()
       const db = useNotificationDB()
+
       stopPolling()
+      await unsubscribe().catch((error) => {
+        console.error('Clear local push subscription failed:', error)
+      })
       await db.clearAll()
     }
   }

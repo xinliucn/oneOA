@@ -2,6 +2,7 @@ import { getNotificationApiPrefix, proxyWindmill } from '../../utils/windmillPro
 import { isNotificationMockEnabled, markMockNotificationAsRead } from '../../utils/notificationMock'
 
 export default defineEventHandler(async (event) => {
+  // 从动态路由中提取要标记已读的通知 ID
   const id = getRouterParam(event, 'id')
 
   if (!id) {
@@ -12,14 +13,17 @@ export default defineEventHandler(async (event) => {
   }
 
   try {
+    // 请求体目前主要兼容 readAt 等扩展字段
     const body = await readBody<Record<string, any>>(event).catch(() => ({}))
 
     if (isNotificationMockEnabled()) {
+      // mock 模式下直接更新本地模拟数据
       return markMockNotificationAsRead(id, typeof body.readAt === 'string' ? body.readAt : undefined)
     }
 
     const path = `${getNotificationApiPrefix()}/mark-read`
 
+    // 非 mock 模式下，将已读请求代理到 Windmill
     const response = await proxyWindmill<any>(event, path, {
       method: 'POST',
       body: {
@@ -37,6 +41,7 @@ export default defineEventHandler(async (event) => {
   } catch (error: any) {
     console.error('Mark notification as read API error:', error)
 
+    // 统一转换成前端可消费的 HTTP 错误
     throw createError({
       statusCode: error.statusCode || 500,
       message: error.message || '标记通知已读失败',

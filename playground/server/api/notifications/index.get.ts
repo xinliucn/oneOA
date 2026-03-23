@@ -4,18 +4,21 @@ import { isNotificationMockEnabled, listMockNotifications } from '../../utils/no
 
 export default defineEventHandler(async (event) => {
   const query = getQuery(event)
+  // 前端分页参数统一做一次兜底和边界收敛，避免异常值直接透传
   const rawPage = Number.parseInt(String(query.page || '1'), 10)
   const rawPageSize = Number.parseInt(String(query.pageSize || '20'), 10)
   const page = Number.isFinite(rawPage) && rawPage > 0 ? rawPage : 1
   const pageSize = Number.isFinite(rawPageSize) && rawPageSize > 0 ? Math.min(rawPageSize, 100) : 20
 
   try {
+    // 透传可选筛选条件，兼容前端列表查询
     const keyword = typeof query.keyword === 'string' ? query.keyword : ''
     const userId = typeof query.user_id === 'string' ? query.user_id : ''
     const isRead = typeof query.is_read === 'string' ? query.is_read : ''
     const category = typeof query.category === 'string' ? query.category : ''
 
     if (isNotificationMockEnabled()) {
+      // mock 模式直接返回本地模拟通知，便于前端联调
       return listMockNotifications({
         page,
         pageSize,
@@ -23,6 +26,7 @@ export default defineEventHandler(async (event) => {
       })
     }
 
+    // 将前端参数转换成 Windmill 侧约定的查询参数格式
     const params = new URLSearchParams({
       page: String(page),
       page_size: String(pageSize),
@@ -34,6 +38,7 @@ export default defineEventHandler(async (event) => {
     if (keyword) params.set('keyword', keyword)
 
     const path = `${getNotificationApiPrefix()}/list?${params.toString()}`
+    // 这里原本应回源 Windmill，当前先保留本地联调用的静态返回
     // const response = await proxyWindmill<any>(event, path, {
     //   method: 'GET',
     //   skipCookies: true,
@@ -73,10 +78,12 @@ export default defineEventHandler(async (event) => {
       "syncedAt": 1773716103078
     }
 
+    // 将不同来源的数据统一规整成前端使用的通知列表结构
     return normalizeNotificationList(response, page, pageSize)
   } catch (error: any) {
     console.error('Get notifications API error:', error)
 
+    // 统一转换成前端可消费的 HTTP 错误
     throw createError({
       statusCode: error.statusCode || 500,
       message: error.message || '获取通知列表失败',
