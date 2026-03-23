@@ -129,6 +129,7 @@ export const usePushSubscription = () => {
   }
 
   const createSubscription = async (registration: ServiceWorkerRegistration) => {
+    console.log('+++++++',2);
     const vapidPublicKey = await fetchVapidPublicKey()
 
     return registration.pushManager.subscribe({
