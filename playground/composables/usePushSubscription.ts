@@ -136,15 +136,15 @@ export const usePushSubscription = () => {
   }
 
   const init = async () => {
-    if (!import.meta.client || !isSupported.value) {
-      status.value = 'unsupported'
-      return
-    }
+    // if (!import.meta.client || !isSupported.value) {
+    //   status.value = 'unsupported'
+    //   return
+    // }
 
-    if (Notification.permission === 'denied') {
-      status.value = 'denied'
-      return
-    }
+    // if (Notification.permission === 'denied') {
+    //   status.value = 'denied'
+    //   return
+    // }
     console.log('++++++1');
     
 
@@ -154,7 +154,7 @@ export const usePushSubscription = () => {
       console.log('+++++++',registration);
       
       let existing = await registration.pushManager.getSubscription()
- console.log('++++++1',existing);
+      console.log('++++++1',existing);
       // 如果用户之前已经授权通知，但浏览器里还没有 subscription，
       // 则在登录后自动补建订阅，不额外弹权限框。
       if (!existing && Notification.permission === 'granted') {
