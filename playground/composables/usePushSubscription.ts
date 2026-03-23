@@ -145,7 +145,8 @@ export const usePushSubscription = () => {
       status.value = 'denied'
       return
     }
-
+    console.log('++++++1');
+    
 
     try {
       // 初始化时优先读取浏览器里已有的 Push Subscription，用于恢复订阅状态
