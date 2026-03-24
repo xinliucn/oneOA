@@ -21,7 +21,7 @@ const TEMP_SUBSCRIBE_PAYLOAD = {
 } as const
 
 // 将服务端返回的 VAPID 公钥从 Base64URL 转成 PushManager 需要的 Uint8Array
-const urlBase64ToUint8Array = (base64String: string) => {
+  const urlBase64ToUint8Array = (base64String: string) => {
   const padding = '='.repeat((4 - (base64String.length % 4)) % 4)
   const normalized = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/')
   const rawData = atob(normalized)
@@ -68,13 +68,21 @@ export const usePushSubscription = () => {
   }
 
   const ensurePermission = async () => {
+    console.log('[push] ensurePermission:start', {
+      importMetaClient: import.meta.client,
+      isSupported: isSupported.value,
+      permission: import.meta.client && 'Notification' in window ? Notification.permission : 'unavailable',
+    })
+
     if (!import.meta.client || !isSupported.value) {
       status.value = 'unsupported'
+      console.warn('[push] ensurePermission:unsupported')
       return 'denied'
     }
 
     // 已经授权时直接复用，避免重复弹权限框
     if (Notification.permission === 'granted') {
+      console.log('[push] ensurePermission:already-granted')
       return 'granted'
     }
 
@@ -84,87 +92,145 @@ export const usePushSubscription = () => {
       status.value = 'denied'
     }
 
+    console.log('[push] ensurePermission:result', {
+      result,
+      status: status.value,
+    })
     return result
   }
 
   const ensureServiceWorkerRegistration = async () => {
-    // 优先复用已注册的 SW，避免重复 register
+    console.log('[push] ensureServiceWorkerRegistration:start')
     const existing = await navigator.serviceWorker.getRegistration()
-    if (existing) {
-      return existing
+    console.log('[push] ensureServiceWorkerRegistration:existing', {
+      hasExisting: Boolean(existing),
+      scope: existing?.scope || null,
+      activeState: existing?.active?.state || null,
+    })
+
+    if (!existing) {
+      console.log('[push] ensureServiceWorkerRegistration:register /sw.js')
+      await navigator.serviceWorker.register('/sw.js')
     }
 
-    // 如果还未注册，则注册通知 Service Worker，并等待 ready
-    await navigator.serviceWorker.register('/sw.js')
-    return navigator.serviceWorker.ready
+    // 始终等待 SW 进入 active 状态，pushManager.subscribe() 依赖此状态
+    const readyRegistration = await navigator.serviceWorker.ready
+    console.log('[push] ensureServiceWorkerRegistration:ready', {
+      scope: readyRegistration.scope,
+      activeState: readyRegistration.active?.state || null,
+    })
+
+    return readyRegistration
   }
 
   const syncSubscription = async (pushJSON: PushSubscriptionJSON) => {
     // 当前先使用写死请求体联调，因此这里不依赖浏览器真实 subscription 内容。
     // 保留入参是为了后续切回动态上报时，不需要改调用方。
-    void pushJSON
+    console.log('[push] syncSubscription:start', {
+      endpoint: pushJSON?.endpoint || null,
+      hasKeys: Boolean(pushJSON?.keys?.p256dh && pushJSON?.keys?.auth),
+      payloadUserId: TEMP_SUBSCRIBE_PAYLOAD.user_id,
+    })
 
     if (!TEMP_SUBSCRIBE_PAYLOAD.subscription.endpoint) {
+      console.warn('[push] syncSubscription:skip-empty-endpoint')
       return
     }
 
-    await $fetch<NotificationSubscribeResponse>('/api/notifications/subscribe', {
+    const response = await $fetch<NotificationSubscribeResponse>('/api/notifications/subscribe', {
       method: 'POST',
       body: TEMP_SUBSCRIBE_PAYLOAD,
     })
+
+    console.log('[push] syncSubscription:success', response)
   }
 
   const fetchVapidPublicKey = async () => {
-    console.log('+++++++',2);
-    
+    console.log('[push] fetchVapidPublicKey:start')
     const config = await $fetch<NotificationSubscribeResponse>('/api/notifications/subscribe', {
-      method: 'POST',
-      body: TEMP_SUBSCRIBE_PAYLOAD,
+      method: 'GET',
     })
-console.log(config);
 
-    // if (!config.vapidPublicKey) {
-    //   throw new Error('服务端未配置 VAPID 公钥')
-    // }
+    console.log('[push] fetchVapidPublicKey:response', {
+      success: config.success,
+      hasVapidPublicKey: Boolean(config.vapidPublicKey),
+      vapidPublicKeyLength: config.vapidPublicKey?.length || 0,
+    })
 
-    // return config.vapidPublicKey
+    if (!config.vapidPublicKey) {
+      throw new Error('服务端未配置 VAPID 公钥')
+    }
+
+    return config.vapidPublicKey
   }
 
   const createSubscription = async (registration: ServiceWorkerRegistration) => {
-    console.log('+++++++',2);
-    const vapidPublicKey = await fetchVapidPublicKey()
-
-    return registration.pushManager.subscribe({
-      userVisibleOnly: true,
-      applicationServerKey: urlBase64ToUint8Array(vapidPublicKey),
+    console.log('[push] createSubscription:start', {
+      scope: registration.scope,
+      activeState: registration.active?.state || null,
     })
+
+    const vapidPublicKey = await fetchVapidPublicKey()
+    const applicationServerKey = urlBase64ToUint8Array(vapidPublicKey)
+
+    console.log('[push] createSubscription:vapid-ready', {
+      vapidPublicKeyLength: vapidPublicKey.length,
+      vapidPublicKeyPreview: `${vapidPublicKey.slice(0, 12)}...${vapidPublicKey.slice(-8)}`,
+      applicationServerKeyLength: applicationServerKey.length,
+    })
+
+    console.log('[push] createSubscription:before-subscribe')
+
+    let createdSubscription: PushSubscription
+    try {
+      createdSubscription = await registration.pushManager.subscribe({
+        userVisibleOnly: true,
+        applicationServerKey,
+      })
+    } catch (error: any) {
+      console.error('[push] createSubscription:subscribe-failed', {
+        name: error?.name || null,
+        message: error?.message || null,
+        stack: error?.stack || null,
+      })
+      throw error
+    }
+
+    console.log('[push] createSubscription:after-subscribe')
+    console.log('[push] createSubscription:success', createdSubscription.toJSON())
+    return createdSubscription
   }
 
   const init = async () => {
-    // if (!import.meta.client || !isSupported.value) {
-    //   status.value = 'unsupported'
-    //   return
-    // }
+    console.log('[push] init:start', {
+      importMetaClient: import.meta.client,
+      isSupported: isSupported.value,
+      permission: import.meta.client && 'Notification' in window ? Notification.permission : 'unavailable',
+      status: status.value,
+    })
 
-    // if (Notification.permission === 'denied') {
-    //   status.value = 'denied'
-    //   return
-    // }
-    console.log('++++++1');
-    
+    if (!import.meta.client || !isSupported.value) {
+      status.value = 'unsupported'
+      console.warn('[push] init:unsupported')
+      return
+    }
+
+    if (Notification.permission === 'denied') {
+      status.value = 'denied'
+      console.warn('[push] init:permission-denied')
+      return
+    }
+
 
     try {
-      // 初始化时优先读取浏览器里已有的 Push Subscription，用于恢复订阅状态
+      // 初始化时只读取浏览器里已有的 Push Subscription，用于恢复订阅状态
+      // 不主动创建新订阅，避免 pushManager.subscribe() 在非用户手势时挂起
       const registration = await ensureServiceWorkerRegistration()
-      console.log('+++++++',registration);
-      
-      let existing = await registration.pushManager.getSubscription()
-      console.log('++++++1',existing);
-      // 如果用户之前已经授权通知，但浏览器里还没有 subscription，
-      // 则在登录后自动补建订阅，不额外弹权限框。
-      if (!existing) {
-        existing = await createSubscription(registration)
-      }
+      const existing = await registration.pushManager.getSubscription()
+      console.log('[push] init:getSubscription', {
+        hasExisting: Boolean(existing),
+        existing: existing?.toJSON() || null,
+      })
 
       const existingSubscription = existing?.toJSON() || null
       const shouldSync =
@@ -174,27 +240,43 @@ console.log(config);
       subscription.value = existingSubscription
       status.value = existingSubscription ? 'subscribed' : 'idle'
 
+      console.log('[push] init:resolved', {
+        existingSubscription,
+        shouldSync,
+        status: status.value,
+      })
+
       // 登录后自动做“无感恢复”：
       // 如果浏览器里已经有订阅，则静默同步一次到后端，但不会主动申请新权限
       if (existingSubscription && shouldSync) {
+        console.log('[push] init:sync-existing-subscription')
         await syncSubscription(existingSubscription)
       }
     } catch (error) {
       status.value = 'error'
       errorMessage.value = '读取推送订阅状态失败'
-      console.error('Init push subscription failed:', error)
+      console.error('[push] init:failed', error)
     }
   }
 
   const subscribe = async () => {
+    console.log('[push] subscribe:start', {
+      importMetaClient: import.meta.client,
+      isSupported: isSupported.value,
+      permission: import.meta.client && 'Notification' in window ? Notification.permission : 'unavailable',
+      status: status.value,
+    })
+
     if (!import.meta.client || !isSupported.value) {
       status.value = 'unsupported'
+      console.warn('[push] subscribe:unsupported')
       return null
     }
 
     if (isIOS() && !isStandalone()) {
       status.value = 'error'
       errorMessage.value = 'iOS 需要先将站点添加到主屏幕，才能开启推送通知。'
+      console.warn('[push] subscribe:ios-not-standalone')
       return null
     }
 
@@ -205,14 +287,25 @@ console.log(config);
 
       const permission = await ensurePermission()
       if (permission !== 'granted') {
+        status.value = permission === 'denied' ? 'denied' : 'idle'
+        console.warn('[push] subscribe:permission-not-granted', {
+          permission,
+          status: status.value,
+        })
         return null
       }
 
       const registration = await ensureServiceWorkerRegistration()
       let pushSubscription = await registration.pushManager.getSubscription()
 
+      console.log('[push] subscribe:getSubscription', {
+        hasExisting: Boolean(pushSubscription),
+        existing: pushSubscription?.toJSON() || null,
+      })
+
       if (!pushSubscription) {
         // 浏览器本地尚未订阅时，使用 VAPID 公钥创建新的 Push Subscription
+        console.log('[push] subscribe:create-new-subscription')
         pushSubscription = await createSubscription(registration)
       }
 
@@ -223,11 +316,20 @@ console.log(config);
       subscription.value = pushJSON
       status.value = 'subscribed'
 
+      console.log('[push] subscribe:success', {
+        subscription: pushJSON,
+        status: status.value,
+      })
+
       return pushSubscription
     } catch (error: any) {
       status.value = 'error'
       errorMessage.value = error?.message || '推送订阅失败'
-      console.error('Subscribe push failed:', error)
+      console.error('[push] subscribe:failed', {
+        name: error?.name || null,
+        message: error?.message || null,
+        stack: error?.stack || null,
+      })
       return null
     }
   }

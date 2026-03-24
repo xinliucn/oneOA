@@ -12,6 +12,14 @@
         >
           开启推送
         </el-button>
+        <el-button
+          v-if="isSupported && status === 'subscribed'"
+          text
+          type="danger"
+          @click="handleUnsubscribe"
+        >
+          关闭推送
+        </el-button>
         <el-button text type="primary" @click="handleRefresh">刷新</el-button>
       </div>
     </div>
@@ -81,7 +89,7 @@ const {
   openNotification,
 } = useNotification()
 
-const { status, isSupported, subscribe, errorMessage, init } = usePushSubscription()
+const { status, isSupported, subscribe, unsubscribe, errorMessage, init } = usePushSubscription()
 
 const lastSyncText = computed(() => {
   if (!lastSyncedAt.value) {
@@ -106,11 +114,18 @@ const handleSubscribe = async () => {
   await subscribe()
 }
 
+const handleUnsubscribe = async () => {
+  await unsubscribe()
+}
+
 onMounted(async () => {
   await Promise.all([
     bootstrap(),
     init(),
   ])
+  ,
+  console.log('6+++++',status, isSupported);
+  
 })
 </script>
 

@@ -1,7 +1,6 @@
 <template>
   <el-popover
     v-model:visible="visible"
-    trigger="click"
     :placement="props.placement"
     :width="props.popoverWidth"
     :popper-class="popperClassName"
@@ -50,7 +49,8 @@ const badgeValue = computed(() => {
 })
 
 const handleOpen = async () => {
-  if (!visible.value) {
+  visible.value = !visible.value
+  if (visible.value) {
     await refreshFromServer({ silent: true })
   }
 }

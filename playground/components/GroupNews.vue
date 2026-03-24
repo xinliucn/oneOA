@@ -31,37 +31,37 @@ const newsList = ref([
     id: 1,
     title: 'DCH Foods Hosts Trade Event to Promote New Branding',
     date: '24 October, 2024',
-    image: 'https://via.placeholder.com/300x200/FF6B6B/FFFFFF?text=News+1'
+    image: 'https://picsum.photos/seed/news1/300/200'
   },
   {
     id: 2,
     title: 'DCH Foods Hosts Trade Event to Promote New Branding and Platform',
     date: '24 October, 2024',
-    image: 'https://via.placeholder.com/300x200/4ECDC4/FFFFFF?text=News+2'
+    image: 'https://picsum.photos/seed/news2/300/200'
   },
   {
     id: 3,
     title: 'DCH Logistics promotes regional capabilities with a refreshed look',
     date: '6 March, 2024',
-    image: 'https://via.placeholder.com/300x200/95E1D3/FFFFFF?text=News+3'
+    image: 'https://picsum.photos/seed/news3/300/200'
   },
   {
     id: 4,
     title: 'China CITIC Bank International and Dah Chong Hong to sign str...',
     date: '1 November, 2022',
-    image: 'https://via.placeholder.com/300x200/F38181/FFFFFF?text=News+4'
+    image: 'https://picsum.photos/seed/news4/300/200'
   },
   {
     id: 5,
     title: 'DCH launches new app for better productivity while on the go',
     date: '6 October, 2022',
-    image: 'https://via.placeholder.com/300x200/AA96DA/FFFFFF?text=News+5'
+    image: 'https://picsum.photos/seed/news5/300/200'
   },
   {
     id: 6,
     title: 'New for 2022',
     date: '5 January, 2022',
-    image: 'https://via.placeholder.com/300x200/FCBAD3/FFFFFF?text=News+6'
+    image: 'https://picsum.photos/seed/news6/300/200'
   }
 ])
 
