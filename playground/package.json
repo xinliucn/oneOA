@@ -9,6 +9,7 @@
   },
   "dependencies": {
     "superApp": "workspace:*",
-    "nuxt": "^4.2.2"
+    "nuxt": "^4.2.2",
+    "firebase": "^9.23.0"
   }
 }

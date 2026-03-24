@@ -1,26 +1,29 @@
-import type { NotificationSubscribeResponse } from '~/types/notification'
+import type {
+  NotificationItem,
+  NotificationSubscribeResponse,
+} from '~/types/notification'
 
-// 推送订阅状态：用于驱动按钮展示和错误提示
 type PushStatus = 'idle' | 'unsupported' | 'subscribing' | 'subscribed' | 'denied' | 'error'
 
-// 临时写死的联调数据。
-// 等 Windmill 订阅接口字段最终敲定后，再切回浏览器真实 subscription 动态上报。
-const TEMP_SUBSCRIBE_PAYLOAD = {
-  kind: 'webpush',
-  platform: 'apple',
-  subscription: {
-    endpoint: 'https://web.push.apple.com/test-endpoint',
-    keys: {
-      p256dh: 'test-p256dh-key',
-      auth: 'test-auth-key',
-    },
-  },
-  userAgent: 'Mozilla/5.0 Safari',
-  timeZone: 'Asia/Hong_Kong',
-  user_id: 'test-user-001',
-} as const
+type FCMSubscriptionState = {
+  kind: 'fcm'
+  platform: 'fcm'
+  token: string
+}
 
-// 将服务端返回的 VAPID 公钥从 Base64URL 转成 PushManager 需要的 Uint8Array
+type LocalSubscriptionState = PushSubscriptionJSON | FCMSubscriptionState | null
+type SyncableSubscription = Exclude<LocalSubscriptionState, null>
+
+type FirebaseMessagingClient = {
+  messaging: any
+  getToken: (messaging: any, options: Record<string, any>) => Promise<string>
+  deleteToken: (messaging: any) => Promise<boolean>
+  onMessage: (messaging: any, nextOrObserver: (payload: any) => void) => unknown
+}
+
+let firebaseMessagingClientPromise: Promise<FirebaseMessagingClient> | null = null
+let firebaseForegroundListenerBound = false
+
 const urlBase64ToUint8Array = (base64String: string) => {
   const padding = '='.repeat((4 - (base64String.length % 4)) % 4)
   const normalized = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/')
@@ -34,28 +37,66 @@ const urlBase64ToUint8Array = (base64String: string) => {
   return outputArray
 }
 
+const normalizeIncomingNotification = (payload: any): NotificationItem => {
+  const data = payload?.data || {}
+  const notification = payload?.notification || {}
+  const now = new Date().toISOString()
+
+  return {
+    id: String(data.id || data.notification_id || Date.now()),
+    title: String(notification.title || data.title || '消息通知'),
+    content: String(notification.body || data.content || data.body || ''),
+    summary: String(data.summary || ''),
+    link: String(data.link || data.url || '/desktop'),
+    category: String(data.category || data.type || ''),
+    createdAt: String(data.created_at || data.createdAt || now),
+    readAt: null,
+    payload: data,
+  }
+}
+
 export const usePushSubscription = () => {
-  // 全局共享推送订阅状态，避免多个组件重复初始化
   const status = useState<PushStatus>('push:status', () => 'idle')
   const errorMessage = useState<string | null>('push:error', () => null)
-  const subscription = useState<PushSubscriptionJSON | null>('push:subscription', () => null)
+  const subscription = useState<LocalSubscriptionState>('push:subscription', () => null)
 
-  const isSupported = computed(() => {
-    if (!import.meta.client) {
-      return false
-    }
-
-    // 只有同时支持 Service Worker、PushManager 和 Notification 的浏览器才可用
-    return 'serviceWorker' in navigator && 'PushManager' in window && 'Notification' in window
-  })
+  const runtimeConfig = useRuntimeConfig()
+  const { user } = useAuth()
 
   const isIOS = () => {
     if (!import.meta.client) {
       return false
     }
 
-    const userAgent = navigator.userAgent.toLowerCase()
-    return /iphone|ipad|ipod/.test(userAgent)
+    return /iPhone|iPad|iPod/i.test(navigator.userAgent)
+  }
+
+  const isSafari = () => {
+    if (!import.meta.client) {
+      return false
+    }
+
+    const userAgent = navigator.userAgent
+    const isSafariUA =
+      /Safari\//.test(userAgent) &&
+      !/Chrome\//.test(userAgent) &&
+      !/Chromium\//.test(userAgent) &&
+      !/Edg\//.test(userAgent)
+
+    return isSafariUA || (isIOS() && !/CriOS|FxiOS|EdgiOS/i.test(userAgent))
+  }
+
+  const isChromium = () => {
+    if (!import.meta.client) {
+      return false
+    }
+
+    const userAgent = navigator.userAgent
+    return /Chrome\//.test(userAgent) || /Chromium\//.test(userAgent) || /Edg\//.test(userAgent)
+  }
+
+  const shouldUseFCM = () => {
+    return isChromium() && !isSafari()
   }
 
   const isStandalone = () => {
@@ -63,27 +104,83 @@ export const usePushSubscription = () => {
       return false
     }
 
-    // iOS Web Push 需要以“添加到主屏幕”后的独立模式运行
-    return Boolean((window.navigator as any).standalone)
+    return (
+      Boolean((window.navigator as any).standalone) ||
+      window.matchMedia('(display-mode: standalone)').matches
+    )
+  }
+
+  const isSupported = computed(() => {
+    if (!import.meta.client) {
+      return false
+    }
+
+    if (!('Notification' in window) || !('serviceWorker' in navigator)) {
+      return false
+    }
+
+    return shouldUseFCM() || 'PushManager' in window
+  })
+
+  const getCurrentUserId = (): string | undefined => {
+    return user.value?.username || user.value?.email || undefined
+  }
+
+  const getSubscriptionIdentity = (value: LocalSubscriptionState): string | null => {
+    if (!value) {
+      return null
+    }
+
+    if ('token' in value) {
+      return value.token
+    }
+
+    return value.endpoint || null
+  }
+
+  const getConfiguredVapidPublicKey = (): string => {
+    return String(runtimeConfig.public.firebaseVapidKey || runtimeConfig.public.vapidPublicKey || '')
+  }
+
+  const buildSyncPayload = (value: SyncableSubscription) => {
+    const basePayload = {
+      userAgent: navigator.userAgent,
+      timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+      ...(getCurrentUserId() ? { user_id: getCurrentUserId() } : {}),
+    }
+
+    if ('token' in value) {
+      return {
+        kind: 'fcm' as const,
+        platform: 'fcm' as const,
+        token: value.token,
+        ...basePayload,
+      }
+    }
+
+    return {
+      kind: 'webpush' as const,
+      platform: isSafari() ? 'apple' as const : 'webpush' as const,
+      subscription: value,
+      ...basePayload,
+    }
   }
 
   const ensurePermission = async () => {
-
     if (!import.meta.client || !isSupported.value) {
       status.value = 'unsupported'
       return 'denied'
     }
 
-    // 已经授权时直接复用，避免重复弹权限框
     if (Notification.permission === 'granted') {
       return 'granted'
     }
 
-    // 首次订阅前向浏览器申请通知权限
     const result = await Notification.requestPermission()
     if (result === 'denied') {
       status.value = 'denied'
     }
+
     return result
   }
 
@@ -94,121 +191,211 @@ export const usePushSubscription = () => {
       await navigator.serviceWorker.register('/sw.js')
     }
 
-    // 始终等待 SW 进入 active 状态，pushManager.subscribe() 依赖此状态
-    const readyRegistration = await navigator.serviceWorker.ready
-    return readyRegistration
+    return navigator.serviceWorker.ready
   }
 
-  const syncSubscription = async (pushJSON: PushSubscriptionJSON) => {
-    // 当前先使用写死请求体联调，因此这里不依赖浏览器真实 subscription 内容。
-    // 保留入参是为了后续切回动态上报时，不需要改调用方。
-    void pushJSON
+  const fetchVapidPublicKey = async (): Promise<string> => {
+    const configured = getConfiguredVapidPublicKey()
+    if (configured) {
+      return configured
+    }
 
-    await $fetch<NotificationSubscribeResponse>('/api/notifications/subscribe', {
-      method: 'POST',
-      body: TEMP_SUBSCRIBE_PAYLOAD,
-    })
-  }
-
-  const unsyncSubscription = async () => {
-    await $fetch('/api/notifications/unsubscribe', {
-      method: 'POST',
-      body: {
-        kind: 'fcm',
-        platform: 'fcm',
-        token: TEMP_SUBSCRIBE_PAYLOAD.subscription.endpoint,
-        userAgent: navigator.userAgent,
-        timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
-        user_id: TEMP_SUBSCRIBE_PAYLOAD.user_id,
-      },
-    })
-  }
-
-  const fetchVapidPublicKey = async () => {
     const config = await $fetch<NotificationSubscribeResponse>('/api/notifications/subscribe', {
       method: 'GET',
     })
+
     if (!config.vapidPublicKey) {
       throw new Error('服务端未配置 VAPID 公钥')
     }
 
-    return config.vapidPublicKey
+    return String(config.vapidPublicKey)
   }
 
-  const createSubscription = async (registration: ServiceWorkerRegistration) => {
-
-    const vapidPublicKey = await fetchVapidPublicKey()
-    const applicationServerKey = urlBase64ToUint8Array(vapidPublicKey)
-    let createdSubscription: PushSubscription
-    try {
-      createdSubscription = await registration.pushManager.subscribe({
-        userVisibleOnly: true,
-        applicationServerKey,
-      })
-    } catch (error: any) {
-      console.error('[push] createSubscription:subscribe-failed', {
-        name: error?.name || null,
-        message: error?.message || null,
-        stack: error?.stack || null,
-      })
-      throw error
+  const getFirebaseMessagingClient = async () => {
+    if (firebaseMessagingClientPromise) {
+      return firebaseMessagingClientPromise
     }
-    return createdSubscription
+
+    firebaseMessagingClientPromise = (async () => {
+      const [{ getApp, getApps, initializeApp }, messagingModule] = await Promise.all([
+        import('firebase/app'),
+        import('firebase/messaging'),
+      ])
+
+      if (!(await messagingModule.isSupported())) {
+        throw new Error('当前浏览器不支持 FCM')
+      }
+
+      const firebaseConfig = {
+        apiKey: runtimeConfig.public.firebaseApiKey,
+        authDomain: runtimeConfig.public.firebaseAuthDomain,
+        projectId: runtimeConfig.public.firebaseProjectId,
+        storageBucket: runtimeConfig.public.firebaseStorageBucket,
+        messagingSenderId: runtimeConfig.public.firebaseMessagingSenderId,
+        appId: runtimeConfig.public.firebaseAppId,
+      } as any
+
+      const missingKeys = Object.entries(firebaseConfig)
+        .filter(([, value]) => !value)
+        .map(([key]) => key)
+
+      if (missingKeys.length > 0) {
+        throw new Error(`FCM 配置缺失: ${missingKeys.join(', ')}`)
+      }
+
+      const app = getApps().length > 0 ? getApp() : initializeApp(firebaseConfig)
+      const messaging = messagingModule.getMessaging(app)
+
+      return {
+        messaging,
+        getToken: messagingModule.getToken,
+        deleteToken: messagingModule.deleteToken,
+        onMessage: messagingModule.onMessage,
+      }
+    })().catch((error) => {
+      firebaseMessagingClientPromise = null
+      throw error
+    })
+
+    return firebaseMessagingClientPromise
+  }
+
+  const ensureForegroundFCMListener = async () => {
+    if (firebaseForegroundListenerBound) {
+      return
+    }
+
+    const client = await getFirebaseMessagingClient()
+    firebaseForegroundListenerBound = true
+
+    client.onMessage(client.messaging, (payload: any) => {
+      try {
+        const { ingestNotification } = useNotification()
+        void ingestNotification(normalizeIncomingNotification(payload))
+      } catch (error) {
+        console.error('Handle FCM foreground message failed:', error)
+      }
+    })
+  }
+
+  const syncSubscription = async (value: SyncableSubscription) => {
+    const body = buildSyncPayload(value)
+
+    if ('token' in value && !value.token) {
+      return
+    }
+
+    if (!('token' in value) && !value.endpoint) {
+      return
+    }
+
+    return await $fetch<NotificationSubscribeResponse>('/api/notifications/subscribe', {
+      method: 'POST',
+      body,
+    })
+  }
+
+  const unsyncSubscription = async (value: SyncableSubscription) => {
+    const body = buildSyncPayload(value)
+
+    if ('token' in value && !value.token) {
+      return
+    }
+
+    if (!('token' in value) && !value.endpoint) {
+      return
+    }
+
+    await $fetch('/api/notifications/unsubscribe', {
+      method: 'POST',
+      body,
+    })
+  }
+
+  const createWebPushSubscription = async (registration: ServiceWorkerRegistration) => {
+    const vapidPublicKey = await fetchVapidPublicKey()
+
+    return await registration.pushManager.subscribe({
+      userVisibleOnly: true,
+      applicationServerKey: urlBase64ToUint8Array(vapidPublicKey),
+    })
+  }
+
+  const getFCMToken = async (registration: ServiceWorkerRegistration) => {
+    const client = await getFirebaseMessagingClient()
+    const vapidKey = await fetchVapidPublicKey()
+    const token = await client.getToken(client.messaging, {
+      vapidKey,
+      serviceWorkerRegistration: registration,
+    })
+
+    if (!token) {
+      throw new Error('未获取到 FCM token')
+    }
+
+    await ensureForegroundFCMListener()
+    return token
   }
 
   const init = async () => {
     if (!import.meta.client || !isSupported.value) {
       status.value = 'unsupported'
-      console.warn('[push] init:unsupported')
       return
     }
 
     if (Notification.permission === 'denied') {
       status.value = 'denied'
-      console.warn('[push] init:permission-denied')
       return
     }
 
-
     try {
-      // 初始化时只读取浏览器里已有的 Push Subscription，用于恢复订阅状态
-      // 不主动创建新订阅，避免 pushManager.subscribe() 在非用户手势时挂起
       const registration = await ensureServiceWorkerRegistration()
-      const existing = await registration.pushManager.getSubscription()
-      const existingSubscription = existing?.toJSON() || null
+      let existingSubscription: LocalSubscriptionState = null
+
+      if (shouldUseFCM()) {
+        if (Notification.permission === 'granted') {
+          existingSubscription = {
+            kind: 'fcm',
+            platform: 'fcm',
+            token: await getFCMToken(registration),
+          }
+        }
+      } else {
+        const existing = await registration.pushManager.getSubscription()
+        existingSubscription = existing?.toJSON() || null
+      }
+
       const shouldSync =
-        Boolean(existingSubscription?.endpoint) &&
-        existingSubscription?.endpoint !== subscription.value?.endpoint
+        Boolean(getSubscriptionIdentity(existingSubscription)) &&
+        getSubscriptionIdentity(existingSubscription) !== getSubscriptionIdentity(subscription.value)
 
       subscription.value = existingSubscription
       status.value = existingSubscription ? 'subscribed' : 'idle'
-      // 登录后自动做“无感恢复”：
-      // 如果浏览器里已经有订阅，则静默同步一次到后端，但不会主动申请新权限
+      errorMessage.value = null
+
       if (existingSubscription && shouldSync) {
         await syncSubscription(existingSubscription)
       }
-    } catch (error) {
+    } catch (error: any) {
       status.value = 'error'
-      errorMessage.value = '读取推送订阅状态失败'
+      errorMessage.value = error?.message || '读取推送订阅状态失败'
+      console.error('Init push subscription failed:', error)
     }
   }
 
   const subscribe = async () => {
     if (!import.meta.client || !isSupported.value) {
       status.value = 'unsupported'
-      console.warn('[push] subscribe:unsupported')
       return null
     }
 
-    if (isIOS() && !isStandalone()) {
+    if (!shouldUseFCM() && isIOS() && !isStandalone()) {
       status.value = 'error'
       errorMessage.value = 'iOS 需要先将站点添加到主屏幕，才能开启推送通知。'
-      console.warn('[push] subscribe:ios-not-standalone')
       return null
     }
 
     try {
-      // 进入订阅流程时先清空上一次错误提示
       status.value = 'subscribing'
       errorMessage.value = null
 
@@ -219,29 +406,33 @@ export const usePushSubscription = () => {
       }
 
       const registration = await ensureServiceWorkerRegistration()
-      let pushSubscription = await registration.pushManager.getSubscription()
+      let nextSubscription: SyncableSubscription
 
-      if (!pushSubscription) {
-        // 浏览器本地尚未订阅时，使用 VAPID 公钥创建新的 Push Subscription
-        pushSubscription = await createSubscription(registration)
+      if (shouldUseFCM()) {
+        nextSubscription = {
+          kind: 'fcm',
+          platform: 'fcm',
+          token: await getFCMToken(registration),
+        }
+      } else {
+        let pushSubscription = await registration.pushManager.getSubscription()
+
+        if (!pushSubscription) {
+          pushSubscription = await createWebPushSubscription(registration)
+        }
+
+        nextSubscription = pushSubscription.toJSON()
       }
 
-      const pushJSON = pushSubscription.toJSON()
-      // 将浏览器生成的订阅信息上报后端，供服务端后续发送 Web Push
-      await syncSubscription(pushJSON)
-
-      subscription.value = pushJSON
+      await syncSubscription(nextSubscription)
+      subscription.value = nextSubscription
       status.value = 'subscribed'
 
-      return pushSubscription
+      return nextSubscription
     } catch (error: any) {
       status.value = 'error'
       errorMessage.value = error?.message || '推送订阅失败'
-      console.error('[push] subscribe:failed', {
-        name: error?.name || null,
-        message: error?.message || null,
-        stack: error?.stack || null,
-      })
+      console.error('Subscribe push failed:', error)
       return null
     }
   }
@@ -254,8 +445,35 @@ export const usePushSubscription = () => {
     }
 
     try {
-      // 登出或会话失效时，主动取消浏览器本地的 Push Subscription
       const registration = await ensureServiceWorkerRegistration()
+      const currentSubscription = subscription.value
+
+      if (shouldUseFCM()) {
+        let success = false
+
+        try {
+          const client = await getFirebaseMessagingClient()
+          success = await client.deleteToken(client.messaging)
+        } catch (error) {
+          console.error('Delete FCM token failed:', error)
+        }
+
+        const existingPushSubscription = await registration.pushManager.getSubscription()
+        if (existingPushSubscription) {
+          success = (await existingPushSubscription.unsubscribe()) || success
+        }
+
+        if (currentSubscription && 'token' in currentSubscription) {
+          await unsyncSubscription(currentSubscription)
+        }
+
+        subscription.value = null
+        status.value = 'idle'
+        errorMessage.value = null
+
+        return success || !currentSubscription
+      }
+
       const existing = await registration.pushManager.getSubscription()
 
       if (!existing) {
@@ -264,9 +482,14 @@ export const usePushSubscription = () => {
         errorMessage.value = null
         return true
       }
-           
+
+      const payloadToUnsync = currentSubscription && !('token' in currentSubscription)
+        ? currentSubscription
+        : existing.toJSON()
+
       const success = await existing.unsubscribe()
-      await unsyncSubscription()
+      await unsyncSubscription(payloadToUnsync)
+
       subscription.value = null
       status.value = 'idle'
       errorMessage.value = null
