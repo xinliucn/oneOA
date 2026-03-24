@@ -123,9 +123,7 @@ onMounted(async () => {
     bootstrap(),
     init(),
   ])
-  ,
-  console.log('6+++++',status, isSupported);
-  
+
 })
 </script>
 

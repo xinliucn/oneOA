@@ -32,8 +32,6 @@ const loginInit = async () => {
   try {
     // 检查是否已登录（通过调用 API 验证 cookie）
     const isLoggedIn = await checkAuth()
-    console.log('Login status:', isLoggedIn);
-    
     if (isLoggedIn) {
       // 已登录，跳转到首页
       loadingText.value = '登录成功！'

@@ -96,8 +96,6 @@ export const useBanner = () => {
 
       // 调用 CMS GraphQL 接口
       const response = await getCmsdata<CmsBannerResponse>({ query })
-      console.log('CMS Banners response:', response);
-      
       if (response?.listSuperAppBanners?.data) {
         banners.value = response.listSuperAppBanners.data
         return banners.value

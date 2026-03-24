@@ -39,44 +39,44 @@ export default defineEventHandler(async (event) => {
 
     const path = `${getNotificationApiPrefix()}/list?${params.toString()}`
     // 这里原本应回源 Windmill，当前先保留本地联调用的静态返回
-    // const response = await proxyWindmill<any>(event, path, {
-    //   method: 'GET',
-    //   skipCookies: true,
-    // })
-     const response = {
-      "items": [
-        {
-          "id": "169",
-          "title": "通知标题",
-          "content": "通知正文",
-          "summary": "",
-          "link": "",
-          "source": "",
-          "category": "order",
-          "createdAt": "2026-03-16T17:56:20.065Z",
-          "readAt": null,
-          "payload": null
-        },
-        {
-          "id": "167",
-          "title": "通知标题",
-          "content": "通知正文",
-          "summary": "",
-          "link": "",
-          "source": "",
-          "category": "order",
-          "createdAt": "2026-03-16T17:56:18.994Z",
-          "readAt": null,
-          "payload": null
-        }
-      ],
-      "total": 2,
-      "page": 1,
-      "pageSize": 20,
-      "unreadCount": 2,
-      "hasMore": false,
-      "syncedAt": 1773716103078
-    }
+    const response = await proxyWindmill<any>(event, path, {
+      method: 'GET',
+      skipCookies: true,
+    })
+    //  const response = {
+    //   "items": [
+    //     {
+    //       "id": "169",
+    //       "title": "通知标题",
+    //       "content": "通知正文",
+    //       "summary": "",
+    //       "link": "",
+    //       "source": "",
+    //       "category": "order",
+    //       "createdAt": "2026-03-16T17:56:20.065Z",
+    //       "readAt": null,
+    //       "payload": null
+    //     },
+    //     {
+    //       "id": "167",
+    //       "title": "通知标题",
+    //       "content": "通知正文",
+    //       "summary": "",
+    //       "link": "",
+    //       "source": "",
+    //       "category": "order",
+    //       "createdAt": "2026-03-16T17:56:18.994Z",
+    //       "readAt": null,
+    //       "payload": null
+    //     }
+    //   ],
+    //   "total": 2,
+    //   "page": 1,
+    //   "pageSize": 20,
+    //   "unreadCount": 2,
+    //   "hasMore": false,
+    //   "syncedAt": 1773716103078
+    // }
 
     // 将不同来源的数据统一规整成前端使用的通知列表结构
     return normalizeNotificationList(response, page, pageSize)

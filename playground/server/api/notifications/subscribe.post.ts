@@ -8,31 +8,22 @@ export default defineEventHandler(async (event) => {
   try {
     // 读取前端上报的订阅信息，兼容扁平结构和嵌套 subscription 结构
     const body = await readBody<Record<string, any>>(event)
-    // const endpoint = String(body?.subscription?.endpoint || body?.endpoint || '')
-
-    // if (isNotificationMockEnabled()) {
-    //   // 本地 mock 模式下，不调用真实后端，直接写入内存模拟数据
-    //   const mockResult = registerMockSubscription(body)
-    //   return {
-    //     success: true,
-    //     vapidPublicKey,
-    //     data: mockResult,
-    //     message: '模拟订阅已注册',
-    //   }
-    // }
-
-    // if (!endpoint) {
-    //   throw createError({
-    //     statusCode: 400,
-    //     message: '订阅 endpoint 不能为空',
-    //   })
-    // }
-
-    // 非 mock 模式下，将订阅请求代理到 Windmill 通知接口
     const response = await proxyWindmill<any>(event, `${getNotificationApiPrefix()}/subscribe`, {
       method: 'POST',
       body,
     })
+    // const response = {
+    //   "success": true,
+    //   "vapidPublicKey": "",
+    //   "data": {
+    //     "email": null,
+    //     "channel": "apns",
+    //     "success": true,
+    //     "user_id": "test-user-001",
+    //     "platform": "web"
+    //   },
+    //   "message": "订阅已注册"
+    // }
 
     return {
       success: true,

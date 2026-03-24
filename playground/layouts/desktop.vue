@@ -96,6 +96,7 @@
 import { createUserWatermark, removeWatermark } from '~/utils/watermark'
 
 const { logout, user } = useAuth()
+const { unsubscribe } = usePushSubscription()
 const route = useRoute()
 
 const menuRoutes: Record<string, string> = {
@@ -125,11 +126,9 @@ const handleCommand = async (command: string) => {
         console.log('打开个人信息页面')
         // TODO: 导航到个人信息页面
     } else if (command === 'logout') {
-        console.log('退出登录')
         try {
+            await unsubscribe()
             await logout()
-            // 退出成功后会自动跳转到登出 URL 或清除状态
-            // 手动跳转到登录页面
             await navigateTo('/')
         } catch (error) {
             console.error('退出登录失败:', error)
