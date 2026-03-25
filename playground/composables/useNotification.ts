@@ -3,6 +3,7 @@ import type {
   NotificationItem,
   NotificationListResponse,
 } from '~/types/notification'
+import { useCurrentUserId } from '~/composables/useCurrentUserId'
 
 // 默认每页加载条数
 const DEFAULT_PAGE_SIZE = 20
@@ -58,6 +59,7 @@ export const useNotification = () => {
   const syncing = useState<boolean>('notifications:syncing', () => false)
 
   const db = useNotificationDB()
+  const { getCurrentUserId } = useCurrentUserId()
 
   // ─── 派生状态 ──────────────────────────────────────────────────────────
   // 未读通知数量（用于铃铛角标）
@@ -111,13 +113,12 @@ export const useNotification = () => {
     }
 
     try {
-      const { user } = useAuth()
       const response = await $fetch<NotificationListResponse>('/api/notifications', {
         method: 'GET',
         query: {
           page: targetPage,
           pageSize: pageSize.value,
-          user_id: 'anonymous',
+          ...(getCurrentUserId() ? { user_id: getCurrentUserId() } : {}),
           is_read: 0,
           category: 'order',
         },
@@ -198,7 +199,10 @@ export const useNotification = () => {
       try {
         await $fetch(`/api/notifications/${encodeURIComponent(id)}`, {
           method: 'POST',
-          body: {"user_id": "anonymous", "id": id},
+          body: {
+            ...(getCurrentUserId() ? { user_id: getCurrentUserId() } : {}),
+            id,
+          },
         })
       } catch (error) {
         console.error('Mark notification as read failed:', error)

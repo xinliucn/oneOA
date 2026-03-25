@@ -14,7 +14,7 @@ export default defineEventHandler(async (event) => {
 
   try {
     // 请求体目前主要兼容 readAt 等扩展字段
-    const body = await readBody<Record<string, any>>(event).catch(() => ({}))
+    const body: Record<string, any> = await readBody<Record<string, any>>(event).catch(() => ({} as Record<string, any>))
 
     if (isNotificationMockEnabled()) {
       // mock 模式下直接更新本地模拟数据
@@ -22,15 +22,16 @@ export default defineEventHandler(async (event) => {
     }
 
     const path = `${getNotificationApiPrefix()}/mark-read`
+    const userId = typeof body.user_id === 'string' && body.user_id.trim() ? body.user_id.trim() : 'anonymous'
 
     // 非 mock 模式下，将已读请求代理到 Windmill
     const response = await proxyWindmill<any>(event, path, {
       method: 'POST',
       body: {
-        user_id: 'anonymous',
+        user_id: userId,
         id: Number(id),
       },
-      skipCookies: true,
+      skipCookies: false,
     })
 
     return {

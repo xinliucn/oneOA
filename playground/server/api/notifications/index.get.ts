@@ -41,7 +41,7 @@ export default defineEventHandler(async (event) => {
     // 这里原本应回源 Windmill，当前先保留本地联调用的静态返回
     const response = await proxyWindmill<any>(event, path, {
       method: 'GET',
-      skipCookies: true,
+      skipCookies: false,
     })
     //  const response = {
     //   "items": [

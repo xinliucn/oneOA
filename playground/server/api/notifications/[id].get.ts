@@ -29,7 +29,7 @@ export default defineEventHandler(async (event) => {
 
     const path = `${getNotificationApiPrefix()}/detail?${params.toString()}`
     // 转发到 Windmill 详情接口，并把返回结果规整成统一结构
-    const response = await proxyWindmill<any>(event, path, { method: 'GET', skipCookies: true })
+    const response = await proxyWindmill<any>(event, path, { method: 'GET', skipCookies: false })
     const candidate = response?.data?.item || response?.data || response?.item || response
 
     return {

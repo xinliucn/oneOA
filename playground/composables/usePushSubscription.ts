@@ -2,6 +2,7 @@ import type {
   NotificationItem,
   NotificationSubscribeResponse,
 } from '~/types/notification'
+import { useCurrentUserId } from '~/composables/useCurrentUserId'
 
 type PushStatus = 'idle' | 'unsupported' | 'subscribing' | 'subscribed' | 'denied' | 'error'
 
@@ -61,7 +62,7 @@ export const usePushSubscription = () => {
   const subscription = useState<LocalSubscriptionState>('push:subscription', () => null)
 
   const runtimeConfig = useRuntimeConfig()
-  const { user } = useAuth()
+  const { getCurrentUserId } = useCurrentUserId()
 
   const isIOS = () => {
     if (!import.meta.client) {
@@ -121,10 +122,6 @@ export const usePushSubscription = () => {
 
     return shouldUseFCM() || 'PushManager' in window
   })
-
-  const getCurrentUserId = (): string | undefined => {
-    return user.value?.username || user.value?.email || undefined
-  }
 
   const getSubscriptionIdentity = (value: LocalSubscriptionState): string | null => {
     if (!value) {

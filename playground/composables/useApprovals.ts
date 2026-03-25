@@ -1,5 +1,6 @@
 import type { ApprovalAction, ApprovalItem } from '~/types/approval'
 import type { NotificationDetailResponse, NotificationItem, NotificationListResponse } from '~/types/notification'
+import { useCurrentUserId } from '~/composables/useCurrentUserId'
 
 const DEFAULT_PAGE_SIZE = 20
 
@@ -97,6 +98,7 @@ export const useApprovals = () => {
   const loading = useState<boolean>('approvals:loading', () => false)
   const syncing = useState<boolean>('approvals:syncing', () => false)
   const bootstrapped = useState<boolean>('approvals:bootstrapped', () => false)
+  const { getCurrentUserId } = useCurrentUserId()
 
   const getApprovalById = (id: string) => {
     return approvals.value.find((item) => item.id === id || item.code === id) || null
@@ -116,7 +118,7 @@ export const useApprovals = () => {
         query: {
           page: 1,
           pageSize: DEFAULT_PAGE_SIZE,
-          user_id: 'anonymous',
+          ...(getCurrentUserId() ? { user_id: getCurrentUserId() } : {}),
           is_read: 0,
           category: 'order',
         },
@@ -152,7 +154,7 @@ export const useApprovals = () => {
       const detail = await $fetch<NotificationDetailResponse>(`/api/notifications/${encodeURIComponent(id)}`, {
         method: 'GET',
         query: {
-          user_id: 'anonymous',
+          ...(getCurrentUserId() ? { user_id: getCurrentUserId() } : {}),
         },
       })
 
@@ -180,7 +182,7 @@ export const useApprovals = () => {
         await $fetch(`/api/notifications/${encodeURIComponent(id)}`, {
           method: 'POST',
           body: {
-            user_id: 'anonymous',
+            ...(getCurrentUserId() ? { user_id: getCurrentUserId() } : {}),
             id,
           },
         })
