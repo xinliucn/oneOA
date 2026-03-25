@@ -14,7 +14,7 @@
                 <NotificationBell />
                 <el-dropdown @command="handleCommand">
                     <span class="avatar-dropdown">
-                        <el-avatar :size="40" src="/path/to/avatar.jpg" />
+                        <el-avatar :size="40" src="/favicon.png" />
                     </span>
                     <template #dropdown>
                         <el-dropdown-menu>

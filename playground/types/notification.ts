@@ -28,6 +28,8 @@ export interface NotificationDetailResponse {
 export interface NotificationSubscribeResponse {
   success: boolean
   vapidPublicKey?: string
+  firebaseVapidKey?: string
+  webpushVapidPublicKey?: string
   message?: string
   data?: Record<string, any>
 }

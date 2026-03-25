@@ -138,8 +138,12 @@ export const usePushSubscription = () => {
     return value.endpoint || null
   }
 
-  const getConfiguredVapidPublicKey = (): string => {
-    return String(runtimeConfig.public.firebaseVapidKey || runtimeConfig.public.vapidPublicKey || '')
+  const getConfiguredVapidPublicKey = (kind: 'fcm' | 'webpush'): string => {
+    if (kind === 'fcm') {
+      return String(runtimeConfig.public.firebaseVapidKey || '')
+    }
+
+    return String(runtimeConfig.public.vapidPublicKey || '')
   }
 
   const buildSyncPayload = (value: SyncableSubscription) => {
@@ -194,8 +198,8 @@ export const usePushSubscription = () => {
     return navigator.serviceWorker.ready
   }
 
-  const fetchVapidPublicKey = async (): Promise<string> => {
-    const configured = getConfiguredVapidPublicKey()
+  const fetchVapidPublicKey = async (kind: 'fcm' | 'webpush'): Promise<string> => {
+    const configured = getConfiguredVapidPublicKey(kind)
     if (configured) {
       return configured
     }
@@ -204,11 +208,15 @@ export const usePushSubscription = () => {
       method: 'GET',
     })
 
-    if (!config.vapidPublicKey) {
-      throw new Error('服务端未配置 VAPID 公钥')
+    const remoteKey = kind === 'fcm'
+      ? config.firebaseVapidKey
+      : config.webpushVapidPublicKey
+
+    if (!remoteKey) {
+      throw new Error(kind === 'fcm' ? '服务端未配置 FCM VAPID 公钥' : '服务端未配置 Web Push VAPID 公钥')
     }
 
-    return String(config.vapidPublicKey)
+    return String(remoteKey)
   }
 
   const getFirebaseMessagingClient = async () => {
@@ -288,7 +296,7 @@ export const usePushSubscription = () => {
     if (!('token' in value) && !value.endpoint) {
       return
     }
-
+    
     return await $fetch<NotificationSubscribeResponse>('/api/notifications/subscribe', {
       method: 'POST',
       body,
@@ -313,7 +321,7 @@ export const usePushSubscription = () => {
   }
 
   const createWebPushSubscription = async (registration: ServiceWorkerRegistration) => {
-    const vapidPublicKey = await fetchVapidPublicKey()
+    const vapidPublicKey = await fetchVapidPublicKey('webpush')
 
     return await registration.pushManager.subscribe({
       userVisibleOnly: true,
@@ -323,7 +331,7 @@ export const usePushSubscription = () => {
 
   const getFCMToken = async (registration: ServiceWorkerRegistration) => {
     const client = await getFirebaseMessagingClient()
-    const vapidKey = await fetchVapidPublicKey()
+    const vapidKey = await fetchVapidPublicKey('fcm')
     const token = await client.getToken(client.messaging, {
       vapidKey,
       serviceWorkerRegistration: registration,

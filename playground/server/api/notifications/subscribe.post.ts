@@ -1,10 +1,6 @@
 import { getNotificationApiPrefix, proxyWindmill } from '../../utils/windmillProxy'
 
 export default defineEventHandler(async (event) => {
-  const config = useRuntimeConfig()
-  // 返回给前端的 VAPID 公钥，用于浏览器创建 Push Subscription
-  const vapidPublicKey = config.public.vapidPublicKey || ''
-
   try {
     // 读取前端上报的订阅信息，兼容扁平结构和嵌套 subscription 结构
     const body = await readBody<Record<string, any>>(event)
@@ -27,7 +23,7 @@ export default defineEventHandler(async (event) => {
 
     return {
       success: true,
-      vapidPublicKey,
+      // vapidPublicKey,
       data: response,
       message: '订阅已注册',
     }
