@@ -1,6 +1,5 @@
 import { normalizeNotificationList } from '../../utils/notification'
 import { getNotificationApiPrefix, proxyWindmill } from '../../utils/windmillProxy'
-import { isNotificationMockEnabled, listMockNotifications } from '../../utils/notificationMock'
 
 export default defineEventHandler(async (event) => {
   const query = getQuery(event)
@@ -9,6 +8,46 @@ export default defineEventHandler(async (event) => {
   const rawPageSize = Number.parseInt(String(query.pageSize || '20'), 10)
   const page = Number.isFinite(rawPage) && rawPage > 0 ? rawPage : 1
   const pageSize = Number.isFinite(rawPageSize) && rawPageSize > 0 ? Math.min(rawPageSize, 100) : 20
+  const config = useRuntimeConfig()
+  const raw = config.mockEnabled
+  if (raw) {
+    const response = {
+      "items": [
+        {
+          "id": "169",
+          "title": "通知标题",
+          "content": "通知正文",
+          "summary": "",
+          "link": "",
+          "source": "",
+          "category": "order",
+          "createdAt": "2026-03-16T17:56:20.065Z",
+          "readAt": null,
+          "payload": null
+        },
+        {
+          "id": "167",
+          "title": "通知标题",
+          "content": "通知正文",
+          "summary": "",
+          "link": "",
+          "source": "",
+          "category": "order",
+          "createdAt": "2026-03-16T17:56:18.994Z",
+          "readAt": null,
+          "payload": null
+        }
+      ],
+      "total": 2,
+      "page": 1,
+      "pageSize": 20,
+      "unreadCount": 2,
+      "hasMore": false,
+      "syncedAt": 1773716103078
+    }
+    return normalizeNotificationList(response, page, pageSize)
+  }
+
 
   try {
     // 透传可选筛选条件，兼容前端列表查询
@@ -16,15 +55,6 @@ export default defineEventHandler(async (event) => {
     const userId = typeof query.user_id === 'string' ? query.user_id : ''
     const isRead = typeof query.is_read === 'string' ? query.is_read : ''
     const category = typeof query.category === 'string' ? query.category : ''
-
-    if (isNotificationMockEnabled()) {
-      // mock 模式直接返回本地模拟通知，便于前端联调
-      return listMockNotifications({
-        page,
-        pageSize,
-        keyword,
-      })
-    }
 
     // 将前端参数转换成 Windmill 侧约定的查询参数格式
     const params = new URLSearchParams({
@@ -43,47 +73,13 @@ export default defineEventHandler(async (event) => {
       method: 'GET',
       skipCookies: false,
     })
-    //  const response = {
-    //   "items": [
-    //     {
-    //       "id": "169",
-    //       "title": "通知标题",
-    //       "content": "通知正文",
-    //       "summary": "",
-    //       "link": "",
-    //       "source": "",
-    //       "category": "order",
-    //       "createdAt": "2026-03-16T17:56:20.065Z",
-    //       "readAt": null,
-    //       "payload": null
-    //     },
-    //     {
-    //       "id": "167",
-    //       "title": "通知标题",
-    //       "content": "通知正文",
-    //       "summary": "",
-    //       "link": "",
-    //       "source": "",
-    //       "category": "order",
-    //       "createdAt": "2026-03-16T17:56:18.994Z",
-    //       "readAt": null,
-    //       "payload": null
-    //     }
-    //   ],
-    //   "total": 2,
-    //   "page": 1,
-    //   "pageSize": 20,
-    //   "unreadCount": 2,
-    //   "hasMore": false,
-    //   "syncedAt": 1773716103078
-    // }
+
 
     // 将不同来源的数据统一规整成前端使用的通知列表结构
     return normalizeNotificationList(response, page, pageSize)
   } catch (error: any) {
     console.error('Get notifications API error:', error)
 
-    // 统一转换成前端可消费的 HTTP 错误
     throw createError({
       statusCode: error.statusCode || 500,
       message: error.message || '获取通知列表失败',

@@ -1,6 +1,5 @@
 import { normalizeNotification } from '../../utils/notification'
 import { getNotificationApiPrefix, proxyWindmill } from '../../utils/windmillProxy'
-import { getMockNotificationDetail, isNotificationMockEnabled } from '../../utils/notificationMock'
 
 export default defineEventHandler(async (event) => {
   // 从动态路由中提取通知 ID
@@ -14,10 +13,6 @@ export default defineEventHandler(async (event) => {
   }
 
   try {
-    if (isNotificationMockEnabled()) {
-      // mock 模式直接读取本地模拟详情
-      return getMockNotificationDetail(id)
-    }
 
     const query = getQuery(event)
     // 当前没有完整登录态串联时，先保留 user_id 的兜底逻辑

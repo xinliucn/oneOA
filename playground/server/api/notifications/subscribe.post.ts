@@ -1,6 +1,27 @@
 import { getNotificationApiPrefix, proxyWindmill } from '../../utils/windmillProxy'
 
 export default defineEventHandler(async (event) => {
+  const config = useRuntimeConfig()
+  const raw = config.mockEnabled
+  const response = {
+    "success": true,
+    "vapidPublicKey": "",
+    "data": {
+      "email": null,
+      "channel": "apns",
+      "success": true,
+      "user_id": "test-user-001",
+      "platform": "web"
+    },
+    "message": "订阅已注册"
+  }
+  if (raw) {
+    return {
+      success: true,
+      data: response,
+      message: '订阅已注册',
+    }
+  }
   try {
     // 读取前端上报的订阅信息，兼容扁平结构和嵌套 subscription 结构
     const body = await readBody<Record<string, any>>(event)
@@ -8,22 +29,10 @@ export default defineEventHandler(async (event) => {
       method: 'POST',
       body,
     })
-    // const response = {
-    //   "success": true,
-    //   "vapidPublicKey": "",
-    //   "data": {
-    //     "email": null,
-    //     "channel": "apns",
-    //     "success": true,
-    //     "user_id": "test-user-001",
-    //     "platform": "web"
-    //   },
-    //   "message": "订阅已注册"
-    // }
+
 
     return {
       success: true,
-      // vapidPublicKey,
       data: response,
       message: '订阅已注册',
     }

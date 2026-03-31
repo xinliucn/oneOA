@@ -8,24 +8,17 @@
     </div>
 
     <div class="mobile-applications__tabs">
-      <button
-        :class="['tab-btn', { active: activeTab === 'application' }]"
-        @click="activeTab = 'application'"
-      >By Application</button>
-      <button
-        :class="['tab-btn', { active: activeTab === 'business' }]"
-        @click="activeTab = 'business'"
-      >By Business</button>
+      <div class="applications__tabs__box">
+        <button :class="['tab-btn', { active: activeTab === 'application' }]" @click="activeTab = 'application'">By
+          Application</button>
+        <button :class="['tab-btn', { active: activeTab === 'business' }]" @click="activeTab = 'business'">By
+          Business</button>
+      </div>
     </div>
 
     <!-- By Application -->
     <div v-if="activeTab === 'application'" class="app-grid">
-      <div
-        v-for="app in applications"
-        :key="app.id"
-        class="app-card"
-        @click="handleAppClick(app)"
-      >
+      <div v-for="app in applications" :key="app.id" class="app-card" @click="handleAppClick(app)">
         <div class="app-card__logo">
           <img v-if="app.image" :src="app.image" :alt="app.name" class="app-card__img" />
           <IconCustom v-else :name="app.icon" :size="36" />
@@ -36,12 +29,7 @@
 
     <!-- By Business -->
     <div v-else class="business-grid">
-      <div
-        v-for="biz in businesses"
-        :key="biz.id"
-        class="biz-card"
-        @click="handleBizClick(biz)"
-      >
+      <div v-for="biz in businesses" :key="biz.id" class="biz-card" @click="handleBizClick(biz)">
         <div class="biz-card__icon" :style="{ color: biz.color }">
           <IconCustom :name="biz.icon" :size="32" />
         </div>
@@ -53,30 +41,40 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { computed, ref } from 'vue'
+import { applicationDepartments } from '~/composables/useApplicationCatalog'
+import eLeaveImg from '~/assets/images/applications/eLeave.png'
+import yonYouImg from '~/assets/images/applications/yonyou.png'
+import eAppraisalImg from '~/assets/images/applications/eAppraisal.png'
+import itServiceDeskImg from '~/assets/images/applications/ITServiceDesk.png'
+import italcant from '~/assets/images/applications/italcant.png'
 
 const activeTab = ref('application')
 
 const applications = ref([
-  { id: 1, name: 'eLeave', icon: 'calendar', image: null },
-  { id: 2, name: 'YonYou', icon: 'briefcase', image: null },
-  { id: 3, name: 'eLearning', icon: 'book', image: null },
-  { id: 4, name: 'eAppraisal', icon: 'laptop', image: null },
-  { id: 5, name: 'IT Service Desk', icon: 'settings', image: null },
+  { id: 1, name: 'eLeave', icon: 'calendar', image: eLeaveImg },
+  { id: 2, name: 'YonYou', icon: 'briefcase', image: yonYouImg },
+  { id: 3, name: 'eLearning', icon: 'book', image: italcant },
+  { id: 4, name: 'eAppraisal', icon: 'laptop', image: eAppraisalImg },
+  { id: 5, name: 'IT Service Desk', icon: 'settings', image: itServiceDeskImg },
 ])
 
-const businesses = ref([
-  { id: 1, name: 'Digital & Technology', icon: 'monitor', color: '#1976D2', description: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit, s...' },
-  { id: 2, name: 'Finance', icon: 'chart', color: '#00897B', description: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit, s...' },
-  { id: 3, name: 'Legal & Compliance', icon: 'users', color: '#A60A3A', description: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit, s...' },
-])
+const businesses = computed(() =>
+  applicationDepartments.map((department) => ({
+    id: department.slug,
+    name: department.name,
+    icon: department.icon,
+    color: department.color,
+    description: department.description,
+  })),
+)
 
 const handleAppClick = (app) => {
   console.log('App clicked:', app.name)
 }
 
 const handleBizClick = (biz) => {
-  console.log('Business clicked:', biz.name)
+  return navigateTo(`/mobile/applications/${encodeURIComponent(biz.id)}`)
 }
 </script>
 
@@ -114,29 +112,39 @@ const handleBizClick = (biz) => {
 }
 
 .mobile-applications__tabs {
-  display: flex;
   padding: 12px 16px;
   background: white;
-  gap: 8px;
-  border-bottom: 1px solid #E0E0E0;
+  border-bottom: 1px solid #f2f2f2;
+}
+
+.applications__tabs__box {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px;
+  background: #ffffff;
+  border-radius: 999px;
+  box-shadow: 0 6px 18px rgba(217, 217, 217, 0.75);
 }
 
 .tab-btn {
   flex: 1;
-  padding: 10px 0;
-  border: 1px solid #E0E0E0;
-  background: white;
-  border-radius: 20px;
-  font-size: 14px;
-  color: #666666;
+  min-height: 48px;
+  padding: 0 20px;
+  border: 0;
+  background: transparent;
+  border-radius: 999px;
+  font-size: 16px;
+  font-weight: 600;
+  color: #171717;
   cursor: pointer;
-  transition: all 0.2s;
+  transition: all 0.2s ease;
 }
 
 .tab-btn.active {
-  background: #A60A3A;
+  background: linear-gradient(180deg, #bf124b 0%, #a60a3a 100%);
   color: white;
-  border-color: #A60A3A;
+  box-shadow: 0 4px 10px rgba(166, 10, 58, 0.28);
 }
 
 /* By Application Grid */
@@ -205,9 +213,18 @@ const handleBizClick = (biz) => {
   padding: 16px;
   display: flex;
   flex-direction: column;
+  align-items: center;
   gap: 8px;
   cursor: pointer;
   transition: transform 0.2s;
+}
+
+.applications__tabs__box {
+  display: flex;
+  ;
+  align-items: center;
+  width: 100%;
+  box-shadow: 0 4px 12px #D9D9D9;
 }
 
 .biz-card:active {
@@ -233,8 +250,8 @@ const handleBizClick = (biz) => {
   color: #666666;
   line-height: 1.4;
   display: -webkit-box;
-  -webkit-line-clamp: 3;
-  line-clamp: 3;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
 }

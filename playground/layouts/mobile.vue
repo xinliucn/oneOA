@@ -21,7 +21,7 @@
                     :icon-size="20"
                     popover-class="notification-bell-popover--mobile"
                 />
-                <el-avatar :size="40" src="/path/to/avatar.jpg" />
+                <el-avatar :size="40" src="/favicon.png" />
             </div>
         </header>
         <main class="mobile__main">
@@ -44,12 +44,13 @@
 </template>
 
 
-<script setup>
-import { ref, provide } from 'vue'
+<script setup lang="ts">
+import { provide, watch } from 'vue'
 import { createUserWatermark, removeWatermark } from '~/utils/watermark'
 
 const { user } = useAuth()
-const activeTab = ref(1)
+const route = useRoute()
+const activeTab = useState('mobile:activeTab', () => 1)
 
 const tabs = [
     { index: 1, icon: 'document', label: 'To-Do' },
@@ -58,12 +59,30 @@ const tabs = [
     { index: 4, icon: 'search', label: 'Search' }
 ]
 
-const handleTabClick = (tabIndex) => {
+const handleTabClick = (tabIndex: number) => {
     activeTab.value = tabIndex
+    if (route.path !== '/mobile') {
+        return navigateTo('/mobile')
+    }
 }
 
 // Provide activeTab to child components
 provide('activeTab', activeTab)
+
+watch(
+    () => route.path,
+    (path) => {
+        if (path.startsWith('/mobile/applications')) {
+            activeTab.value = 3
+            return
+        }
+
+        if (path.startsWith('/mobile/approval')) {
+            activeTab.value = 1
+        }
+    },
+    { immediate: true }
+)
 
 // 在组件挂载后创建水印
 onMounted(() => {

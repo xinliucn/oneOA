@@ -20,21 +20,18 @@
       <div v-for="task in filteredTasks" :key="task.id" class="todo-item" @click="handleTaskClick(task)">
         <div class="todo-item__content">
           <div class="todo-item__header">
-            <span class="todo-item__code">{{ task.code }}</span>
-            <span class="todo-item__status" :class="`status-${task.status.toLowerCase()}`">
-              {{ task.status }}
-            </span>
-            <span v-if="task.badge" class="todo-item__badge">
-              {{ task.badge }}
-            </span>
+            <div class="todo-item__meta">
+              <span class="todo-item__code">{{ task.code }}</span>
+              <span class="todo-item__status" :class="`status-${task.status.toLowerCase()}`">
+                {{ task.status }}
+              </span>
+            </div>
+            <div class="todo-item__date">{{ task.date }}</div>
           </div>
           <div class="todo-item__title">{{ task.title }}</div>
           <div class="todo-item__subtitle">{{ task.subtitle }}</div>
         </div>
-        <div class="todo-item__right">
-          <div class="todo-item__date">{{ task.date }}</div>
-          <IconCustom name="chevron-right" :size="20" color="#A60A3A" class="todo-item__arrow" />
-        </div>
+        <IconCustom name="chevron-right" :size="20" color="#A60A3A" class="todo-item__arrow" />
       </div>
     </div>
   </div>
@@ -176,15 +173,15 @@ onMounted(async () => {
 .mobile-todo__list {
   flex: 1;
   overflow-y: auto;
-   -ms-overflow-style: none;
-    /* IE and Edge */
-    scrollbar-width: none;
-    /* Firefox */
+  -ms-overflow-style: none;
+  /* IE and Edge */
+  scrollbar-width: none;
+  /* Firefox */
 
-    &::-webkit-scrollbar {
-        display: none;
-        /* Chrome, Safari, Opera */
-    }
+  &::-webkit-scrollbar {
+    display: none;
+    /* Chrome, Safari, Opera */
+  }
 }
 
 .mobile-todo__state {
@@ -198,10 +195,12 @@ onMounted(async () => {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 16px;
+  gap: 12px;
+  padding: 18px 16px;
   background: white;
   cursor: pointer;
-  border-bottom: #D9D9D9 0.5px solid;
+  border-bottom: 0.5px solid #d9d9d9;
+  transition: transform 0.2s ease, background-color 0.2s ease;
 }
 
 .todo-item:active {
@@ -210,83 +209,88 @@ onMounted(async () => {
 
 .todo-item__content {
   flex: 1;
+  width: 100%;
   min-width: 0;
+  display: flex;
+  flex-direction: column;
 }
 
 .todo-item__header {
   display: flex;
   align-items: center;
-  gap: 8px;
-  margin-bottom: 8px;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 6px;
+  width: 100%;
+}
+
+.todo-item__meta {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  min-width: 0;
   flex-wrap: wrap;
 }
 
 .todo-item__code {
-  font-size: 14px;
+  font-size: 15px;
   font-weight: 600;
-  color: #000000;
+  line-height: 1.3;
+  color: #1f1f1f;
 }
 
 .todo-item__status {
-  font-size: 11px;
-  padding: 3px 8px;
-  border-radius: 4px;
+  font-size: 15px;
   font-weight: 600;
+  line-height: 1.3;
 }
 
 .status-pending {
-  background: #FFF3E0;
-  color: #F57C00;
+  color: #d69a00;
 }
 
 .status-approved {
-  background: #E8F5E9;
-  color: #2E7D32;
+  color: #2e7d32;
 }
 
 .status-rejected {
-  background: #FFEBEE;
-  color: #C62828;
-}
-
-.todo-item__badge {
-  font-size: 11px;
-  padding: 3px 8px;
-  border-radius: 4px;
-  background: #E3F2FD;
-  color: #1976D2;
-  font-weight: 600;
+  color: #c62828;
 }
 
 .todo-item__title {
-  font-size: 15px;
-  font-weight: 500;
-  color: #000000;
-  margin-bottom: 4px;
+  font-size: 17px;
+  font-weight: 700;
+  line-height: 1.35;
+  color: #111111;
+  margin-bottom: 6px;
+  text-align: left;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  -webkit-box-orient: vertical;
+}
+
+.todo-item__subtitle {
+  font-size: 13px;
+  line-height: 1.35;
+  color: #666666;
+  text-align: left;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
-.todo-item__subtitle {
-  font-size: 13px;
-  color: #666666;
-}
-
-.todo-item__right {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  flex-shrink: 0;
-  margin-left: 12px;
-}
-
 .todo-item__date {
-  font-size: 12px;
-  color: #999999;
+  flex-shrink: 0;
+  font-size: 13px;
+  line-height: 1.3;
+  color: #9ca3af;
 }
 
 .todo-item__arrow {
-  color: #CCCCCC;
+  flex-shrink: 0;
+  align-self: center;
 }
 </style>

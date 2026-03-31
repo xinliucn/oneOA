@@ -1,0 +1,27 @@
+<template>
+  <svg
+    :width="size"
+    :height="size"
+    viewBox="0 0 39 39"
+    fill="none"
+    xmlns="http://www.w3.org/2000/svg"
+  >
+    <path
+      d="M34.125 27.625V16.4125L19.5 24.375L1.625 14.625L19.5 4.875L37.375 14.625V27.625H34.125ZM19.5 34.125L8.125 27.95V19.825L19.5 26L30.875 19.825V27.95L19.5 34.125Z"
+      :fill="color"
+    />
+  </svg>
+</template>
+
+<script setup lang="ts">
+withDefaults(
+  defineProps<{
+    size?: number | string
+    color?: string
+  }>(),
+  {
+    size: 20,
+    color: 'currentColor'
+  }
+)
+</script>

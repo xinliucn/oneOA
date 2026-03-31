@@ -1,5 +1,4 @@
 import { getNotificationApiPrefix, proxyWindmill } from '../../utils/windmillProxy'
-import { isNotificationMockEnabled, markMockNotificationAsRead } from '../../utils/notificationMock'
 
 export default defineEventHandler(async (event) => {
   // 从动态路由中提取要标记已读的通知 ID
@@ -15,11 +14,6 @@ export default defineEventHandler(async (event) => {
   try {
     // 请求体目前主要兼容 readAt 等扩展字段
     const body: Record<string, any> = await readBody<Record<string, any>>(event).catch(() => ({} as Record<string, any>))
-
-    if (isNotificationMockEnabled()) {
-      // mock 模式下直接更新本地模拟数据
-      return markMockNotificationAsRead(id, typeof body.readAt === 'string' ? body.readAt : undefined)
-    }
 
     const path = `${getNotificationApiPrefix()}/mark-read`
     const userId = typeof body.user_id === 'string' && body.user_id.trim() ? body.user_id.trim() : 'anonymous'

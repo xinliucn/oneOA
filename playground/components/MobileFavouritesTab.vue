@@ -6,14 +6,9 @@
     </div>
 
     <div class="mobile-favourites__grid">
-      <div
-        v-for="app in apps"
-        :key="app.id"
-        class="favourite-card"
-        @click="handleClick(app)"
-      >
+      <div v-for="app in apps" :key="app.id" class="favourite-card" @click="handleClick(app)">
         <div class="favourite-card__icon">
-          <IconCustom :name="app.icon" :size="28" />
+          <IconCustom :name="app.icon" :size="39" />
         </div>
         <div class="favourite-card__label">{{ app.label }}</div>
       </div>
@@ -25,22 +20,18 @@
 import { ref } from 'vue'
 
 const apps = ref([
-  // { id: 1, icon: 'document', label: 'Documents' },
-  // { id: 2, icon: 'calendar', label: 'Calendar' },
-  // { id: 3, icon: 'mail', label: 'Email' },
-  // { id: 4, icon: 'users', label: 'Contacts' },
-   { id: 1, icon: 'document', label: 'GLC Portal', color: '#FFC0CB', url: 'https://oa.dchbipoc.cc/wui/cas-entrance.jsp?path=https://oa.dchbipoc.cc/mobilemode/mobile/view.html?appid=1' },
-  { id: 2, icon: 'info', label: 'CCA 手機申請', color: '#FFB6C1', url: 'https://oa.dchbipoc.cc/wui/cas-entrance.jsp?path=https://oa.dchbipoc.cc/mobilemode/mobile/view.html?appHomepageId=4' },
-  { id: 3, icon: 'apps', label: 'CCA 審批/查看', color: '#FFC0CB', url: 'https://oa.dchbipoc.cc/wui/cas-entrance.jsp?path=https://oa.dchbipoc.cc/mobilemode/mobile/view.html?appHomepageId=3' },
-  { id: 4, icon: 'education', label: 'CCA 合同列表', color: '#FFB6C1', url: 'https://oa.dchbipoc.cc/wui/cas-entrance.jsp?path=https://oa.dchbipoc.cc/mobilemode/mobile/view.html?appHomepageId=2' },
-  { id: 5, icon: 'chart', label: 'Analytics' },
-  { id: 6, icon: 'settings', label: 'Settings' },
-  { id: 7, icon: 'folder', label: 'Files' },
-  { id: 8, icon: 'bell', label: 'Notifications' }
+  { id: 1, icon: 'glc-portal', label: 'GLC Portal', color: '#FFC0CB', url: 'https://oa.dchbipoc.cc/wui/cas-entrance.jsp?path=https://oa.dchbipoc.cc/mobilemode/mobile/view.html?appid=1' },
+  { id: 2, icon: 'cca-mobile-apply', label: 'CCA 手機申請', color: '#FFB6C1', url: 'https://oa.dchbipoc.cc/wui/cas-entrance.jsp?path=https://oa.dchbipoc.cc/mobilemode/mobile/view.html?appHomepageId=4' },
+  { id: 3, icon: 'cca-approval-view', label: 'CCA 審批/查看', color: '#FFC0CB', url: 'https://oa.dchbipoc.cc/wui/cas-entrance.jsp?path=https://oa.dchbipoc.cc/mobilemode/mobile/view.html?appHomepageId=3' },
+  { id: 4, icon: 'cca-contract-list', label: 'CCA 合同列表', color: '#FFB6C1', url: 'https://oa.dchbipoc.cc/wui/cas-entrance.jsp?path=https://oa.dchbipoc.cc/mobilemode/mobile/view.html?appHomepageId=2' },
+  { id: 5, icon: 'analytics', label: 'eLearning' },
+  { id: 6, icon: 'settings-list', label: 'Admin Portal' },
+  { id: 7, icon: 'files-grid', label: 'Dashboards' },
+  { id: 8, icon: 'notifications-bag', label: 'eShop' }
 ])
 
 const handleClick = (app) => {
-   if (app.url) {
+  if (app.url) {
     window.open(app.url, '_self')
   } else {
     console.log('点击了:', app.label)
@@ -62,7 +53,6 @@ const handleClick = (app) => {
   align-items: center;
   padding: 16px;
   background: white;
-  margin-bottom: 16px;
 }
 
 .mobile-favourites__title {
@@ -75,11 +65,11 @@ const handleClick = (app) => {
 .mobile-favourites__edit-btn {
   padding: 8px 16px;
   background: transparent;
-  border: 1px solid #A60A3A;
+  border: none;
   border-radius: 20px;
   color: #A60A3A;
-  font-size: 14px;
-  font-weight: 500;
+  font-size: 16px;
+  font-weight: 400;
   cursor: pointer;
   transition: all 0.3s;
 }
@@ -90,14 +80,20 @@ const handleClick = (app) => {
 }
 
 .mobile-favourites__grid {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 16px;
-  padding: 0 16px;
+  display: flex;
+  flex-wrap: wrap;
+  padding: 12px;
 }
 
 .favourite-card {
+  width: 179px;
+  height: 124px;
   display: flex;
+  margin: 6px;
+  padding: 32px 0;
+  border-radius: 12px;
+  color: #A60A3A;
+  background: #A60A3A26;
   flex-direction: column;
   align-items: center;
   gap: 8px;
@@ -108,11 +104,11 @@ const handleClick = (app) => {
   width: 64px;
   height: 64px;
   border-radius: 16px;
-  background: #A60A3A26;
+
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #A60A3A;
+
   transition: all 0.3s;
 }
 
@@ -123,8 +119,8 @@ const handleClick = (app) => {
 }
 
 .favourite-card__label {
-  font-size: 12px;
-  color: #000000;
+  font-size: 16px;
+  font-weight: 600;
   text-align: center;
   line-height: 1.2;
 }

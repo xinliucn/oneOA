@@ -14,6 +14,17 @@ import GlobeIcon from './icons/svg/GlobeIcon.vue'
 import SearchIcon from './icons/svg/SearchIcon.vue'
 import BellIcon from './icons/svg/BellIcon.vue'
 import DocumentIcon from './icons/svg/DocumentIcon.vue'
+import GlcPortalIcon from './icons/svg/GlcPortalIcon.vue'
+import CcaMobileApplyIcon from './icons/svg/CcaMobileApplyIcon.vue'
+import CcaApprovalViewIcon from './icons/svg/CcaApprovalViewIcon.vue'
+import CcaContractListIcon from './icons/svg/CcaContractListIcon.vue'
+import AnalyticsIcon from './icons/svg/AnalyticsIcon.vue'
+import SettingsListIcon from './icons/svg/SettingsListIcon.vue'
+import FilesGridIcon from './icons/svg/FilesGridIcon.vue'
+import NotificationsBagIcon from './icons/svg/NotificationsBagIcon.vue'
+import DigitalTechnologyIcon from './icons/svg/DigitalTechnologyIcon.vue'
+import FinanceBarsIcon from './icons/svg/FinanceBarsIcon.vue'
+import LegalComplianceIcon from './icons/svg/LegalComplianceIcon.vue'
 import InfoIcon from './icons/svg/InfoIcon.vue'
 import DownloadIcon from './icons/svg/DownloadIcon.vue'
 import AppsIcon from './icons/svg/AppsIcon.vue'
@@ -29,7 +40,7 @@ import PersonnelIcon from './icons/svg/PersonnelIcon.vue'
 
 const props = withDefaults(
   defineProps<{
-    name: 'globe' | 'search' | 'bell' | 'document' | 'info' | 'download' | 'apps' | 'building' | 'dashboard' | 'education' | 'shop' | 'menu' | 'share' | 'chevron-right' | 'todo' | 'personnel'
+    name: 'globe' | 'search' | 'bell' | 'document' | 'glc-portal' | 'cca-mobile-apply' | 'cca-approval-view' | 'cca-contract-list' | 'analytics' | 'settings-list' | 'files-grid' | 'notifications-bag' | 'digital-technology' | 'finance-bars' | 'legal-compliance' | 'info' | 'download' | 'apps' | 'building' | 'dashboard' | 'education' | 'shop' | 'menu' | 'share' | 'chevron-right' | 'todo' | 'personnel'
     size?: number | string
     color?: string
     className?: string
@@ -50,6 +61,17 @@ const iconMap: Record<string, any> = {
   search: SearchIcon,
   bell: BellIcon,
   document: DocumentIcon,
+  'glc-portal': GlcPortalIcon,
+  'cca-mobile-apply': CcaMobileApplyIcon,
+  'cca-approval-view': CcaApprovalViewIcon,
+  'cca-contract-list': CcaContractListIcon,
+  analytics: AnalyticsIcon,
+  'settings-list': SettingsListIcon,
+  'files-grid': FilesGridIcon,
+  'notifications-bag': NotificationsBagIcon,
+  'digital-technology': DigitalTechnologyIcon,
+  'finance-bars': FinanceBarsIcon,
+  'legal-compliance': LegalComplianceIcon,
   info: InfoIcon,
   download: DownloadIcon,
   apps: AppsIcon,
