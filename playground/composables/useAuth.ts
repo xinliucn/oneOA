@@ -5,6 +5,15 @@ export interface User {
   displayName?: string
 }
 
+const identifyAuthUser = (user: User) => {
+  if (!import.meta.client) {
+    return
+  }
+
+  const { $identifyLogRocketUser } = useNuxtApp()
+  $identifyLogRocketUser(user)
+}
+
 export const useAuth = () => {
   const user = useState<User | null>('auth:user', () => null)
   const isLoggedIn = useState<boolean>('auth:isLoggedIn', () => false)
@@ -65,12 +74,15 @@ export const useAuth = () => {
         }
         isLoggedIn.value = true
         lastCheckTime.value = now
+        
+        identifyAuthUser(user.value)
 
-        // 登录成功后自动检查浏览器里是否已有推送订阅。
-        // 这里只做静默恢复，不会主动弹权限框创建新订阅。
+        // 登录成功后静默恢复推送订阅，但不阻塞主登录流程。
         if (import.meta.client) {
           const { init } = usePushSubscription()
-          await init()
+          void init().catch((error) => {
+            console.error('Init push subscription after auth failed:', error)
+          })
         }
 
         return true

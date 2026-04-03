@@ -6,10 +6,9 @@
         <div class="login-logo">
           <img src="../assets/images/image002.jpg" alt="logo">
         </div>
-        <div class="subtitle">New Portal Experience</div>
+        <div class="subtitle">{{ t('auth.subtitle') }}</div>
       </div>
 
-      <!-- Loading Indicator -->
       <div class="loading-section">
         <div class="loading-spinner"></div>
         <div class="loading-text">{{ loadingText }}</div>
@@ -19,35 +18,32 @@
 </template>
 
 <script setup lang="ts">
-// 禁用默认布局，登录页面不需要导航栏
 definePageMeta({
   layout: false
 })
 
 const { checkAuth, login } = useAuth()
 const { getDeviceRoute } = useDevice()
-const loadingText = ref('正在检查登录状态...')
+const { t } = useAppI18n()
+const loadingState = ref<'checking' | 'success' | 'redirecting' | 'failed'>('checking')
+const loadingText = computed(() => t(`auth.loading.${loadingState.value}`))
 
 const loginInit = async () => {
   try {
-    // 检查是否已登录（通过调用 API 验证 cookie）
     const isLoggedIn = await checkAuth()
     if (isLoggedIn) {
-      // 已登录，跳转到首页
-      loadingText.value = '登录成功！'
+      loadingState.value = 'success'
       await navigateTo(getDeviceRoute())
     } else {
-      // 未登录，获取登录 URL 并跳转
-      loadingText.value = '正在跳转到登录页面...'
+      loadingState.value = 'redirecting'
       await login()
     }
   } catch (error) {
     console.error('Login initialization failed:', error)
-    loadingText.value = '登录失败，请刷新页面重试'
+    loadingState.value = 'failed'
   }
 }
 
-// 页面加载时初始化登录流程
 onMounted(async () => {
   await loginInit()
 })

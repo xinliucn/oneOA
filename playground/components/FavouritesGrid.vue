@@ -1,8 +1,8 @@
 <template>
   <div class="favourites-grid">
     <div class="favourites-grid__header">
-      <h3 class="favourites-grid__title">My Favourites</h3>
-      <a href="#" class="favourites-grid__edit">Edit</a>
+      <h3 class="favourites-grid__title">{{ t('favourites.title') }}</h3>
+      <a href="#" class="favourites-grid__edit">{{ t('favourites.edit') }}</a>
     </div>
     <div class="favourites-grid__items">
       <div v-for="app in apps" :key="app.id" class="favourite-card" @click="handleClick(app)">
@@ -15,21 +15,23 @@
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { ref } from 'vue'
+
+const { t } = useAppI18n()
 
 const apps = ref([
   { id: 1, icon: 'document', label: 'ePolicy', url: '' },
   { id: 2, icon: 'info', label: 'eClaim', url: '' },
   { id: 3, icon: 'apps', label: 'eTravel', url: '' },
-  { id: 4, icon: 'users', label: 'HR Intranet', url: '' },
+  { id: 4, icon: 'personnel', label: 'HR Intranet', url: '' },
   { id: 5, icon: 'education', label: 'eLearning', url: '' },
   { id: 6, icon: 'building', label: 'Admin Portal', url: '' },
   { id: 7, icon: 'dashboard', label: 'Dashboards', url: '' },
   { id: 8, icon: 'shop', label: 'eShop', url: '' },
 ])
 
-const handleClick = (app) => {
+const handleClick = (app: { url: string, label: string }) => {
   if (app.url) {
     window.open(app.url, '_blank')
   } else {

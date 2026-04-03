@@ -1,19 +1,75 @@
-import { defineNuxtModule, addPlugin, createResolver } from '@nuxt/kit'
+import { addImportsDir, addPlugin, createResolver, defineNuxtModule } from '@nuxt/kit'
 
-// Module options TypeScript interface definition
-export interface ModuleOptions {}
+export interface LocaleDefinition {
+  code: string
+  label: string
+}
+
+export interface TranslationMessages {
+  [localeCode: string]: Record<string, any>
+}
+
+export interface ModuleOptions {
+  defaultLocale?: string
+  fallbackLocale?: string
+  storageKey?: string
+  cookieKey?: string
+  locales?: LocaleDefinition[]
+  messages?: TranslationMessages
+}
+
+const defaultLocales: LocaleDefinition[] = [
+  { code: 'zh-CN', label: '简体' },
+  { code: 'zh-TW', label: '繁體' },
+  { code: 'en', label: 'ENG' }
+]
+
+const normalizeLocales = (locales?: LocaleDefinition[]) => {
+  const source = locales?.length ? locales : defaultLocales
+  const deduped = new Map<string, LocaleDefinition>()
+
+  for (const locale of source) {
+    if (!locale?.code) {
+      continue
+    }
+
+    const code = locale.code.toLowerCase()
+    if (!deduped.has(code)) {
+      deduped.set(code, locale)
+    }
+  }
+
+  return Array.from(deduped.values())
+}
 
 export default defineNuxtModule<ModuleOptions>({
   meta: {
     name: 'superApp',
     configKey: 'myModule',
   },
-  // Default configuration options of the Nuxt module
-  defaults: {},
-  setup(_options, _nuxt) {
+  defaults: {
+    defaultLocale: 'zh-CN',
+    fallbackLocale: 'en',
+    storageKey: 'superapp-locale',
+    cookieKey: 'superapp-locale',
+    locales: defaultLocales,
+    messages: {}
+  },
+  setup(options, nuxt) {
     const resolver = createResolver(import.meta.url)
+    const publicRuntimeConfig = nuxt.options.runtimeConfig.public as Record<string, any>
 
-    // Do not add the extension since the `.ts` will be transpiled to `.mjs` after `npm run prepack`
+    publicRuntimeConfig.superAppI18n = {
+      ...(publicRuntimeConfig.superAppI18n || {}),
+      defaultLocale: options.defaultLocale,
+      fallbackLocale: options.fallbackLocale,
+      storageKey: options.storageKey,
+      cookieKey: options.cookieKey,
+      locales: normalizeLocales(options.locales),
+      messages: options.messages || {}
+    }
+
     addPlugin(resolver.resolve('./runtime/plugin'))
+    addImportsDir(resolver.resolve('./runtime/composables'))
   },
 })

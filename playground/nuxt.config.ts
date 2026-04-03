@@ -1,8 +1,15 @@
+import { appLocales, appMessages } from './i18n/config'
+
 export default defineNuxtConfig({
   modules: ['../src/module', '@element-plus/nuxt'],
   devtools: { enabled: true },
   compatibilityDate: 'latest',
-  myModule: {},
+  myModule: {
+    defaultLocale: 'zh-CN',
+    fallbackLocale: 'en',
+    locales: appLocales,
+    messages: appMessages
+  },
   devServer: {
     port: 5173
   },
@@ -11,6 +18,7 @@ export default defineNuxtConfig({
     vapidPrivateKey: process.env.NUXT_VAPID_PRIVATE_KEY || '',
     vapidSubject: process.env.NUXT_VAPID_SUBJECT || '',
     public: {
+      logrocketAppId: process.env.NUXT_PUBLIC_LOGROCKET_APP_ID || '',
       apiBase: process.env.NUXT_PUBLIC_API_BASE || 'https://windmill-uat.dchbi.app',
       notificationApiPrefix: process.env.NUXT_PUBLIC_NOTIFICATION_API_PREFIX || '/api/r/notification',
       vapidPublicKey: process.env.NUXT_PUBLIC_VAPID_PUBLIC_KEY || '',

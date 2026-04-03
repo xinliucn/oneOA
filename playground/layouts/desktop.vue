@@ -5,9 +5,7 @@
                 <img src="~/assets/images/dchLogo.png" alt="SuperApp Logo">
             </div>
             <div class="desktop_header_actions">
-                <el-button circle class="action-btn">
-                    <IconCustom name="globe" :size="20" />
-                </el-button>
+                <LocaleDropdown />
                 <el-button circle class="action-btn">
                     <IconCustom name="search" :size="20" />
                 </el-button>
@@ -18,8 +16,8 @@
                     </span>
                     <template #dropdown>
                         <el-dropdown-menu>
-                            <el-dropdown-item command="profile">个人信息</el-dropdown-item>
-                            <el-dropdown-item command="logout">退出登录</el-dropdown-item>
+                            <el-dropdown-item command="profile">{{ t('user.profile') }}</el-dropdown-item>
+                            <el-dropdown-item command="logout">{{ t('user.logout') }}</el-dropdown-item>
                         </el-dropdown-menu>
                     </template>
                 </el-dropdown>
@@ -29,58 +27,10 @@
             <div class="desktop__sidebar">
                 <el-menu :default-active="activeMenu" class="el-menu-vertical-demo" @select="handleMenuSelect"
                     background-color="#D9D9D9" text-color="#000000" active-text-color="#000000">
-                    <el-menu-item index="1">
+                    <el-menu-item v-for="item in menuItems" :key="item.index" :index="item.index">
                         <template #title>
-                            <IconCustom name="document" :size="26" />
-                            News
-                        </template>
-                    </el-menu-item>
-                    <el-menu-item index="2">
-                        <template #title>
-                            <IconCustom name="info" :size="26" />
-                            Company Information
-                        </template>
-                    </el-menu-item>
-                    <el-menu-item index="3">
-                        <template #title>
-                            <IconCustom name="download" :size="26" />
-                            Company Documents
-                        </template>
-                    </el-menu-item>
-                    <el-menu-item index="4">
-                        <template #title>
-                            <IconCustom name="apps" :size="26" />
-                            Applications
-                        </template>
-                    </el-menu-item>
-                    <el-menu-item index="5">
-                        <template #title>
-                            <IconCustom name="building" :size="26" />
-                            Department Intranets
-                        </template>
-                    </el-menu-item>
-                    <el-menu-item index="6">
-                        <template #title>
-                            <IconCustom name="dashboard" :size="26" />
-                            Dashboards
-                        </template>
-                    </el-menu-item>
-                    <el-menu-item index="7">
-                        <template #title>
-                            <IconCustom name="document" :size="26" />
-                            To-Do
-                        </template>
-                    </el-menu-item>
-                    <el-menu-item index="8">
-                        <template #title>
-                            <IconCustom name="education" :size="26" />
-                            eLearning
-                        </template>
-                    </el-menu-item>
-                    <el-menu-item index="9">
-                        <template #title>
-                            <IconCustom name="shop" :size="26" />
-                            eShop
+                            <IconCustom :name="item.icon" :size="26" />
+                            {{ item.label }}
                         </template>
                     </el-menu-item>
                 </el-menu>
@@ -97,6 +47,7 @@ import { createUserWatermark, removeWatermark } from '~/utils/watermark'
 
 const { logout, user } = useAuth()
 const { unsubscribe } = usePushSubscription()
+const { t } = useAppI18n()
 const route = useRoute()
 
 const menuRoutes: Record<string, string> = {
@@ -110,6 +61,18 @@ const menuRoutes: Record<string, string> = {
     '8': '/desktop/elearning',
     '9': '/desktop/eshop',
 }
+
+const menuItems = computed(() => [
+    { index: '1', icon: 'document', label: t('nav.news') },
+    { index: '2', icon: 'info', label: t('nav.companyInformation') },
+    { index: '3', icon: 'download', label: t('nav.companyDocuments') },
+    { index: '4', icon: 'apps', label: t('nav.applications') },
+    { index: '5', icon: 'building', label: t('nav.departmentIntranets') },
+    { index: '6', icon: 'dashboard', label: t('nav.dashboards') },
+    { index: '7', icon: 'document', label: t('nav.todo') },
+    { index: '8', icon: 'education', label: t('nav.eLearning') },
+    { index: '9', icon: 'shop', label: t('nav.eShop') },
+])
 
 const activeMenu = computed(() => {
     const matched = Object.entries(menuRoutes).find(([, path]) => route.path.startsWith(path))

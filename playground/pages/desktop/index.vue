@@ -5,11 +5,11 @@
                 <div class="desktop__date">{{ formattedDate }}</div>
                 <div class="desktop__time">{{ formattedTime }}</div>
                 <div class="desktop__greeting">
-                    Good morning, <ClientOnly>{{ userName || 'Guest' }}<template #fallback>Guest</template></ClientOnly>
+                    {{ greetingText }}
                 </div>
                 <div class="desktop__search-bar">
                     <IconCustom name="search" :size="18" class="desktop__search-icon" />
-                    <input type="text" class="desktop__search-input" placeholder="Search" />
+                    <input type="text" class="desktop__search-input" :placeholder="t('home.searchPlaceholder')" />
                     <button class="desktop__ai-btn">AI <span>★</span></button>
                 </div>
             </div>
@@ -25,12 +25,12 @@
         </div>
 
         <footer class="desktop__footer">
-            Copyright © 2026 Dah Chong Hong Holdings Limited. All rights reserved.
+            {{ t('home.footerCopyright', { year: currentYear }) }}
         </footer>
     </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 definePageMeta({
     layout: 'desktop',
     middleware: 'auth'
@@ -39,21 +39,29 @@ import { ref, computed, onMounted, onUnmounted } from 'vue'
 import desktopBanner from '~/assets/images/desktop-banner.jpg'
 
 const { user } = useAuth()
+const { locale, t } = useAppI18n()
 const userName = computed(() => user.value?.name || user.value?.username || user.value?.displayName)
-
+const currentYear = computed(() => currentTime.value.getFullYear())
 const currentTime = ref(new Date())
-let timer = null
+let timer: ReturnType<typeof setInterval> | null = null
 
 const formattedDate = computed(() => {
-    const d = currentTime.value
-    const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']
-    const months = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December']
-    return `${days[d.getDay()]}, ${months[d.getMonth()]} ${d.getDate()}, ${d.getFullYear()}`
+    return new Intl.DateTimeFormat(locale.value, {
+        weekday: 'long',
+        month: 'long',
+        day: 'numeric',
+        year: 'numeric'
+    }).format(currentTime.value)
 })
 
 const formattedTime = computed(() => {
     const d = currentTime.value
     return `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`
+})
+
+const greetingText = computed(() => {
+    const displayName = userName.value || t('common.guest')
+    return t('home.greeting', { name: displayName })
 })
 
 onMounted(() => { timer = setInterval(() => { currentTime.value = new Date() }, 1000) })

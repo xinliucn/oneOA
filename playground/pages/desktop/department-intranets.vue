@@ -1,11 +1,13 @@
-<script setup>
+<script setup lang="ts">
 definePageMeta({ layout: 'desktop', middleware: 'auth' })
+
+const { t } = useAppI18n()
 </script>
 
 <template>
   <div class="page">
-    <h1 class="page__title">Department Intranets</h1>
-    <p class="page__placeholder">部门内网内容区域</p>
+    <h1 class="page__title">{{ t('pages.departmentIntranets.title') }}</h1>
+    <p class="page__placeholder">{{ t('pages.departmentIntranets.placeholder') }}</p>
   </div>
 </template>
 

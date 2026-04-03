@@ -11,9 +11,7 @@
                 <el-button circle class="action-btn active-btn">
                     <IconCustom name="share" :size="20" />
                 </el-button>
-                <el-button circle class="action-btn active-btn">
-                    <IconCustom name="globe" :size="20" />
-                </el-button>
+                <LocaleDropdown variant="mobile" placement="bottom-end" />
                 <NotificationBell
                     placement="bottom"
                     :popover-width="320"
@@ -49,15 +47,16 @@ import { provide, watch } from 'vue'
 import { createUserWatermark, removeWatermark } from '~/utils/watermark'
 
 const { user } = useAuth()
+const { t } = useAppI18n()
 const route = useRoute()
 const activeTab = useState('mobile:activeTab', () => 1)
 
-const tabs = [
-    { index: 1, icon: 'document', label: 'To-Do' },
-    { index: 2, icon: 'bell', label: 'My Favourites' },
-    { index: 3, icon: 'apps', label: 'Applications' },
-    { index: 4, icon: 'search', label: 'Search' }
-]
+const tabs = computed(() => [
+    { index: 1, icon: 'document', label: t('mobile.tabs.todo') },
+    { index: 2, icon: 'bell', label: t('mobile.tabs.favourites') },
+    { index: 3, icon: 'apps', label: t('mobile.tabs.applications') },
+    { index: 4, icon: 'search', label: t('mobile.tabs.search') }
+])
 
 const handleTabClick = (tabIndex: number) => {
     activeTab.value = tabIndex

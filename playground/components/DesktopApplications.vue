@@ -1,8 +1,8 @@
 <template>
   <div class="desktop-apps">
     <div class="desktop-apps__header">
-      <h3 class="desktop-apps__title">Applications</h3>
-      <a href="#" class="desktop-apps__link">View All ></a>
+      <h3 class="desktop-apps__title">{{ t('desktopApps.title') }}</h3>
+      <a href="#" class="desktop-apps__link">{{ t('desktopApps.viewAll') }}</a>
     </div>
     <div class="desktop-apps__columns">
       <div v-for="category in categories" :key="category.id" class="app-column">
@@ -12,7 +12,7 @@
           </div>
           <div class="app-column__name">{{ category.name }}</div>
           <div class="app-column__desc">{{ category.description }}</div>
-          <a href="#" class="app-column__intranet">{{ category.intranetLabel }} ></a>
+          <a href="#" class="app-column__intranet">{{ category.intranetLabel }}</a>
         </div>
         <div class="app-column__list">
           <div v-for="app in category.apps" :key="app.id" class="app-row" @click="handleClick(app)">
@@ -22,53 +22,55 @@
             </div>
             <IconCustom name="chevron-right" :size="14" class="app-row__arrow" />
           </div>
-          <a href="#" class="app-column__view-all">View All ></a>
+          <a href="#" class="app-column__view-all">{{ t('desktopApps.viewAll') }}</a>
         </div>
       </div>
     </div>
   </div>
 </template>
 
-<script setup>
-import { ref } from 'vue'
+<script setup lang="ts">
+import { computed } from 'vue'
 
-const categories = ref([
+const { t } = useAppI18n()
+
+const categories = computed(() => [
   {
-    id: 1, name: 'Digital & Technology', icon: 'monitor', color: '#1976D2',
-    description: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit, s...',
-    intranetLabel: 'Group IT Intranet',
+    id: 1, name: t('desktopApps.categories.digitalTechnology.name'), icon: 'digital-technology', color: '#1976D2',
+    description: t('desktopApps.categories.digitalTechnology.description'),
+    intranetLabel: t('desktopApps.categories.digitalTechnology.intranet'),
     apps: [
-      { id: 1, name: 'Staff Onboarding IT Service', subtitle: 'Process Name' },
-      { id: 2, name: 'IT Demand Creation', subtitle: 'Process Name' },
-      { id: 3, name: 'IT Project Change Submission', subtitle: 'Process Name' },
-      { id: 4, name: 'IT Project Creation', subtitle: 'Process Name' },
+      { id: 1, name: 'Staff Onboarding IT Service', subtitle: t('desktopApps.processName') },
+      { id: 2, name: 'IT Demand Creation', subtitle: t('desktopApps.processName') },
+      { id: 3, name: 'IT Project Change Submission', subtitle: t('desktopApps.processName') },
+      { id: 4, name: 'IT Project Creation', subtitle: t('desktopApps.processName') },
     ]
   },
   {
-    id: 2, name: 'Finance', icon: 'chart', color: '#00897B',
-    description: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit, s...',
-    intranetLabel: 'Group Finance Intranet',
+    id: 2, name: t('desktopApps.categories.finance.name'), icon: 'finance-bars', color: '#00897B',
+    description: t('desktopApps.categories.finance.description'),
+    intranetLabel: t('desktopApps.categories.finance.intranet'),
     apps: [
-      { id: 5, name: 'Bounced Cheque Record', subtitle: 'Process Name' },
-      { id: 6, name: 'Bounced Cheque Refund Application', subtitle: 'Process Name' },
+      { id: 5, name: 'Bounced Cheque Record', subtitle: t('desktopApps.processName') },
+      { id: 6, name: 'Bounced Cheque Refund Application', subtitle: t('desktopApps.processName') },
       { id: 7, name: 'TBC', subtitle: 'TBC ref id' },
-      { id: 8, name: 'Bounced Cheque Data List', subtitle: 'Process Name' },
+      { id: 8, name: 'Bounced Cheque Data List', subtitle: t('desktopApps.processName') },
     ]
   },
   {
-    id: 3, name: 'Legal & Compliance', icon: 'users', color: '#A60A3A',
-    description: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit, s...',
-    intranetLabel: 'Group Legal Intranet',
+    id: 3, name: t('desktopApps.categories.legalCompliance.name'), icon: 'legal-compliance', color: '#A60A3A',
+    description: t('desktopApps.categories.legalCompliance.description'),
+    intranetLabel: t('desktopApps.categories.legalCompliance.intranet'),
     apps: [
-      { id: 9, name: 'Dispute Submission', subtitle: 'Process Name' },
-      { id: 10, name: 'Group Contract Clearance & Approval', subtitle: 'Process Name' },
-      { id: 11, name: 'Signed Contract Submission (Group...)', subtitle: 'Process Name' },
-      { id: 12, name: 'Trademark Registration', subtitle: 'Process Name' },
+      { id: 9, name: 'Dispute Submission', subtitle: t('desktopApps.processName') },
+      { id: 10, name: 'Group Contract Clearance & Approval', subtitle: t('desktopApps.processName') },
+      { id: 11, name: 'Signed Contract Submission (Group...)', subtitle: t('desktopApps.processName') },
+      { id: 12, name: 'Trademark Registration', subtitle: t('desktopApps.processName') },
     ]
   },
 ])
 
-const handleClick = (app) => {
+const handleClick = (app: { name: string }) => {
   console.log('App clicked:', app.name)
 }
 </script>

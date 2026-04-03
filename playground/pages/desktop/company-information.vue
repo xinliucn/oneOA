@@ -1,11 +1,13 @@
-<script setup>
+<script setup lang="ts">
 definePageMeta({ layout: 'desktop', middleware: 'auth' })
+
+const { t } = useAppI18n()
 </script>
 
 <template>
   <div class="page">
-    <h1 class="page__title">Company Information</h1>
-    <p class="page__placeholder">公司信息内容区域</p>
+    <h1 class="page__title">{{ t('pages.companyInformation.title') }}</h1>
+    <p class="page__placeholder">{{ t('pages.companyInformation.placeholder') }}</p>
   </div>
 </template>
 

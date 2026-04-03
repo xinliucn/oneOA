@@ -1,8 +1,8 @@
 <template>
   <div class="group-news">
     <div class="group-news__header">
-      <h3 class="group-news__title">Group News</h3>
-      <a href="#" class="group-news__link">View All ></a>
+      <h3 class="group-news__title">{{ t('groupNews.title') }}</h3>
+      <a href="#" class="group-news__link">{{ t('groupNews.viewAll') }}</a>
     </div>
     <div class="group-news__grid">
       <div
@@ -23,8 +23,10 @@
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { ref } from 'vue'
+
+const { t } = useAppI18n()
 
 const newsList = ref([
   {
@@ -65,7 +67,7 @@ const newsList = ref([
   }
 ])
 
-const handleClick = (news) => {
+const handleClick = (news: { title: string }) => {
   console.log('Clicked news:', news.title)
 }
 </script>

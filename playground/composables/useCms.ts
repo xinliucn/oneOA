@@ -16,12 +16,12 @@ export const useCms = () => {
       loading.value = true
       error.value = null
 
-      const response = await $fetch<T>('/api/r/cms/graphql', {
+      const response = await $fetch('/api/r/cms/graphql', {
         method: 'POST',
         body: query
       })
 
-      return response
+      return response as T
     } catch (err: any) {
       console.error('CMS GraphQL request failed:', err)
       error.value = err

@@ -4,15 +4,16 @@
   </NuxtLayout>
 </template>
 
-<script setup>
-// 全局应用配置
-useHead({
-  title: 'One OA',
+<script setup lang="ts">
+const { t } = useAppI18n()
+
+useHead(() => ({
+  title: t('common.appName'),
   meta: [
     { charset: 'utf-8' },
     { name: 'viewport', content: 'width=device-width, initial-scale=1' }
   ]
-})
+}))
 </script>
 
 <style>
@@ -24,15 +25,13 @@ useHead({
 }
 
 body {
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  font-family: 'PingFang SC', 'Noto Sans TC', 'Segoe UI', sans-serif;
   line-height: 1.6;
   color: #333;
-  /* 防止 FOUC - 在样式加载前隐藏内容 */
   opacity: 1;
   transition: opacity 0.1s ease-in;
 }
 
-/* 确保布局容器立即可见 */
 #__nuxt {
   min-height: 100vh;
 }

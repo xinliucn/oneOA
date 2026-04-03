@@ -40,7 +40,7 @@ import PersonnelIcon from './icons/svg/PersonnelIcon.vue'
 
 const props = withDefaults(
   defineProps<{
-    name: 'globe' | 'search' | 'bell' | 'document' | 'glc-portal' | 'cca-mobile-apply' | 'cca-approval-view' | 'cca-contract-list' | 'analytics' | 'settings-list' | 'files-grid' | 'notifications-bag' | 'digital-technology' | 'finance-bars' | 'legal-compliance' | 'info' | 'download' | 'apps' | 'building' | 'dashboard' | 'education' | 'shop' | 'menu' | 'share' | 'chevron-right' | 'todo' | 'personnel'
+    name: string
     size?: number | string
     color?: string
     className?: string

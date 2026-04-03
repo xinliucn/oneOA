@@ -1,8 +1,8 @@
 <template>
   <div class="tasks-list">
     <div class="tasks-list__header">
-      <h3 class="tasks-list__title">To-Do</h3>
-      <a href="#" class="tasks-list__link">To-Do ></a>
+      <h3 class="tasks-list__title">{{ t('tasks.title') }}</h3>
+      <a href="#" class="tasks-list__link">{{ t('tasks.link') }}</a>
     </div>
     <div class="tasks-list__tabs">
       <button v-for="tab in tabs" :key="tab.value"
@@ -12,11 +12,11 @@
       </button>
     </div>
     <div class="tasks-list__items">
-      <div v-for="task in tasks" :key="task.id" class="task-item" @click="handleClick(task)">
+      <div v-for="task in visibleTasks" :key="task.id" class="task-item" @click="handleClick(task)">
         <div class="task-item__content">
           <div class="task-item__meta">
             <span class="task-item__code">{{ task.code }}</span>
-            <span class="task-item__status" :class="`status-${task.status.toLowerCase()}`">{{ task.status }}</span>
+            <span class="task-item__status" :class="`status-${task.status.toLowerCase()}`">{{ t(`tasks.status.${task.status}`) }}</span>
           </div>
           <div class="task-item__title">{{ task.title }}</div>
           <div class="task-item__subtitle">{{ task.subtitle }}</div>
@@ -30,27 +30,30 @@
   </div>
 </template>
 
-<script setup>
-import { ref } from 'vue'
+<script setup lang="ts">
+import { computed, ref } from 'vue'
 
-const activeTab = ref('approval')
+const { t } = useAppI18n()
 
-const tabs = [
-  { label: 'My Approval', value: 'approval' },
-  { label: 'My Requests', value: 'requests' },
-  { label: 'My Tasks', value: 'tasks' },
-  { label: 'Watchlist', value: 'watchlist' },
-]
+const activeTab = ref('pending')
 
-const tasks = ref([
-  { id: 1, code: 'YY-CCA-20250890', status: 'Pending', title: 'DCH Foods Contract Clearance Approval', subtitle: 'Thomas Chiu Au Yeung', date: '2025-10-24' },
-  { id: 2, code: 'YY-ICAPER-20250094', status: 'Pending', title: 'DCH Foods eICAPES Approval', subtitle: 'Thomas Chiu Au Yeung', date: '2025-11-N' },
-  { id: 3, code: 'BIPO-EAPPRAISAL-20250893', status: 'Approved', title: 'Victor Ho eAppraisal 2025', subtitle: 'Thomas Chiu Au Yeung', date: '2025-10-24' },
-  { id: 4, code: 'YY-CLAIM-20250092', status: 'Rejected', title: 'Kelvin Leung eClaim', subtitle: 'Kelvin Leung Au Yeung', date: '2025-10-24' },
-  { id: 5, code: 'YY-ETRAVEL-20250895', status: 'Approved', title: 'Kelvin Leung eTravel (Singapore)', subtitle: 'Kelvin Leung Au Yeung', date: '2025-10-24' },
+const tabs = computed(() => [
+  { label: t('tasks.tabs.approval'), value: 'pending' },
+  { label: t('tasks.tabs.requests'), value: 'approved' },
+  { label: t('tasks.tabs.tasks'), value: 'rejected' }
 ])
 
-const handleClick = (task) => {
+const tasks = ref([
+  { id: 1, code: 'YY-CCA-20250890', status: 'pending', title: 'DCH Foods Contract Clearance Approval', subtitle: 'Thomas Chiu Au Yeung', date: '2025-10-24' },
+  { id: 2, code: 'YY-ICAPER-20250094', status: 'pending', title: 'DCH Foods eICAPES Approval', subtitle: 'Thomas Chiu Au Yeung', date: '2025-11-N' },
+  { id: 3, code: 'BIPO-EAPPRAISAL-20250893', status: 'approved', title: 'Victor Ho eAppraisal 2025', subtitle: 'Thomas Chiu Au Yeung', date: '2025-10-24' },
+  { id: 4, code: 'YY-CLAIM-20250092', status: 'rejected', title: 'Kelvin Leung eClaim', subtitle: 'Kelvin Leung Au Yeung', date: '2025-10-24' },
+  { id: 5, code: 'YY-ETRAVEL-20250895', status: 'approved', title: 'Kelvin Leung eTravel (Singapore)', subtitle: 'Kelvin Leung Au Yeung', date: '2025-10-24' },
+])
+
+const visibleTasks = computed(() => tasks.value.filter(task => task.status === activeTab.value))
+
+const handleClick = (task: { code: string }) => {
   console.log('Clicked task:', task.code)
 }
 </script>

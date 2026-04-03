@@ -50,7 +50,7 @@ watch(
   department,
   (value) => {
     if (value?.regions?.length) {
-      selectedRegion.value = value.regions[0]
+      selectedRegion.value = value.regions[0] || 'CN'
     }
   },
   { immediate: true },

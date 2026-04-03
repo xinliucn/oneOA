@@ -4,8 +4,6 @@ export default defineEventHandler(async (event) => {
   const config = useRuntimeConfig()
   const apiBase = config.public.apiBase
   const raw = config.mockEnabled
-  console.log('raw',raw&&raw,isString(raw));
-  
   if (raw) {
     return {
       code: 1,
