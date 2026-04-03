@@ -2,7 +2,7 @@
     <div class="mobile">
         <header class="mobile__header">
             <div class="mobile__header-left">
-                <IconCustom name="menu" :size="24" class="menu-icon" />
+                <IconCustom name="menu" :size="24" class="menu-icon" @click="openMenu"/>
                 <div class="mobile__logo">
                     <img src="~/assets/images/dchLogo.png" alt="SuperApp Logo">
                 </div>
@@ -38,6 +38,7 @@
                 </div>
             </div>
         </footer>
+        <MobileSidebar v-model="isSidebarOpen" />
     </div>
 </template>
 
@@ -45,11 +46,14 @@
 <script setup lang="ts">
 import { provide, watch } from 'vue'
 import { createUserWatermark, removeWatermark } from '~/utils/watermark'
+import MobileSidebar from '~/components/MobileSidebar.vue'
 
 const { user } = useAuth()
 const { t } = useAppI18n()
 const route = useRoute()
 const activeTab = useState('mobile:activeTab', () => 1)
+const isSidebarOpen = useState('mobile:isSidebarOpen', () => false)
+
 
 const tabs = computed(() => [
     { index: 1, icon: 'document', label: t('mobile.tabs.todo') },
@@ -63,6 +67,10 @@ const handleTabClick = (tabIndex: number) => {
     if (route.path !== '/mobile') {
         return navigateTo('/mobile')
     }
+}
+
+const openMenu = () => {
+    isSidebarOpen.value = !isSidebarOpen.value
 }
 
 // Provide activeTab to child components

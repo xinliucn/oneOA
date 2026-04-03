@@ -45,7 +45,6 @@ export const identifyLogRocketUser = (user: {
 
     return result
   }, {})
-  console.log('identifier, traits',identifier, traits);
   
   LogRocket.identify(identifier, traits)
 }

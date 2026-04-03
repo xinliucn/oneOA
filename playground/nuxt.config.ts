@@ -14,7 +14,7 @@ export default defineNuxtConfig({
     port: 5173
   },
   runtimeConfig: {
-    mockEnabled: false,
+    mockEnabled: true,
     vapidPrivateKey: process.env.NUXT_VAPID_PRIVATE_KEY || '',
     vapidSubject: process.env.NUXT_VAPID_SUBJECT || '',
     public: {
