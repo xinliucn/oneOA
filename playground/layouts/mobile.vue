@@ -30,7 +30,7 @@
                 <div
                     v-for="tab in tabs"
                     :key="tab.index"
-                    :class="['tab-item', { active: activeTab === tab.index }]"
+                    :class="['tab-item', { active: displayActiveTab === tab.index }]"
                     @click="handleTabClick(tab.index)"
                 >
                     <IconCustom :name="tab.icon" :size="24" />
@@ -61,6 +61,22 @@ const tabs = computed(() => [
     { index: 3, icon: 'apps', label: t('mobile.tabs.applications') },
     { index: 4, icon: 'search', label: t('mobile.tabs.search') }
 ])
+
+const displayActiveTab = computed<number | null>(() => {
+  if (route.path === '/mobile') {
+    return activeTab.value
+  }
+
+  if (route.path.startsWith('/mobile/applications')) {
+    return 3
+  }
+
+  if (route.path.startsWith('/mobile/approval')) {
+    return 1
+  }
+
+  return null
+})
 
 const handleTabClick = (tabIndex: number) => {
     activeTab.value = tabIndex

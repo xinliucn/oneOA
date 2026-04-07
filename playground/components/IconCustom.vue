@@ -37,6 +37,7 @@ import ShareIcon from './icons/svg/ShareIcon.vue'
 import ChevronRightIcon from './icons/svg/ChevronRightIcon.vue'
 import TodoIcon from './icons/svg/TodoIcon.vue'
 import PersonnelIcon from './icons/svg/PersonnelIcon.vue'
+import FilterIcon from './icons/svg/FilterIcon.vue'
 
 const props = withDefaults(
   defineProps<{
@@ -83,7 +84,8 @@ const iconMap: Record<string, any> = {
   share: ShareIcon,
   'chevron-right': ChevronRightIcon,
   todo: TodoIcon,
-  personnel: PersonnelIcon
+  personnel: PersonnelIcon,
+  filterIcon: FilterIcon
 }
 
 // 动态获取图标组件
