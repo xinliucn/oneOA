@@ -1,44 +1,27 @@
 <template>
-  <el-popover
-    v-model:visible="visible"
-    :placement="props.placement"
-    :width="props.popoverWidth"
-    :popper-class="popperClassName"
-  >
-    <template #reference>
-      <el-badge :value="badgeValue" :hidden="unreadCount === 0" class="notification-bell__badge">
-        <el-button circle class="action-btn" @click="handleOpen">
-          <IconCustom name="bell" :size="props.iconSize" />
-        </el-button>
-      </el-badge>
-    </template>
-
-    <NotificationPanel @close="visible = false" />
-  </el-popover>
+  <el-badge :value="badgeValue" :hidden="unreadCount === 0" class="notification-bell__badge">
+    <el-button circle :class="['action-btn', { 'action-btn--active': isActive }]" @click="handleClick">
+      <IconCustom name="bell" :size="props.iconSize" :color="isActive ? '#ffffff' : '#c2185b'" />
+    </el-button>
+  </el-badge>
 </template>
 
 <script setup lang="ts">
+const NOTIFICATION_CENTER_PATH = '/mobile/notifications'
+
 const props = withDefaults(defineProps<{
-  placement?: 'bottom' | 'bottom-start' | 'bottom-end'
-  popoverWidth?: number
-  popoverClass?: string
   buttonSize?: number
   iconSize?: number
 }>(), {
-  placement: 'bottom-end',
-  popoverWidth: 390,
-  popoverClass: '',
   buttonSize: 40,
   iconSize: 20,
 })
 
-const visible = ref(false)
-
-const { unreadCount, bootstrap, refreshFromServer, startPolling, stopPolling } = useNotification()
+const route = useRoute()
+const returnPath = useState<string>('mobile:notification:return-path', () => '/mobile')
+const { unreadCount, bootstrap, startPolling, stopPolling } = useNotification()
 const buttonSizePx = computed(() => `${props.buttonSize}px`)
-const popperClassName = computed(() => {
-  return ['notification-bell-popover', props.popoverClass].filter(Boolean).join(' ')
-})
+const isActive = computed(() => route.path.startsWith(NOTIFICATION_CENTER_PATH))
 
 const badgeValue = computed(() => {
   if (unreadCount.value > 99) {
@@ -48,18 +31,19 @@ const badgeValue = computed(() => {
   return unreadCount.value
 })
 
-const handleOpen = async () => {
-  visible.value = !visible.value
-  if (visible.value) {
-    await refreshFromServer({ silent: true })
-  }
-}
+const handleClick = async () => {
+  if (isActive.value) {
+    const targetPath = returnPath.value && returnPath.value !== NOTIFICATION_CENTER_PATH
+      ? returnPath.value
+      : '/mobile'
 
-watch(visible, async (nextVisible) => {
-  if (nextVisible) {
-    await refreshFromServer({ silent: true })
+    await navigateTo(targetPath)
+    return
   }
-})
+
+  returnPath.value = route.fullPath
+  await navigateTo(NOTIFICATION_CENTER_PATH)
+}
 
 onMounted(async () => {
   await bootstrap()
@@ -81,12 +65,20 @@ onBeforeUnmount(() => {
   width: v-bind(buttonSizePx);
   background-color: #fce4ec;
   border: none;
-  color: #c2185b;
   margin-left: 0 !important;
   margin-right: 0 !important;
+  transition: background-color 0.2s ease, transform 0.2s ease;
 }
 
 .action-btn:hover {
   background-color: #f8bbd0;
+}
+
+.action-btn--active {
+  background-color: #b10f49;
+}
+
+.action-btn--active:hover {
+  background-color: #980d3f;
 }
 </style>

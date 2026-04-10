@@ -38,6 +38,9 @@ import ChevronRightIcon from './icons/svg/ChevronRightIcon.vue'
 import TodoIcon from './icons/svg/TodoIcon.vue'
 import PersonnelIcon from './icons/svg/PersonnelIcon.vue'
 import FilterIcon from './icons/svg/FilterIcon.vue'
+import StarIcon from './icons/svg/StarIcon.vue'
+import ClockIcon from './icons/svg/ColckIcon.vue'
+import DownArrowIcon from './icons/svg/downArrowIcon.vue'
 
 const props = withDefaults(
   defineProps<{
@@ -85,7 +88,10 @@ const iconMap: Record<string, any> = {
   'chevron-right': ChevronRightIcon,
   todo: TodoIcon,
   personnel: PersonnelIcon,
-  filterIcon: FilterIcon
+  filterIcon: FilterIcon,
+  starIcon: StarIcon,
+  clockIcon:ClockIcon,
+  downArrowIcon:DownArrowIcon
 }
 
 // 动态获取图标组件

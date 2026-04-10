@@ -1,69 +1,41 @@
 <template>
   <div class="notification-panel">
     <div class="notification-panel__header">
-      <h3 class="notification-panel__title">消息中心</h3>
-      <div class="notification-panel__actions">
-        <el-button
-          v-if="isSupported && status !== 'subscribed'"
-          text
-          type="primary"
-          :loading="status === 'subscribing'"
-          @click="handleSubscribe"
+      <div class="notification-panel__title-row">
+        <h1 class="notification-panel__title">Notifications</h1>
+        <span class="notification-panel__accent">•••</span>
+      </div>
+
+      <div class="notification-panel__filters">
+        <button
+          v-for="filter in filters"
+          :key="filter.value"
+          type="button"
+          :class="['notification-panel__filter', { 'is-active': activeFilter === filter.value }]"
+          @click="activeFilter = filter.value"
         >
-          开启推送
-        </el-button>
-        <el-button
-          v-if="isSupported && status === 'subscribed'"
-          text
-          type="danger"
-          @click="handleUnsubscribe"
-        >
-          关闭推送
-        </el-button>
-        <el-button text type="primary" @click="handleRefresh">刷新</el-button>
+          {{ filter.label }}<span v-if="filter.count !== null"> {{ filter.count }}</span>
+        </button>
       </div>
     </div>
 
     <div class="notification-panel__body">
-      <div v-if="loading && notifications.length === 0" class="notification-panel__state">加载中...</div>
-      <div v-else-if="notifications.length === 0" class="notification-panel__state">暂无消息</div>
-      <template v-else>
-        <section v-if="unreadNotifications.length > 0" class="notification-panel__section">
-          <p class="notification-panel__section-title">未读</p>
-          <div class="notification-panel__list">
-            <NotificationItem
-              v-for="item in unreadNotifications"
-              :key="item.id"
-              :item="item"
-              @select="handleSelect"
-            />
-          </div>
-        </section>
+      <div v-if="loading && filteredNotifications.length === 0" class="notification-panel__state">加载中...</div>
+      <div v-else-if="filteredNotifications.length === 0" class="notification-panel__state">暂无消息</div>
+      <div v-else class="notification-panel__list">
+        <NotificationItem
+          v-for="item in filteredNotifications"
+          :key="item.id"
+          :item="item"
+          @select="handleSelect"
+        />
+      </div>
 
-        <section v-if="readNotifications.length > 0" class="notification-panel__section">
-          <p class="notification-panel__section-title">已读</p>
-          <div class="notification-panel__list">
-            <NotificationItem
-              v-for="item in readNotifications"
-              :key="item.id"
-              :item="item"
-              @select="handleSelect"
-            />
-          </div>
-        </section>
-
-        <div v-if="hasMore" class="notification-panel__load-more">
-          <el-button :loading="syncing" @click="loadMore">加载更多</el-button>
-        </div>
-      </template>
-    </div>
-
-    <div class="notification-panel__footer">
-      <ClientOnly fallback="上次同步：尚未同步">
-        上次同步：{{ lastSyncText }}
-        <span v-if="status === 'subscribed'" class="notification-panel__push-status"> · 推送已开启</span>
-        <span v-if="errorMessage" class="notification-panel__push-error"> · {{ errorMessage }}</span>
-      </ClientOnly>
+      <div v-if="hasMore" class="notification-panel__load-more">
+        <el-button class="notification-panel__load-more-btn" :loading="syncing" @click="loadMore">
+          Load more
+        </el-button>
+      </div>
     </div>
   </div>
 </template>
@@ -77,138 +49,185 @@ const emit = defineEmits<{
 
 const {
   notifications,
-  unreadNotifications,
-  readNotifications,
+  unreadCount,
   hasMore,
   loading,
   syncing,
-  lastSyncedAt,
   bootstrap,
-  refreshFromServer,
   loadMore,
   openNotification,
 } = useNotification()
 
-const { status, isSupported, subscribe, unsubscribe, errorMessage, init } = usePushSubscription()
+const activeFilter = ref('all')
 
-const lastSyncText = computed(() => {
-  if (!lastSyncedAt.value) {
-    return '尚未同步'
+const formatCategoryLabel = (value?: string) => {
+  const raw = value?.trim()
+  if (!raw) {
+    return ''
   }
 
-  return new Date(lastSyncedAt.value).toLocaleString('zh-CN', {
-    hour12: false,
-  })
+  return raw
+    .split(/[\s/_-]+/)
+    .filter(Boolean)
+    .map(part => part.charAt(0).toUpperCase() + part.slice(1))
+    .join(' ')
+}
+
+const categoryFilters = computed(() => {
+  const counts = new Map<string, number>()
+
+  for (const item of notifications.value) {
+    const category = formatCategoryLabel(item.category)
+    if (!category) {
+      continue
+    }
+
+    counts.set(category, (counts.get(category) || 0) + 1)
+  }
+
+  return Array.from(counts.entries())
+    .sort((left, right) => right[1] - left[1])
+    .slice(0, 3)
+    .map(([label, count]) => ({
+      label,
+      value: `category:${label}`,
+      count,
+    }))
 })
 
-const handleRefresh = async () => {
-  await refreshFromServer()
-}
+const filters = computed(() => {
+  return [
+    { label: 'All', value: 'all', count: null as number | null },
+    ...categoryFilters.value,
+    { label: 'Pending', value: 'pending', count: unreadCount.value },
+  ]
+})
+
+const filteredNotifications = computed(() => {
+  if (activeFilter.value === 'all') {
+    return notifications.value
+  }
+
+  if (activeFilter.value === 'pending') {
+    return notifications.value.filter(item => !item.readAt)
+  }
+
+  if (activeFilter.value.startsWith('category:')) {
+    const targetCategory = activeFilter.value.replace('category:', '')
+    return notifications.value.filter(item => formatCategoryLabel(item.category) === targetCategory)
+  }
+  
+  
+  return notifications.value
+})
 
 const handleSelect = async (item: NotificationItem) => {
   await openNotification(item)
   emit('close')
 }
 
-const handleSubscribe = async () => {
-  await subscribe()
-}
-
-const handleUnsubscribe = async () => {
-  await unsubscribe()
-}
-
 onMounted(async () => {
-  await Promise.all([
-    bootstrap(),
-    init(),
-  ])
-
+  await bootstrap()
 })
 </script>
 
 <style scoped>
 .notification-panel {
-  width: 100%;
-  max-width: 360px;
-  max-height: 500px;
+  min-height: 100%;
   display: flex;
   flex-direction: column;
+  background: #f7f2f4;
 }
 
 .notification-panel__header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding-bottom: 10px;
-  border-bottom: 1px solid #f0f0f0;
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  padding: 18px 14px 14px;
+  background: linear-gradient(180deg, #ffffff 0%, #fbf8f9 100%);
+  border-bottom: 1px solid #e5d9de;
 }
 
-.notification-panel__actions {
+.notification-panel__title-row {
   display: flex;
   align-items: center;
-  gap: 4px;
+  gap: 8px;
+  margin-bottom: 14px;
 }
 
 .notification-panel__title {
   margin: 0;
-  font-size: 16px;
-  font-weight: 600;
-  color: #1f2328;
+  font-size: 19px;
+  line-height: 1.2;
+  font-weight: 700;
+  color: #161616;
+}
+
+.notification-panel__accent {
+  color: #b10f49;
+  font-size: 15px;
+  line-height: 1;
+  letter-spacing: 1px;
+}
+
+.notification-panel__filters {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+}
+
+.notification-panel__filters::-webkit-scrollbar {
+  display: none;
+}
+
+.notification-panel__filter {
+  flex-shrink: 0;
+  border: 1px solid #d7d0d3;
+  border-radius: 999px;
+  background: #ffffff;
+  color: #6d6d6d;
+  font-size: 13px;
+  line-height: 1;
+  padding: 8px 14px;
+  transition: all 0.2s ease;
+}
+
+.notification-panel__filter.is-active {
+  background: #b10f49;
+  border-color: #b10f49;
+  color: #ffffff;
+  box-shadow: 0 10px 18px rgba(177, 15, 73, 0.16);
 }
 
 .notification-panel__body {
-  overflow-y: auto;
-  padding: 10px 0;
+  flex: 1;
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  padding-bottom: 20px;
 }
 
 .notification-panel__state {
   text-align: center;
-  color: #999;
-  padding: 40px 0;
   font-size: 13px;
-}
-
-.notification-panel__section {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.notification-panel__section-title {
-  margin: 0;
-  font-size: 12px;
-  color: #8c8c8c;
-  font-weight: 600;
+  color: #8b8b8b;
 }
 
 .notification-panel__list {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  background: #ffffff;
 }
 
 .notification-panel__load-more {
   display: flex;
   justify-content: center;
-  padding-top: 4px;
+  padding: 18px 16px 0;
 }
 
-.notification-panel__footer {
-  border-top: 1px solid #f0f0f0;
-  padding-top: 8px;
-  font-size: 12px;
-  color: #999;
-}
-
-.notification-panel__push-status {
-  color: #5c8b35;
-}
-
-.notification-panel__push-error {
-  color: #c75146;
+.notification-panel__load-more-btn {
+  width: 100%;
+  max-width: 220px;
 }
 </style>

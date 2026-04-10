@@ -1,8 +1,22 @@
 import type { ApprovalAction, ApprovalItem } from '~/types/approval'
-import type { NotificationDetailResponse, NotificationItem, NotificationListResponse } from '~/types/notification'
-import { useCurrentUserId } from '~/composables/useCurrentUserId'
 
-const DEFAULT_PAGE_SIZE = 20
+interface WorkflowBaseInfo {
+  workflowName?: string
+  workflowTypeName?: string
+}
+
+interface WorkflowListItem {
+  createTime?: string
+  creatorDepartmentName?: string
+  creatorName?: string
+  currentNodeName?: string
+  lastOperateTime?: string
+  requestId?: string
+  requestName?: string
+  requestmark?: string
+  status?: string
+  workflowBaseInfo?: WorkflowBaseInfo
+}
 
 const actionLabelMap: Record<ApprovalAction, string> = {
   Approve: 'Approved',
@@ -22,12 +36,20 @@ const processStatusMap: Record<ApprovalAction, string> = {
   Return: 'Returned for revision',
 }
 
+const normalizeDateValue = (value?: string | null) => {
+  if (!value) {
+    return ''
+  }
+
+  return value.includes(' ') ? value.replace(' ', 'T') : value
+}
+
 const formatDate = (value?: string | null) => {
   if (!value) {
     return ''
   }
 
-  const date = new Date(value)
+  const date = new Date(normalizeDateValue(value))
   if (Number.isNaN(date.getTime())) {
     return value
   }
@@ -37,60 +59,65 @@ const formatDate = (value?: string | null) => {
   })
 }
 
-const mapNotificationToApproval = (item: NotificationItem): ApprovalItem => {
-  const status: ApprovalItem['status'] = item.readAt ? 'Approved' : 'Pending'
-  const submittedBy = item.source || '消息中心'
-  const requestDate = item.createdAt ? item.createdAt.slice(0, 10) : ''
-  const processStatus = item.readAt ? 'Approved' : 'Pending'
+const formatDateOnly = (value?: string | null) => {
+  if (!value) {
+    return ''
+  }
+
+  const date = new Date(normalizeDateValue(value))
+  if (Number.isNaN(date.getTime())) {
+    return value.slice(0, 10)
+  }
+
+  return date.toISOString().slice(0, 10)
+}
+
+const mapWorkflowToApproval = (item: WorkflowListItem): ApprovalItem => {
+  const requestId = item.requestId || item.requestmark || ''
+  const code = item.requestmark || requestId
+  const submittedBy = item.creatorName || 'Unknown'
+  const submittedDate = formatDate(item.createTime)
+  const requestDate = formatDateOnly(item.createTime)
+  const processStatus = item.currentNodeName || item.status || 'Pending'
+  const portfolio = item.workflowBaseInfo?.workflowName || item.workflowBaseInfo?.workflowTypeName || 'Workflow'
+  const businessUnit = item.creatorDepartmentName || submittedBy
 
   return {
-    id: item.id,
-    code: item.id,
-    category: item.category || 'order',
-    status,
-    title: item.title || '通知标题',
-    subtitle: item.summary || item.content || '通知正文',
+    id: requestId,
+    code,
+    category: item.workflowBaseInfo?.workflowTypeName || 'workflow',
+    status: 'Pending',
+    title: item.requestName || code || 'Workflow Request',
+    subtitle: item.status || processStatus || 'Pending Approval',
     date: requestDate,
     badge: null,
-    referenceNo: item.id,
+    referenceNo: code || requestId,
     submittedBy,
-    submittedDate: formatDate(item.createdAt),
+    submittedDate,
     processStatus,
     requestDate,
-    portfolio: item.category || 'order',
-    businessUnit: submittedBy,
-    detailLinkLabel: 'View details in Message Center',
+    portfolio,
+    businessUnit,
+    detailLinkLabel: 'View workflow details',
     latestComment: '',
-    attachments: item.link ? [{ name: 'Notification Link' }] : [],
+    attachments: [],
     approvers: [
       {
         name: submittedBy,
-        action: item.readAt ? 'Approved' : 'Pending',
-        date: formatDate(item.readAt || item.createdAt),
-        role: 'Source',
+        action: 'Submitted',
+        date: submittedDate,
+        role: 'Requestor',
       },
     ],
     fields: [
-      { label: 'Reference Number', value: item.id },
+      { label: 'Reference Number', value: code || requestId },
       { label: 'Process Status', value: processStatus },
       { label: 'Requestor', value: submittedBy },
       { label: 'Request Date', value: requestDate },
-      { label: 'Portfolio', value: item.category || 'order' },
-      { label: 'Business Unit', value: submittedBy },
+      { label: 'Portfolio', value: portfolio },
+      { label: 'Business Unit', value: businessUnit },
     ],
   }
-}
-
-const upsertApproval = (list: ApprovalItem[], incoming: ApprovalItem) => {
-  const next = [...list]
-  const targetIndex = next.findIndex((item) => item.id === incoming.id)
-
-  if (targetIndex >= 0) {
-    next[targetIndex] = incoming
-    return next
-  }
-
-  return [incoming, ...next]
 }
 
 export const useApprovals = () => {
@@ -98,7 +125,6 @@ export const useApprovals = () => {
   const loading = useState<boolean>('approvals:loading', () => false)
   const syncing = useState<boolean>('approvals:syncing', () => false)
   const bootstrapped = useState<boolean>('approvals:bootstrapped', () => false)
-  const { getCurrentUserId } = useCurrentUserId()
 
   const getApprovalById = (id: string) => {
     return approvals.value.find((item) => item.id === id || item.code === id) || null
@@ -113,22 +139,16 @@ export const useApprovals = () => {
     loading.value = true
 
     try {
-      const response = await $fetch<NotificationListResponse>('/api/notifications', {
-        method: 'GET',
-        query: {
-          page: 1,
-          pageSize: DEFAULT_PAGE_SIZE,
-          ...(getCurrentUserId() ? { user_id: getCurrentUserId() } : {}),
-          is_read: 0,
-          category: 'order',
-        },
+      const response = await $fetch<WorkflowListItem[]>('/api/myApproved/workflowList', {
+        method: 'POST',
       })
 
-      approvals.value = Array.isArray(response?.items)
-        ? response.items.map((item) => mapNotificationToApproval(item))
+      approvals.value = Array.isArray(response)
+        ? response.map((item) => mapWorkflowToApproval(item))
         : []
     } catch (error) {
-      console.error('Fetch approvals from notifications failed:', error)
+      console.error('Fetch approvals from workflow list failed:', error)
+      approvals.value = []
     } finally {
       loading.value = false
       syncing.value = false
@@ -150,45 +170,14 @@ export const useApprovals = () => {
       return existing
     }
 
-    try {
-      const detail = await $fetch<NotificationDetailResponse>(`/api/notifications/${encodeURIComponent(id)}`, {
-        method: 'GET',
-        query: {
-          ...(getCurrentUserId() ? { user_id: getCurrentUserId() } : {}),
-        },
-      })
-
-      if (!detail?.item) {
-        return null
-      }
-
-      const mapped = mapNotificationToApproval(detail.item)
-      approvals.value = upsertApproval(approvals.value, mapped)
-      return mapped
-    } catch (error) {
-      console.error('Fetch approval detail from notifications failed:', error)
-      return null
-    }
+    await refreshFromServer()
+    return getApprovalById(id)
   }
 
   const submitApprovalAction = async (id: string, action: ApprovalAction, comment = '') => {
     const target = getApprovalById(id)
     if (!target) {
       return null
-    }
-
-    if (action === 'Approve') {
-      try {
-        await $fetch(`/api/notifications/${encodeURIComponent(id)}`, {
-          method: 'POST',
-          body: {
-            ...(getCurrentUserId() ? { user_id: getCurrentUserId() } : {}),
-            id,
-          },
-        })
-      } catch (error) {
-        console.error('Mark notification as read failed:', error)
-      }
     }
 
     target.status = statusMap[action]

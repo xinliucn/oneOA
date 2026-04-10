@@ -13,11 +13,8 @@
                 </el-button>
                 <LocaleDropdown variant="mobile" placement="bottom-end" />
                 <NotificationBell
-                    placement="bottom"
-                    :popover-width="320"
                     :button-size="36"
                     :icon-size="20"
-                    popover-class="notification-bell-popover--mobile"
                 />
                 <el-avatar :size="40" src="/favicon.png" />
             </div>

@@ -1,14 +1,16 @@
 <template>
   <button class="notification-item" :class="{ unread: !item.readAt }" @click="handleClick">
-    <div class="notification-item__header">
-      <span class="notification-item__title">{{ item.title }}</span>
-      <span class="notification-item__time">{{ timeText }}</span>
+    <div class="notification-item__main">
+      <div class="notification-item__top">
+        <span class="notification-item__title">{{ item.title }}</span>
+        <span class="notification-item__time">{{ timeText }}</span>
+      </div>
+
+      <p v-if="subtitle" class="notification-item__subtitle">{{ subtitle }}</p>
+      <p class="notification-item__reference">{{ referenceText }}</p>
     </div>
-    <p class="notification-item__content">{{ item.summary || item.content }}</p>
-    <div class="notification-item__meta">
-      <span v-if="item.category" class="notification-item__tag">{{ item.category }}</span>
-      <span v-if="!item.readAt" class="notification-item__dot" />
-    </div>
+
+    <span v-if="!item.readAt" class="notification-item__dot" />
   </button>
 </template>
 
@@ -23,15 +25,31 @@ const emit = defineEmits<{
   select: [item: NotificationItemModel]
 }>()
 
+const subtitle = computed(() => {
+  return props.item.source || props.item.summary || props.item.content || ''
+})
+
+const referenceText = computed(() => {
+  const category = props.item.category?.trim()
+  return category ? `${category.toUpperCase()}-${props.item.id}` : props.item.id
+})
+
 const timeText = computed(() => {
-  const date = new Date(props.item.createdAt)
-  return date.toLocaleString('zh-CN', {
-    hour12: false,
-    month: '2-digit',
-    day: '2-digit',
-    hour: '2-digit',
-    minute: '2-digit',
-  })
+  const createdAt = new Date(props.item.createdAt).getTime()
+  const diff = Math.max(0, Date.now() - createdAt)
+  const minute = 60 * 1000
+  const hour = 60 * minute
+  const day = 24 * hour
+
+  if (diff < hour) {
+    return `${Math.max(1, Math.floor(diff / minute))}m ago`
+  }
+
+  if (diff < day) {
+    return `${Math.floor(diff / hour)}h ago`
+  }
+
+  return `${Math.floor(diff / day)}d ago`
 })
 
 const handleClick = () => {
@@ -42,73 +60,81 @@ const handleClick = () => {
 <style scoped>
 .notification-item {
   width: 100%;
-  border: 1px solid #ececec;
-  border-radius: 10px;
-  background-color: #fff;
-  padding: 12px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  border: 0;
+  border-bottom: 1px solid #ece3e6;
+  background: #ffffff;
+  padding: 16px 14px;
   text-align: left;
-  cursor: pointer;
-  transition: all 0.2s ease;
+  transition: background-color 0.2s ease;
 }
 
 .notification-item:hover {
-  border-color: #d7a0b2;
-  background-color: #fff8fa;
+  background: #fcf7f9;
 }
 
 .notification-item.unread {
-  border-color: #f1c4d3;
+  background: #fbf3f6;
 }
 
-.notification-item__header {
+.notification-item__main {
+  min-width: 0;
+  flex: 1;
+}
+
+.notification-item__top {
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
-  gap: 12px;
+  gap: 10px;
 }
 
 .notification-item__title {
-  font-size: 14px;
-  color: #1f2328;
+  flex: 1;
+  min-width: 0;
+  font-size: 15px;
+  line-height: 1.35;
   font-weight: 600;
-  line-height: 1.4;
-}
-
-.notification-item__time {
-  font-size: 12px;
-  color: #8c8c8c;
-  white-space: nowrap;
-}
-
-.notification-item__content {
-  margin: 8px 0;
-  color: #4f4f4f;
-  font-size: 13px;
-  line-height: 1.5;
+  color: #171717;
   display: -webkit-box;
-  -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
   overflow: hidden;
 }
 
-.notification-item__meta {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
+.notification-item__time {
+  flex-shrink: 0;
+  font-size: 12px;
+  line-height: 1.3;
+  color: #9a9a9a;
+  white-space: nowrap;
 }
 
-.notification-item__tag {
+.notification-item__subtitle {
+  margin: 4px 0 0;
+  font-size: 13px;
+  line-height: 1.35;
+  color: #1f1f1f;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 1;
+  overflow: hidden;
+}
+
+.notification-item__reference {
+  margin: 4px 0 0;
   font-size: 12px;
-  color: #a60a3a;
-  background: #ffeaf0;
-  border-radius: 999px;
-  padding: 2px 8px;
+  line-height: 1.3;
+  color: #4b4b4b;
 }
 
 .notification-item__dot {
-  width: 8px;
-  height: 8px;
+  flex-shrink: 0;
+  width: 14px;
+  height: 14px;
   border-radius: 999px;
-  background-color: #a60a3a;
+  background: #b10f49;
 }
 </style>

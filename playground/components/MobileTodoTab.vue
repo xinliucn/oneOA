@@ -1,19 +1,39 @@
 <template>
   <div class="mobile-todo">
     <div class="mobile-todo__header">
-      <h2 class="mobile-todo__title">My Approvals</h2>
-      <el-button circle class="action-btn">
-        <IconCustom name="search" :size="20" />
-      </el-button>
+      <div ref="dropdownRef" class="mobile-todo__dropdown">
+        <button type="button" class="mobile-todo__title" @click="toggleDropdown">
+          <h2>{{ selectedView.label }}</h2>
+          <span class="mobile-todo__arrow" :class="{ 'is-open': isDropdownOpen }">
+            <IconCustom name="downArrowIcon" :size="20" />
+          </span>
+        </button>
+
+        <div v-if="isDropdownOpen" class="mobile-todo__menu">
+          <button v-for="option in todoOptions" :key="option.value" type="button" class="mobile-todo__menu-item"
+            :class="{ 'is-active': selectedView.value === option.value }" @click="selectView(option)">
+            <span class="mobile-todo__menu-check" :class="{ 'is-visible': selectedView.value === option.value }" />
+            <span>{{ option.label }}</span>
+          </button>
+        </div>
+      </div>
+      <div>
+        <el-button circle class="action-btn_left" @click="filterDropdown">
+          <IconCustom name="filterIcon" :size="20" />
+        </el-button>
+        <el-button circle class="action-btn">
+          <IconCustom name="search" :size="20" @click="filterDropdown"/>
+        </el-button>
+      </div>
     </div>
 
-    <div class="mobile-todo__filters">
+    <!-- <div class="mobile-todo__filters">
       <button v-for="filter in filters" :key="filter.value"
         :class="['filter-btn', { active: activeFilter === filter.value }]" @click="activeFilter = filter.value">
         {{ filter.label }}{{ filter.count ? ' ' + filter.count : '' }}
       </button>
-    </div>
-
+    </div> -->
+    
     <div class="mobile-todo__list">
       <div v-if="loading && filteredTasks.length === 0" class="mobile-todo__state">加载中...</div>
       <div v-else-if="!loading && filteredTasks.length === 0" class="mobile-todo__state">暂无消息</div>
@@ -29,7 +49,10 @@
             <div class="todo-item__date">{{ task.date }}</div>
           </div>
           <div class="todo-item__title">{{ task.title }}</div>
-          <div class="todo-item__subtitle">{{ task.subtitle }}</div>
+          <div class="todo-item__subtitle">
+            <span>{{ task.submittedBy }}</span><span>via</span><span class="todo-item__portfolio">{{ task.portfolio
+            }}</span>
+          </div>
         </div>
         <IconCustom name="chevron-right" :size="20" color="#A60A3A" class="todo-item__arrow" />
       </div>
@@ -42,6 +65,16 @@ import { computed, ref } from 'vue'
 import type { ApprovalItem } from '~/types/approval'
 
 const activeFilter = ref('all')
+const dropdownRef = ref<HTMLElement | null>(null)
+const isDropdownOpen = ref(false)
+const isfilterDropdown = ref(false)
+const todoOptions = [
+  { label: 'My Approvals', value: 'approvals' },
+  { label: 'My Requests', value: 'requests' },
+  { label: 'My Tasks', value: 'tasks' },
+  { label: 'Watchlist', value: 'watchlist' },
+]
+const selectedView = ref(todoOptions[0]) as any
 const { approvals, loading, bootstrap } = useApprovals()
 
 const filters = computed(() => {
@@ -72,8 +105,38 @@ const handleTaskClick = (task: ApprovalItem) => {
   return navigateTo(`/mobile/approval/${encodeURIComponent(task.code)}`)
 }
 
+const toggleDropdown = () => {
+  isDropdownOpen.value = !isDropdownOpen.value
+}
+
+const filterDropdown = () => {
+  isfilterDropdown.value = !isfilterDropdown.value
+}
+
+const selectView = (option: (typeof todoOptions)[number]) => {
+  selectedView.value = option
+  isDropdownOpen.value = false
+}
+
+const handleDocumentClick = (event: MouseEvent) => {
+  const target = event.target
+  if (!(target instanceof Node)) {
+    return
+  }
+
+  if (!dropdownRef.value?.contains(target)) {
+    isDropdownOpen.value = false
+  }
+}
+
+
 onMounted(async () => {
+  document.addEventListener('click', handleDocumentClick)
   await bootstrap()
+})
+
+onBeforeUnmount(() => {
+  document.removeEventListener('click', handleDocumentClick)
 })
 </script>
 
@@ -91,6 +154,25 @@ onMounted(async () => {
   align-items: center;
   padding: 16px;
   background: white;
+
+  .action-btn_left {
+    height: 40px;
+    width: 40px;
+    background-color: #fce4ec;
+    /* 浅粉色背景 */
+    border: none;
+    color: #c2185b;
+    /* 深粉色图标 */
+
+    &:hover {
+      background-color: #f8bbd0;
+      /* hover 时稍深的粉色 */
+    }
+
+    /* 移除 Element Plus 默认的 margin */
+    margin-left: 0 !important;
+    margin-right: 16px !important;
+  }
 
   .action-btn {
     height: 40px;
@@ -112,11 +194,80 @@ onMounted(async () => {
   }
 }
 
+.mobile-todo__dropdown {
+  position: relative;
+}
+
 .mobile-todo__title {
+  border: 0;
+  background: transparent;
+  display: flex;
+  align-items: center;
+  gap: 2px;
   font-size: 20px;
   font-weight: 600;
   color: #000000;
   margin: 0;
+  padding: 0;
+
+  h2 {
+    font-size: 20px;
+    font-weight: 600;
+    margin: 0;
+  }
+
+  span {
+    display: flex;
+    align-items: center;
+  }
+}
+
+.mobile-todo__arrow {
+  transition: transform 0.2s ease;
+}
+
+.mobile-todo__arrow.is-open {
+  transform: rotate(180deg);
+}
+
+.mobile-todo__menu {
+  position: absolute;
+  top: calc(100% + 12px);
+  left: 0;
+  min-width: 176px;
+  padding: 14px 0;
+  border-radius: 32px;
+  background: #ffffff;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.14);
+  z-index: 20;
+}
+
+.mobile-todo__menu-item {
+  width: 100%;
+  border: 0;
+  background: transparent;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 22px 28px;
+  text-align: left;
+  font-size: 17px;
+  font-weight: 600;
+  color: #111111;
+}
+
+.mobile-todo__menu-check {
+  width: 12px;
+  height: 20px;
+  flex-shrink: 0;
+  opacity: 0;
+  border-right: 4px solid #a60a3a;
+  border-bottom: 4px solid #a60a3a;
+  transform: rotate(45deg) translateY(-2px);
+}
+
+.mobile-todo__menu-check.is-visible {
+  opacity: 1;
 }
 
 .mobile-todo__add-btn {
@@ -292,5 +443,9 @@ onMounted(async () => {
 .todo-item__arrow {
   flex-shrink: 0;
   align-self: center;
+}
+
+.todo-item__portfolio {
+  color: #A60A3A;
 }
 </style>

@@ -10,10 +10,13 @@
           placeholder="Search Intranet"
           @keyup.enter="handleSearch"
         />
-        <button class="search-bar__ai-btn">
-          AI <span class="ai-star">★</span>
-        </button>
+       
       </div>
+       <button class="search-bar__ai-btn">
+          AI <span class="ai-star">
+            <IconCustom name="starIcon" :size="20" />
+          </span>
+        </button>
     </div>
 
     <!-- 默认：最近搜索 -->
@@ -24,7 +27,7 @@
         class="recent-item"
         @click="selectRecent(item.query)"
       >
-        <IconCustom name="clock" :size="18" class="recent-item__icon" />
+        <IconCustom name="clockIcon" :size="28" class="recent-item__icon" />
         <span class="recent-item__text">{{ item.query }}</span>
       </div>
     </div>
@@ -96,6 +99,8 @@ const handleResultClick = (result) => {
 .mobile-search__header {
   padding: 12px 16px;
   background: white;
+  display: flex;
+  justify-content: space-between;
 }
 
 .search-bar {
@@ -103,9 +108,11 @@ const handleResultClick = (result) => {
   align-items: center;
   gap: 8px;
   padding: 10px 14px;
-  background: white;
-  border: 1px solid #E0E0E0;
-  border-radius: 24px;
+  width: 100%;
+  margin-right: 8px;
+  background: #F5F5F5;
+  border: none;
+  border-radius: 8px;
 }
 
 .search-bar__icon {
@@ -131,10 +138,12 @@ const handleResultClick = (result) => {
   align-items: center;
   gap: 3px;
   padding: 5px 12px;
-  background: #A60A3A;
-  color: white;
+  width: 56px;
+  height: 39px;
+  background: #A60A3A26;
+  color: #A60A3A;
   border: none;
-  border-radius: 16px;
+  border-radius: 18px;
   font-size: 13px;
   font-weight: 600;
   cursor: pointer;
@@ -158,7 +167,6 @@ const handleResultClick = (result) => {
   align-items: center;
   gap: 14px;
   padding: 16px;
-  border-bottom: 1px solid #F0F0F0;
   cursor: pointer;
 }
 
