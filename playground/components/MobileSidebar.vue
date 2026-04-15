@@ -30,20 +30,23 @@
 </template>
 
 <script setup lang="ts">
+import { computed } from 'vue'
+
 const props = defineProps<{ modelValue: boolean }>()
 const emit = defineEmits(['update:modelValue'])
+const { t } = useAppI18n()
 
-const menuItems = [
-  { icon: 'document', label: 'News', path: '/mobile/news' },
-  { icon: 'info', label: 'Company Information' },
-  { icon: 'download', label: 'Company Documents' },
-  { icon: 'apps', label: 'Applications' },
-  { icon: 'building', label: 'Department Intranets' },
-  { icon: 'dashboard', label: 'Dashboards' },
-  { icon: 'todo', label: 'To-Do' },
-  { icon: 'education', label: 'eLearning' },
-  { icon: 'shop', label: 'eShop' },
-]
+const menuItems = computed(() => [
+  { icon: 'document', label: t('nav.news'), path: '/mobile/news' },
+  { icon: 'info', label: t('nav.companyInformation') },
+  { icon: 'download', label: t('nav.companyDocuments') },
+  { icon: 'apps', label: t('nav.applications') },
+  { icon: 'building', label: t('nav.departmentIntranets') },
+  { icon: 'dashboard', label: t('nav.dashboards') },
+  { icon: 'todo', label: t('nav.todo') },
+  { icon: 'education', label: t('nav.eLearning') },
+  { icon: 'shop', label: t('nav.eShop') },
+])
 
 const onNavigateTo = (path?: string) => {
   emit('update:modelValue', false)

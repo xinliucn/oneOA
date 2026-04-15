@@ -43,6 +43,29 @@ export const appMessages = {
         favourites: '收藏',
         applications: '应用',
         search: '搜索'
+      },
+      applications: {
+        tabs: {
+          byApplication: '按应用',
+          byBusiness: '按业务'
+        }
+      },
+      todo: {
+        via: '通过',
+        filters: {
+          category: '筛选 1',
+          status: '筛选 2',
+          all: '全部'
+        },
+        actions: {
+          cancel: '取消',
+          apply: '应用'
+        },
+        states: {
+          loadingScreen: '加载{view}中...',
+          loading: '加载中...',
+          empty: '暂无消息'
+        }
       }
     },
     home: {
@@ -168,6 +191,29 @@ export const appMessages = {
         favourites: '收藏',
         applications: '應用',
         search: '搜尋'
+      },
+      applications: {
+        tabs: {
+          byApplication: '按應用',
+          byBusiness: '按業務'
+        }
+      },
+      todo: {
+        via: '透過',
+        filters: {
+          category: '篩選 1',
+          status: '篩選 2',
+          all: '全部'
+        },
+        actions: {
+          cancel: '取消',
+          apply: '套用'
+        },
+        states: {
+          loadingScreen: '載入{view}中...',
+          loading: '載入中...',
+          empty: '暫無消息'
+        }
       }
     },
     home: {
@@ -293,6 +339,29 @@ export const appMessages = {
         favourites: 'Favourites',
         applications: 'Applications',
         search: 'Search'
+      },
+      applications: {
+        tabs: {
+          byApplication: 'By Application',
+          byBusiness: 'By Business'
+        }
+      },
+      todo: {
+        via: 'via',
+        filters: {
+          category: 'Filter 1',
+          status: 'Filter 2',
+          all: 'All'
+        },
+        actions: {
+          cancel: 'Cancel',
+          apply: 'Apply'
+        },
+        states: {
+          loadingScreen: 'Loading {view}...',
+          loading: 'Loading...',
+          empty: 'No items'
+        }
       }
     },
     home: {

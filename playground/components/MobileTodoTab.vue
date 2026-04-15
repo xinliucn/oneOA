@@ -1,121 +1,372 @@
 <template>
   <div class="mobile-todo">
-    <div class="mobile-todo__header">
-      <div ref="dropdownRef" class="mobile-todo__dropdown">
-        <button type="button" class="mobile-todo__title" @click="toggleDropdown">
-          <h2>{{ selectedView.label }}</h2>
-          <span class="mobile-todo__arrow" :class="{ 'is-open': isDropdownOpen }">
-            <IconCustom name="downArrowIcon" :size="20" />
-          </span>
+    <div v-if="!isLoadingScreenVisible" class="mobile-todo__header">
+      <template v-if="isSearchOpen">
+        <div class="mobile-todo__search">
+          <IconCustom name="search" :size="20" class="mobile-todo__search-icon" />
+          <input
+            ref="searchInputRef"
+            v-model.trim="searchQuery"
+            type="text"
+            class="mobile-todo__search-input"
+            :placeholder="searchPlaceholder"
+          >
+        </div>
+        <button type="button" class="mobile-todo__search-cancel" @click="closeSearch">
+          {{ text('mobile.todo.actions.cancel', { 'zh-CN': '取消', 'zh-TW': '取消', en: 'Cancel' }) }}
         </button>
+      </template>
 
-        <div v-if="isDropdownOpen" class="mobile-todo__menu">
-          <button v-for="option in todoOptions" :key="option.value" type="button" class="mobile-todo__menu-item"
-            :class="{ 'is-active': selectedView.value === option.value }" @click="selectView(option)">
-            <span class="mobile-todo__menu-check" :class="{ 'is-visible': selectedView.value === option.value }" />
-            <span>{{ option.label }}</span>
+      <template v-else>
+        <div ref="dropdownRef" class="mobile-todo__dropdown">
+          <button type="button" class="mobile-todo__title" @click="toggleDropdown">
+            <h2>{{ selectedView.label }}</h2>
+            <span class="mobile-todo__arrow" :class="{ 'is-open': isDropdownOpen }">
+              <IconCustom name="downArrowIcon" :size="20" />
+            </span>
+          </button>
+
+          <div v-if="isDropdownOpen" class="mobile-todo__menu">
+            <button
+              v-for="option in todoOptions"
+              :key="option.value"
+              type="button"
+              class="mobile-todo__menu-item"
+              :class="{ 'is-active': selectedView.value === option.value }"
+              @click="selectView(option)"
+            >
+              <span class="mobile-todo__menu-check" :class="{ 'is-visible': selectedView.value === option.value }" />
+              <span>{{ option.label }}</span>
+            </button>
+          </div>
+        </div>
+
+        <div class="mobile-todo__actions">
+          <div ref="filterTriggerRef" class="mobile-todo__filter-trigger">
+            <el-button circle class="action-btn_left" :class="{ 'is-active': isFilterPanelOpen }" @click="toggleFilterPanel">
+              <IconCustom name="filterIcon" :size="20" />
+            </el-button>
+          </div>
+          <el-button circle class="action-btn" @click="openSearch">
+            <IconCustom name="search" :size="20" />
+          </el-button>
+        </div>
+      </template>
+    </div>
+
+    <div v-if="!isLoadingScreenVisible && isFilterPanelOpen && !isSearchOpen" ref="filterPanelRef" class="mobile-todo__filter-panel">
+      <div class="mobile-todo__filter-group">
+        <div class="mobile-todo__filter-label">{{ text('mobile.todo.filters.category', { 'zh-CN': '筛选 1', 'zh-TW': '篩選 1', en: 'Filter 1' }) }}</div>
+        <div class="mobile-todo__filter-options">
+          <button
+            v-for="filter in categoryFilters"
+            :key="filter.value"
+            type="button"
+            class="mobile-todo__filter-chip"
+            :class="{ 'is-active': draftCategoryFilter === filter.value }"
+            @click="draftCategoryFilter = filter.value"
+          >
+            {{ filter.label }}{{ filter.count ? ` ${filter.count}` : '' }}
           </button>
         </div>
       </div>
-      <div>
-        <el-button circle class="action-btn_left" @click="filterDropdown">
-          <IconCustom name="filterIcon" :size="20" />
-        </el-button>
-        <el-button circle class="action-btn">
-          <IconCustom name="search" :size="20" @click="filterDropdown"/>
-        </el-button>
+
+      <div class="mobile-todo__filter-group">
+        <div class="mobile-todo__filter-label">{{ text('mobile.todo.filters.status', { 'zh-CN': '筛选 2', 'zh-TW': '篩選 2', en: 'Filter 2' }) }}</div>
+        <div class="mobile-todo__filter-options">
+          <button
+            v-for="filter in statusFilters"
+            :key="filter.value"
+            type="button"
+            class="mobile-todo__filter-chip"
+            :class="{ 'is-active': draftStatusFilter === filter.value }"
+            @click="draftStatusFilter = filter.value"
+          >
+            {{ filter.label }}{{ filter.count ? ` ${filter.count}` : '' }}
+          </button>
+        </div>
+      </div>
+
+      <div class="mobile-todo__filter-actions">
+        <button type="button" class="mobile-todo__panel-btn" @click="cancelFilters">
+          {{ text('mobile.todo.actions.cancel', { 'zh-CN': '取消', 'zh-TW': '取消', en: 'Cancel' }) }}
+        </button>
+        <button type="button" class="mobile-todo__panel-btn" @click="applyFilters">
+          {{ text('mobile.todo.actions.apply', { 'zh-CN': '应用', 'zh-TW': '套用', en: 'Apply' }) }}
+        </button>
       </div>
     </div>
 
-    <!-- <div class="mobile-todo__filters">
-      <button v-for="filter in filters" :key="filter.value"
-        :class="['filter-btn', { active: activeFilter === filter.value }]" @click="activeFilter = filter.value">
-        {{ filter.label }}{{ filter.count ? ' ' + filter.count : '' }}
-      </button>
-    </div> -->
-    
     <div class="mobile-todo__list">
-      <div v-if="loading && filteredTasks.length === 0" class="mobile-todo__state">加载中...</div>
-      <div v-else-if="!loading && filteredTasks.length === 0" class="mobile-todo__state">暂无消息</div>
-      <div v-for="task in filteredTasks" :key="task.id" class="todo-item" @click="handleTaskClick(task)">
+      <div v-if="isLoadingScreenVisible" class="mobile-todo__loading-screen">
+        <div class="mobile-todo__loading-content">
+          <div class="mobile-todo__loading-title">{{ loadingLabel }}</div>
+          <div class="mobile-todo__loading-track" aria-hidden="true">
+            <span class="mobile-todo__loading-bar" />
+          </div>
+        </div>
+      </div>
+      <div v-else-if="!loading && filteredTasks.length === 0" class="mobile-todo__state">{{ text('mobile.todo.states.empty', { 'zh-CN': '暂无消息', 'zh-TW': '暫無消息', en: 'No items' }) }}</div>
+      <template v-else>
+      <div v-if="selectedViewValue === 'approvals'" v-for="task in list" :key="task.id" class="todo-item" @click="handleTaskClick(selectedViewValue,task)">
         <div class="todo-item__content">
           <div class="todo-item__header">
             <div class="todo-item__meta">
-              <span class="todo-item__code">{{ task.code }}</span>
-              <span class="todo-item__status" :class="`status-${task.status.toLowerCase()}`">
-                {{ task.status }}
+              <span class="todo-item__code">{{ task.requestmark }}</span>
+              <span class="todo-item__status" :class="`status-pending`">
+                {{ t(`${task.status}`) }}
               </span>
             </div>
-            <div class="todo-item__date">{{ task.date }}</div>
+            <div class="todo-item__date">{{ task.createTime }}</div>
           </div>
-          <div class="todo-item__title">{{ task.title }}</div>
+          <div class="todo-item__title">{{ task.requestName }}</div>
           <div class="todo-item__subtitle">
-            <span>{{ task.submittedBy }}</span><span>via</span><span class="todo-item__portfolio">{{ task.portfolio
+            <span>{{ task.creatorName }}</span>
+            <span>{{ ' | ' }}</span>
+            <span class="todo-item__portfolio">{{ task.workflowBaseInfo.workflowName
             }}</span>
           </div>
         </div>
         <IconCustom name="chevron-right" :size="20" color="#A60A3A" class="todo-item__arrow" />
       </div>
+       <div v-if="selectedViewValue === 'requests'" v-for="task in list" :key="task.id" class="todo-item" @click="handleTaskClick(selectedViewValue,task)">
+        <div class="todo-item__content">
+          <div class="todo-item__header">
+            <div class="todo-item__meta">
+              <span class="todo-item__code">{{ task.requestmark }}</span>
+             
+            </div>
+            
+          </div>
+          <div class="todo-item__title">{{ task.requestName }} <span class="todo-item__status" :class="`status-pending`">
+                {{ t(`${task.currentNodeName}`) }}
+              </span>
+            <div class="todo-item__date">{{ task.createTime }}</div>
+            </div>
+               <div class="todo-item__title">
+              <span>{{ task.creatorSubcompanyName }}</span>
+              <span>-></span>
+              <span>{{ task.creatorDepartmentName }}</span>  
+              </div>
+          <div class="todo-item__subtitle">
+            <span>{{ task.creatorName }}</span>
+            <span>{{ ' | ' }}</span>
+            <span class="todo-item__portfolio">{{ task.workflowBaseInfo.workflowName
+            }}</span>
+          </div>
+        </div>
+      </div>
+      <div v-if="selectedViewValue === 'tasks'" v-for="task in list" :key="task.id" class="todo-item" @click="handleTaskClick(selectedViewValue,task)">
+        <div class="todo-item__content">
+          <div class="todo-item__header">
+            <div class="todo-item__meta">
+              <span class="todo-item__code">{{ task.requestmark }}</span>
+             
+            </div>
+            <div class="todo-item__date">{{ task.createTime }}</div>
+          </div>
+          <div class="todo-item__title">{{ task.requestName }}</div>
+           <span class="todo-item__status" :class="`status-pending`">
+                {{ t(`${task.status}`) }}
+              </span>
+          <div class="todo-item__subtitle">
+            <span>{{ task.creatorName }}</span>
+            <span>{{ ' | ' }}</span>
+            <span class="todo-item__portfolio">{{ task.workflowBaseInfo.workflowName
+            }}</span>
+          </div>
+        </div>
+    
+      </div>
+      </template>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed, nextTick, ref } from 'vue'
 import type { ApprovalItem } from '~/types/approval'
+const toDoFrom:any = useState('mobile:todo-form', () => null)
 
-const activeFilter = ref('all')
+type TodoOption = {
+  label: string
+  value: string
+}
+
+type LocaleMessages = Record<string, string>
+
+const { locale, t } = useAppI18n()
 const dropdownRef = ref<HTMLElement | null>(null)
+const filterTriggerRef = ref<HTMLElement | null>(null)
+const filterPanelRef = ref<HTMLElement | null>(null)
+const searchInputRef = ref<HTMLInputElement | null>(null)
 const isDropdownOpen = ref(false)
-const isfilterDropdown = ref(false)
-const todoOptions = [
-  { label: 'My Approvals', value: 'approvals' },
-  { label: 'My Requests', value: 'requests' },
-  { label: 'My Tasks', value: 'tasks' },
-  { label: 'Watchlist', value: 'watchlist' },
-]
-const selectedView = ref(todoOptions[0]) as any
-const { approvals, loading, bootstrap } = useApprovals()
+const isFilterPanelOpen = ref(false)
+const isSearchOpen = ref(false)
+const searchQuery = ref('')
+const todoOptions = computed<TodoOption[]>(() => [
+  { label: t('tasks.tabs.approval'), value: 'approvals' },
+  { label: t('tasks.tabs.requests'), value: 'requests' },
+  { label: t('tasks.tabs.tasks'), value: 'tasks' },
+  { label: t('tasks.tabs.watchlist'), value: 'watchlist' },
+])
+const selectedViewValue = ref('approvals')
+const selectedView = computed<TodoOption>(() => {
+  return todoOptions.value.find(option => option.value === selectedViewValue.value)
+    ?? todoOptions.value[0]
+    ?? { label: '', value: '' }
+})
+const appliedCategoryFilter = ref('all')
+const appliedStatusFilter = ref('all')
+const draftCategoryFilter = ref('all')
+const draftStatusFilter = ref('all')
+const { list, loading, fetchByView } = useToDoData()
 
-const filters = computed(() => {
-  const countBy = (matcher: (task: ApprovalItem) => boolean) => approvals.value.filter(matcher).length
 
-  return [
-    { label: 'All', value: 'all', count: null },
-    { label: 'IT', value: 'it', count: countBy((task) => task.category.toLowerCase() === 'it') },
-    { label: 'BU', value: 'bu', count: countBy((task) => task.category.toLowerCase() === 'bu') },
-    { label: 'Legal', value: 'legal', count: countBy((task) => task.category.toLowerCase() === 'legal') },
-    { label: 'Pending', value: 'pending', count: countBy((task) => task.status.toLowerCase() === 'pending') },
-    { label: 'Approved', value: 'approved', count: countBy((task) => task.status.toLowerCase() === 'approved') },
-  ]
+const defaultFallbacks = {
+  all: 'All',
+  search: 'Search',
+  others: 'Others',
+}
+
+const localizedFallbacks: Record<string, { all: string, search: string, others: string }> = {
+  'zh-CN': {
+    all: '全部',
+    search: '搜索',
+    others: '其他',
+  },
+  'zh-TW': {
+    all: '全部',
+    search: '搜尋',
+    others: '其他',
+  },
+  en: defaultFallbacks,
+}
+
+const text = (key: string, fallback: LocaleMessages) => {
+  const message = t(key)
+  return message === key ? fallback[locale.value] || fallback.en || '' : message
+}
+
+const searchPlaceholder = computed(() => {
+  const prefix = localizedFallbacks[locale.value]?.search || defaultFallbacks.search
+  return `${prefix} ${selectedView.value.label}`.trim()
 })
 
-const filteredTasks = computed(() => {
-  if (activeFilter.value === 'all') {
-    return approvals.value
-  }
+const isLoadingScreenVisible = computed(() => loading.value && list.value.length === 0)
 
-  return approvals.value.filter((task) => {
-    const filterValue = activeFilter.value.toLowerCase()
-    return task.status.toLowerCase() === filterValue || task.category.toLowerCase() === filterValue
+const loadingLabel = computed(() => {
+  return t('mobile.todo.states.loadingScreen', {
+    view: selectedView.value.label,
   })
 })
 
-const handleTaskClick = (task: ApprovalItem) => {
-  return navigateTo(`/mobile/approval/${encodeURIComponent(task.code)}`)
+const categoryFilters = computed(() => {
+  // const counts = approvals.value.reduce<Record<string, number>>((accumulator, task) => {
+  //   const category = task.category?.trim() || localizedFallbacks[locale.value]?.others || defaultFallbacks.others
+  //   accumulator[category] = (accumulator[category] || 0) + 1
+  //   return accumulator
+  // }, {})
+
+  // return [
+  //   { label: text('mobile.todo.filters.all', localizedFallbacks[locale.value] || defaultFallbacks), value: 'all', count: null },
+  //   ...Object.entries(counts)
+  //     .sort(([left], [right]) => left.localeCompare(right))
+  //     .map(([label, count]) => ({
+  //       label,
+  //       value: label.toLowerCase(),
+  //       count,
+  //     })),
+  // ]
+})
+
+const statusFilters = computed(() => {
+
+  // return [
+  //   { label: t('mobile.todo.filters.all'), value: 'all', count: null },
+  //   { label: t('tasks.status.pending'), value: 'pending', count: countBy('pending') },
+  //   { label: t('tasks.status.approved'), value: 'approved', count: countBy('approved') },
+  //   { label: t('tasks.status.rejected'), value: 'rejected', count: countBy('rejected') },
+  // ]
+})
+
+const filteredTasks = computed(() => {
+  const keyword = searchQuery.value.trim().toLowerCase()
+
+  return list.value.filter((task) => {
+    const matchesCategory = appliedCategoryFilter.value === 'all'
+      || task.category.toLowerCase() === appliedCategoryFilter.value
+    const matchesStatus = appliedStatusFilter.value === 'all'
+      || task.status.toLowerCase() === appliedStatusFilter.value
+    const matchesSearch = !keyword || [
+      task.code,
+      task.title,
+      task.submittedBy,
+      task.portfolio,
+      task.category,
+      task.status,
+    ].some(field => field.toLowerCase().includes(keyword))
+
+    return matchesCategory && matchesStatus && matchesSearch
+  })
+})
+
+const handleTaskClick = (selectedViewValue:string,task: ApprovalItem) => {
+  toDoFrom.value = task
+  return navigateTo(`/mobile/approval/${encodeURIComponent(task.requestmark)}`)
 }
 
 const toggleDropdown = () => {
+  isSearchOpen.value = false
+  isFilterPanelOpen.value = false
   isDropdownOpen.value = !isDropdownOpen.value
 }
 
-const filterDropdown = () => {
-  isfilterDropdown.value = !isfilterDropdown.value
+const toggleFilterPanel = () => {
+  const nextOpenState = !isFilterPanelOpen.value
+
+  if (nextOpenState) {
+    isSearchOpen.value = false
+    draftCategoryFilter.value = appliedCategoryFilter.value
+    draftStatusFilter.value = appliedStatusFilter.value
+    isDropdownOpen.value = false
+  }
+
+  isFilterPanelOpen.value = nextOpenState
 }
 
-const selectView = (option: (typeof todoOptions)[number]) => {
-  selectedView.value = option
+const openSearch = async () => {
+  isSearchOpen.value = true
   isDropdownOpen.value = false
+  isFilterPanelOpen.value = false
+  await nextTick()
+  searchInputRef.value?.focus()
+}
+
+const closeSearch = () => {
+  searchQuery.value = ''
+  isSearchOpen.value = false
+}
+
+const filterDropdown = async () => {
+  await openSearch()
+}
+
+const selectView = (option: TodoOption) => {
+  selectedViewValue.value = option.value
+  isDropdownOpen.value = false
+}
+
+const cancelFilters = () => {
+  draftCategoryFilter.value = appliedCategoryFilter.value
+  draftStatusFilter.value = appliedStatusFilter.value
+  isFilterPanelOpen.value = false
+}
+
+const applyFilters = () => {
+  appliedCategoryFilter.value = draftCategoryFilter.value
+  appliedStatusFilter.value = draftStatusFilter.value
+  isFilterPanelOpen.value = false
 }
 
 const handleDocumentClick = (event: MouseEvent) => {
@@ -127,12 +378,24 @@ const handleDocumentClick = (event: MouseEvent) => {
   if (!dropdownRef.value?.contains(target)) {
     isDropdownOpen.value = false
   }
+
+  const isInsideFilterArea = filterPanelRef.value?.contains(target) || filterTriggerRef.value?.contains(target)
+
+  if (!isInsideFilterArea) {
+    isFilterPanelOpen.value = false
+  }
 }
 
+watch(
+  selectedViewValue,
+  async (view) => {
+    await fetchByView(view as 'approvals' | 'requests' | 'tasks')
+  },
+  { immediate: true },
+)
 
 onMounted(async () => {
   document.addEventListener('click', handleDocumentClick)
-  await bootstrap()
 })
 
 onBeforeUnmount(() => {
@@ -152,6 +415,7 @@ onBeforeUnmount(() => {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  gap: 12px;
   padding: 16px;
   background: white;
 
@@ -174,6 +438,11 @@ onBeforeUnmount(() => {
     margin-right: 16px !important;
   }
 
+  .action-btn_left.is-active {
+    background-color: #a60a3a;
+    color: #ffffff;
+  }
+
   .action-btn {
     height: 40px;
     width: 40px;
@@ -192,6 +461,52 @@ onBeforeUnmount(() => {
     margin-left: 0 !important;
     margin-right: 0 !important;
   }
+}
+
+.mobile-todo__actions {
+  display: flex;
+  align-items: center;
+}
+
+.mobile-todo__search {
+  flex: 1;
+  min-width: 0;
+  height: 48px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 0 16px;
+  border-radius: 12px;
+  background: #f5f5f5;
+}
+
+.mobile-todo__search-icon {
+  flex-shrink: 0;
+  color: #6b6b6b;
+}
+
+.mobile-todo__search-input {
+  width: 100%;
+  border: 0;
+  outline: none;
+  background: transparent;
+  color: #1f1f1f;
+  font-size: 15px;
+  line-height: 1.4;
+}
+
+.mobile-todo__search-input::placeholder {
+  color: #6b6b6b;
+}
+
+.mobile-todo__search-cancel {
+  flex-shrink: 0;
+  border: 0;
+  padding: 0;
+  background: transparent;
+  color: #a60a3a;
+  font-size: 16px;
+  font-weight: 500;
 }
 
 .mobile-todo__dropdown {
@@ -270,55 +585,61 @@ onBeforeUnmount(() => {
   opacity: 1;
 }
 
-.mobile-todo__add-btn {
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
-  background: #A60A3A;
-  color: white;
-  border: none;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  transition: background 0.3s;
+.mobile-todo__filter-panel {
+  padding: 12px 16px 16px;
+  border-top: 1px solid #e8e2e5;
+  background: #ffffff;
 }
 
-.mobile-todo__add-btn:hover {
-  background: #8A0A2A;
+.mobile-todo__filter-group + .mobile-todo__filter-group {
+  margin-top: 12px;
 }
 
-.mobile-todo__filters {
-  display: flex;
-  gap: 8px;
-  padding: 0 16px 16px;
-  background: white;
-  overflow-x: auto;
-  -webkit-overflow-scrolling: touch;
-  border-bottom: #D9D9D9 0.5px solid;
-}
-
-.mobile-todo__filters::-webkit-scrollbar {
-  display: none;
-}
-
-.filter-btn {
-  flex-shrink: 0;
-  padding: 8px 16px;
-  border: 1px solid #E0E0E0;
-  background: white;
-  border-radius: 20px;
+.mobile-todo__filter-label {
+  margin-bottom: 12px;
   font-size: 14px;
+  font-weight: 600;
+  color: #5f5f5f;
+}
+
+.mobile-todo__filter-options {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px 8px;
+}
+
+.mobile-todo__filter-chip {
+  border: 1px solid #d9d9d9;
+  background: #ffffff;
   color: #666666;
-  cursor: pointer;
-  transition: all 0.3s;
+  border-radius: 999px;
+  padding: 8px 14px;
+  font-size: 14px;
+  line-height: 1;
   white-space: nowrap;
 }
 
-.filter-btn.active {
-  background: #A60A3A;
-  color: white;
-  border-color: #A60A3A;
+.mobile-todo__filter-chip.is-active {
+  border-color: #b0124b;
+  background: #b0124b;
+  color: #ffffff;
+}
+
+.mobile-todo__filter-actions {
+  display: flex;
+  gap: 12px;
+  margin-top: 20px;
+}
+
+.mobile-todo__panel-btn {
+  flex: 1;
+  height: 48px;
+  border: 0;
+  border-radius: 8px;
+  background: #f3dce3;
+  color: #b0124b;
+  font-size: 16px;
+  font-weight: 600;
 }
 
 .mobile-todo__list {
@@ -335,11 +656,65 @@ onBeforeUnmount(() => {
   }
 }
 
+.mobile-todo__loading-screen {
+  min-height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 64px 24px 112px;
+  background: #ffffff;
+}
+
+.mobile-todo__loading-content {
+  width: min(100%, 250px);
+}
+
+.mobile-todo__loading-title {
+  margin-bottom: 22px;
+  text-align: center;
+  font-size: 16px;
+  font-weight: 700;
+  line-height: 1.4;
+  color: #111111;
+}
+
+.mobile-todo__loading-track {
+  position: relative;
+  width: 100%;
+  height: 6px;
+  overflow: hidden;
+  background: #dcdde1;
+}
+
+.mobile-todo__loading-bar {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 30%;
+  height: 100%;
+  background: #b20d45;
+  animation: mobile-todo-loading 1.4s ease-in-out infinite;
+}
+
 .mobile-todo__state {
   padding: 32px 16px;
   text-align: center;
   font-size: 13px;
   color: #999999;
+}
+
+@keyframes mobile-todo-loading {
+  0% {
+    transform: translateX(0);
+  }
+
+  50% {
+    transform: translateX(235%);
+  }
+
+  100% {
+    transform: translateX(0);
+  }
 }
 
 .todo-item {

@@ -24,12 +24,10 @@ export default defineNuxtPlugin(() => {
     localeCookie.value = nextLocale
   }
 
-  syncLocale(locale.value)
-
   if (import.meta.client) {
     const storedLocale = localStorage.getItem(storageKey)
     const browserLocale = navigator.language
-    syncLocale(storedLocale || localeCookie.value || browserLocale)
+    syncLocale(storedLocale || localeCookie.value || locale.value || browserLocale)
 
     watch(
       locale,
@@ -46,6 +44,8 @@ export default defineNuxtPlugin(() => {
       },
       { immediate: true }
     )
+  } else {
+    syncLocale(localeCookie.value || locale.value)
   }
 
   useHead(() => ({

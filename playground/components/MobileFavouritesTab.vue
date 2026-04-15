@@ -1,7 +1,7 @@
 <template>
   <div class="mobile-favourites">
     <div class="mobile-favourites__header">
-      <h2 class="mobile-favourites__title">My Favourites</h2>
+      <h2 class="mobile-favourites__title">{{ t('favourites.title') }}</h2>
       <button class="mobile-favourites__edit-btn">Edit</button>
     </div>
 
@@ -18,6 +18,8 @@
 
 <script setup>
 import { ref } from 'vue'
+
+const { t } = useAppI18n()
 
 const apps = ref([
   { id: 1, icon: 'glc-portal', label: 'GLC Portal', color: '#FFC0CB', url: 'https://oa.dchbipoc.cc/wui/cas-entrance.jsp?path=https://oa.dchbipoc.cc/mobilemode/mobile/view.html?appid=1' },

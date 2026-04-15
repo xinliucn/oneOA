@@ -1,5 +1,121 @@
+<template>
+  <div class="mobile-approval">
+    <header class="mobile-approval__header">
+      <button class="mobile-approval__back" type="button" @click="handleBack">
+        <IconCustom name="chevron-right" :size="18" :rotate="180" />
+      </button>
+      <h1 class="mobile-approval__header-title">My Approvals</h1>
+      <div class="mobile-approval__header-spacer" />
+    </header>
+
+    <main class="mobile-approval__content">
+      <section class="mobile-approval__sheet">
+        <div class="mobile-approval__meta">
+          <span class="mobile-approval__ref">{{ toDoFrom.requestmark }}</span>
+          <span class="mobile-approval__status-text" :class="statusClass">{{ toDoFrom.status }}</span>
+        </div>
+
+        <h2 class="mobile-approval__title">{{ toDoFrom.requestName }}</h2>
+
+        <div class="mobile-approval__submitter">
+          <div class="mobile-approval__submitter-avatar">
+            <IconCustom name="personnel" :size="18" color="#ffffff" />
+          </div>
+          <div class="mobile-approval__submitter-info">
+            <span class="mobile-approval__submitter-label">Submitted by</span>
+            <span class="mobile-approval__submitter-name">{{ toDoFrom.creatorName }}</span>
+          </div>
+          <span class="mobile-approval__submitter-date">{{ toDoFrom.receiveTime }}</span>
+        </div>
+
+        <div class="mobile-approval__progress">
+          <div class="mobile-approval__progress-bar" :class="statusClass">{{ toDoFrom.status }}</div>
+          <div class="mobile-approval__timeline">
+            <div v-for="(approver, index) in form?.processInfo?.workflowRequestLogs" :key="approver.id"
+              class="mobile-approval__timeline-item">
+              <div class="mobile-approval__timeline-marker">
+                <div class="mobile-approval__timeline-avatar" :class="getApproverStatusClass(approver.action)">
+                  <IconCustom name="personnel" :size="14" color="#ffffff" />
+                </div>
+                <!-- <div
+                  v-if="index < visibleApprovers.length - 1"
+                  class="mobile-approval__timeline-line"
+                /> -->
+              </div>
+              <div class="mobile-approval__timeline-info">
+                <span class="mobile-approval__timeline-name">{{ approver.nodeName }}</span>
+                <span class="mobile-approval__timeline-date">
+                  {{ approver.operateType }}<template v-if="approver.operateDate"> {{ approver.operateDate }}</template>
+                </span>
+              </div>
+            </div>
+            <button type="button" class="mobile-approval__show-more" @click="showAllApprovers = !showAllApprovers">
+              {{ showAllApprovers ? 'Show less' : 'Show more' }}
+            </button>
+          </div>
+        </div>
+
+        <div v-if="attachments.length > 0" class="mobile-approval__attachments">
+          <span class="mobile-approval__attachment">
+            <IconCustom name="document" :size="14" color="#5a78a5" />
+            {{ attachments[0]?.name }}
+          </span>
+          <span v-if="attachments.length > 1" class="mobile-approval__attachment mobile-approval__attachment--count">
+            +{{ attachments.length - 1 }}
+          </span>
+        </div>
+
+        <div class="mobile-approval__fields">
+          <div v-for="field in formFileds" :key="field.label" class="mobile-approval__field">
+            <span class="mobile-approval__field-label">{{ field.label }}</span>
+            <span class="mobile-approval__field-value">{{ field.value }}</span>
+          </div>
+        </div>
+
+        <!-- <div v-if="approval.latestComment" class="mobile-approval__field mobile-approval__field--comment">
+          <span class="mobile-approval__field-label">Latest Comment</span>
+          <span class="mobile-approval__field-value">{{ approval.latestComment }}</span>
+        </div> -->
+
+        <button type="button" class="mobile-approval__link">
+          {{ 'View details in WOA-DPM' }} &gt;
+        </button>
+      </section>
+    </main>
+
+    <footer class="mobile-approval__footer">
+      <textarea v-model="actionComment" class="mobile-approval__comment" placeholder="Add a comment..." />
+      <div class="mobile-approval__actions">
+        <button type="button" class="mobile-approval__action mobile-approval__action--approve"
+          :class="{ active: selectedAction === 'Approve' }" @click="selectAction('Approve')">
+          Approve
+        </button>
+        <button type="button" class="mobile-approval__action mobile-approval__action--reject"
+          :class="{ active: selectedAction === 'Reject' }" @click="selectAction('Reject')">
+          Reject
+        </button>
+        <button type="button" class="mobile-approval__action mobile-approval__action--more"
+          :class="{ active: selectedAction === 'Return' }" @click="selectAction('Return')">
+          ...
+        </button>
+      </div>
+      <button type="button" class="mobile-approval__confirm" :disabled="!selectedAction" @click="handleConfirm">
+        Confirm
+      </button>
+    </footer>
+  </div>
+
+  <!-- <div v-else class="mobile-approval__empty">
+    <p class="mobile-approval__empty-title">Approval not found</p>
+    <button type="button" class="mobile-approval__empty-back" @click="handleBack">Back to list</button>
+  </div> -->
+</template>
+
+
 <script setup lang="ts">
-import type { ApprovalAction, ApprovalItem } from '~/types/approval'
+import type { ApprovalAction } from '~/types/approval'
+const { form, getFormData } = useApplicationCatalog()
+const toDoFrom: any = useState('mobile:todo-form', () => null)
 
 definePageMeta({
   layout: false,
@@ -7,37 +123,62 @@ definePageMeta({
 })
 
 const route = useRoute()
-const { bootstrap, ensureApproval, getApprovalById, submitApprovalAction } = useApprovals()
 const approvalId = computed(() => String(route.params.id || ''))
-const approval = computed<ApprovalItem | null>(() => getApprovalById(approvalId.value))
-
 const showAllApprovers = ref(false)
 const selectedAction = ref<ApprovalAction | ''>('')
+const formFileds = ref<any[]>([
+  {
+    label: 'Reference Number',
+    value: 'WOA-DPM-26010001',
+  },
+  {
+    label: 'Process Status',
+    value: 'Pending (Registration)',
+  },
+  {
+    label: 'Requestor',
+    value: 'Victor Ho',
+  },
+  {
+    label: 'Request Date',
+    value: '2026-01-01',
+  },
+  {
+    label: 'Portfolio',
+    value: 'Workflow and Optimization',
+  },
+  {
+    label: 'Business Unit',
+    value: 'Group Internal Audit (GIA)',
+  },
+])
 const actionComment = ref('')
 
-const visibleApprovers = computed(() => {
-  if (!approval.value) {
-    return []
-  }
+// View details in WOA-DPM >
 
-  return showAllApprovers.value ? approval.value.approvers : approval.value.approvers.slice(0, 2)
+const attachments = computed(() => {
+  return [
+    {
+      id: 'mock-attachment-1',
+      name: 'Purchase_Request_Q2.pdf',
+    },
+    {
+      id: 'mock-attachment-2',
+      name: 'Budget_Summary.xlsx',
+    },
+    {
+      id: 'mock-attachment-3',
+      name: 'Vendor_Quotation.docx',
+    },
+  ]
 })
 
 const statusClass = computed(() => {
-  return approval.value ? `is-${approval.value.status.toLowerCase()}` : 'is-pending'
+  return 'is-pending'
 })
 
 const getApproverStatusClass = (action: string) => {
-  const normalized = action.toLowerCase()
-  if (normalized.includes('approve')) {
-    return 'is-approved'
-  }
-
-  if (normalized.includes('reject')) {
-    return 'is-rejected'
-  }
-
-  return 'is-pending'
+  return 'is-approved'
 }
 
 const handleBack = () => navigateTo('/mobile')
@@ -50,165 +191,27 @@ const handleConfirm = () => {
   if (!selectedAction.value) {
     return
   }
-
-  void submitApprovalAction(approvalId.value, selectedAction.value, actionComment.value)
   selectedAction.value = ''
   actionComment.value = ''
   navigateTo('/mobile')
 }
 
-onMounted(async () => {
-  await bootstrap()
-  await ensureApproval(approvalId.value)
-})
+// onMounted(async () => {
+//   await bootstrap()
+//   await ensureApproval(approvalId.value)
+// })
+watch(
+  approvalId,
+  async (id) => {
+    if (!id) {
+      return
+    }
+
+    await getFormData(id)
+  },
+  { immediate: true },
+)
 </script>
-
-<template>
-  <div class="mobile-approval" v-if="approval">
-    <header class="mobile-approval__header">
-      <button class="mobile-approval__back" type="button" @click="handleBack">
-        <IconCustom name="chevron-right" :size="18" :rotate="180" />
-      </button>
-      <h1 class="mobile-approval__header-title">My Approvals</h1>
-      <div class="mobile-approval__header-spacer" />
-    </header>
-
-    <main class="mobile-approval__content">
-      <section class="mobile-approval__sheet">
-        <div class="mobile-approval__meta">
-          <span class="mobile-approval__ref">{{ approval.referenceNo }}</span>
-          <span class="mobile-approval__status-text" :class="statusClass">{{ approval.status }}</span>
-        </div>
-
-        <h2 class="mobile-approval__title">{{ approval.title }}</h2>
-
-        <div class="mobile-approval__submitter">
-          <div class="mobile-approval__submitter-avatar">
-            <IconCustom name="personnel" :size="18" color="#ffffff" />
-          </div>
-          <div class="mobile-approval__submitter-info">
-            <span class="mobile-approval__submitter-label">Submitted by</span>
-            <span class="mobile-approval__submitter-name">{{ approval.submittedBy }}</span>
-          </div>
-          <span class="mobile-approval__submitter-date">{{ approval.submittedDate }}</span>
-        </div>
-
-        <div class="mobile-approval__progress">
-          <div class="mobile-approval__progress-bar" :class="statusClass">{{ approval.status }}</div>
-          <div class="mobile-approval__timeline">
-            <div
-              v-for="(approver, index) in visibleApprovers"
-              :key="`${approver.name}-${index}`"
-              class="mobile-approval__timeline-item"
-            >
-              <div class="mobile-approval__timeline-marker">
-                <div class="mobile-approval__timeline-avatar" :class="getApproverStatusClass(approver.action)">
-                  <IconCustom name="personnel" :size="14" color="#ffffff" />
-                </div>
-                <div
-                  v-if="index < visibleApprovers.length - 1"
-                  class="mobile-approval__timeline-line"
-                />
-              </div>
-              <div class="mobile-approval__timeline-info">
-                <span class="mobile-approval__timeline-name">{{ approver.name }}</span>
-                <span class="mobile-approval__timeline-date">
-                  {{ approver.action }}<template v-if="approver.date"> {{ approver.date }}</template>
-                </span>
-              </div>
-            </div>
-            <button
-              v-if="approval.approvers.length > 2"
-              type="button"
-              class="mobile-approval__show-more"
-              @click="showAllApprovers = !showAllApprovers"
-            >
-              {{ showAllApprovers ? 'Show less' : 'Show more' }}
-            </button>
-          </div>
-        </div>
-
-        <div v-if="approval.attachments.length" class="mobile-approval__attachments">
-          <span
-            v-for="attachment in approval.attachments"
-            :key="attachment.name"
-            class="mobile-approval__attachment"
-          >
-            <IconCustom name="document" :size="14" color="#5a78a5" />
-            {{ attachment.name }}
-          </span>
-        </div>
-
-        <div class="mobile-approval__fields">
-          <div
-            v-for="field in approval.fields"
-            :key="field.label"
-            class="mobile-approval__field"
-          >
-            <span class="mobile-approval__field-label">{{ field.label }}</span>
-            <span class="mobile-approval__field-value">{{ field.value }}</span>
-          </div>
-        </div>
-
-        <div v-if="approval.latestComment" class="mobile-approval__field mobile-approval__field--comment">
-          <span class="mobile-approval__field-label">Latest Comment</span>
-          <span class="mobile-approval__field-value">{{ approval.latestComment }}</span>
-        </div>
-
-        <button type="button" class="mobile-approval__link">
-          {{ approval.detailLinkLabel }} &gt;
-        </button>
-      </section>
-    </main>
-
-    <footer class="mobile-approval__footer">
-      <textarea
-        v-model="actionComment"
-        class="mobile-approval__comment"
-        placeholder="Add a comment..."
-      />
-      <div class="mobile-approval__actions">
-        <button
-          type="button"
-          class="mobile-approval__action mobile-approval__action--approve"
-          :class="{ active: selectedAction === 'Approve' }"
-          @click="selectAction('Approve')"
-        >
-          Approve
-        </button>
-        <button
-          type="button"
-          class="mobile-approval__action mobile-approval__action--reject"
-          :class="{ active: selectedAction === 'Reject' }"
-          @click="selectAction('Reject')"
-        >
-          Reject
-        </button>
-        <button
-          type="button"
-          class="mobile-approval__action mobile-approval__action--more"
-          :class="{ active: selectedAction === 'Return' }"
-          @click="selectAction('Return')"
-        >
-          ...
-        </button>
-      </div>
-      <button
-        type="button"
-        class="mobile-approval__confirm"
-        :disabled="!selectedAction"
-        @click="handleConfirm"
-      >
-        Confirm
-      </button>
-    </footer>
-  </div>
-
-  <div v-else class="mobile-approval__empty">
-    <p class="mobile-approval__empty-title">Approval not found</p>
-    <button type="button" class="mobile-approval__empty-back" @click="handleBack">Back to list</button>
-  </div>
-</template>
 
 <style scoped>
 .mobile-approval {
@@ -417,11 +420,21 @@ onMounted(async () => {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  padding: 6px 10px;
+  min-height: 28px;
+  padding: 0 12px;
   border-radius: 999px;
-  background: #f3f5f8;
-  color: #506070;
-  font-size: 11px;
+  border: 1px solid #d9d9d9;
+  background: #ffffff;
+  color: #646464;
+  font-size: 13px;
+  line-height: 1;
+}
+
+.mobile-approval__attachment--count {
+  justify-content: center;
+  min-width: 40px;
+  padding: 0 10px;
+  color: #8f8f8f;
 }
 
 .mobile-approval__fields {

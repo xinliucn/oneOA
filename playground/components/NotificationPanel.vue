@@ -1,9 +1,19 @@
 <template>
-  <div class="notification-panel">
+  <div :class="['notification-panel', `notification-panel--${props.variant}`]">
     <div class="notification-panel__header">
       <div class="notification-panel__title-row">
         <h1 class="notification-panel__title">Notifications</h1>
-        <span class="notification-panel__accent">•••</span>
+        <button
+          v-if="props.variant === 'desktop-popover'"
+          type="button"
+          class="notification-panel__toggle"
+          :class="{ 'is-on': desktopToggleOn, 'is-loading': isPushToggleLoading }"
+          :disabled="isPushToggleLoading"
+          @click="toggleDesktopSubscription"
+        >
+          <span class="notification-panel__toggle-knob" />
+        </button>
+        <span v-else class="notification-panel__accent">•••</span>
       </div>
 
       <div class="notification-panel__filters">
@@ -27,6 +37,7 @@
           v-for="item in filteredNotifications"
           :key="item.id"
           :item="item"
+          :variant="props.variant"
           @select="handleSelect"
         />
       </div>
@@ -43,6 +54,12 @@
 <script setup lang="ts">
 import type { NotificationItem } from '~/types/notification'
 
+const props = withDefaults(defineProps<{
+  variant?: 'page' | 'desktop-popover'
+}>(), {
+  variant: 'page',
+})
+
 const emit = defineEmits<{
   close: []
 }>()
@@ -57,8 +74,17 @@ const {
   loadMore,
   openNotification,
 } = useNotification()
+const {
+  status: pushStatus,
+  subscribe,
+  unsubscribe,
+  init: initPushSubscription,
+} = usePushSubscription()
+const route = useRoute()
 
 const activeFilter = ref('all')
+const isPushToggleLoading = ref(false)
+const desktopToggleOn = computed(() => pushStatus.value === 'subscribed')
 
 const formatCategoryLabel = (value?: string) => {
   const raw = value?.trim()
@@ -122,12 +148,45 @@ const filteredNotifications = computed(() => {
 })
 
 const handleSelect = async (item: NotificationItem) => {
-  await openNotification(item)
+  const targetLink = await openNotification(item)
+  const isMobileRoute = route.path.startsWith('/mobile')
+  const fallback = isMobileRoute
+    ? `/mobile/notifications/${encodeURIComponent(item.id)}`
+    : `/desktop/notification/${encodeURIComponent(item.id)}`
+
   emit('close')
+
+  if (targetLink) {
+    const isExternalLink = /^https?:\/\//i.test(targetLink)
+    await navigateTo(targetLink, isExternalLink ? { external: true } : undefined)
+    return
+  }
+
+  await navigateTo(fallback)
+}
+
+const toggleDesktopSubscription = async () => {
+  if (props.variant !== 'desktop-popover' || isPushToggleLoading.value) {
+    return
+  }
+
+  isPushToggleLoading.value = true
+
+  try {
+    if (desktopToggleOn.value) {
+      await unsubscribe()
+      return
+    }
+
+    await subscribe()
+  } finally {
+    isPushToggleLoading.value = false
+  }
 }
 
 onMounted(async () => {
   await bootstrap()
+  await initPushSubscription()
 })
 </script>
 
@@ -137,6 +196,13 @@ onMounted(async () => {
   display: flex;
   flex-direction: column;
   background: #f7f2f4;
+}
+
+.notification-panel--desktop-popover {
+  min-height: auto;
+  max-height: min(72vh, 680px);
+  width: 100%;
+  background: #ffffff;
 }
 
 .notification-panel__header {
@@ -163,11 +229,53 @@ onMounted(async () => {
   color: #161616;
 }
 
+.notification-panel__title-row .notification-panel__title {
+  flex: 1;
+}
+
 .notification-panel__accent {
   color: #b10f49;
   font-size: 15px;
   line-height: 1;
   letter-spacing: 1px;
+}
+
+.notification-panel__toggle {
+  position: relative;
+  width: 34px;
+  height: 22px;
+  border: 0;
+  border-radius: 999px;
+  background: #b10f49;
+  padding: 2px;
+  transition: background-color 0.2s ease;
+}
+
+.notification-panel__toggle:disabled {
+  cursor: default;
+  opacity: 0.72;
+}
+
+.notification-panel__toggle-knob {
+  display: block;
+  width: 18px;
+  height: 18px;
+  border-radius: 999px;
+  background: #ffffff;
+  transform: translateX(12px);
+  transition: transform 0.2s ease;
+}
+
+.notification-panel__toggle:not(.is-on) {
+  background: #d7d0d3;
+}
+
+.notification-panel__toggle:not(.is-on) .notification-panel__toggle-knob {
+  transform: translateX(0);
+}
+
+.notification-panel__toggle.is-loading .notification-panel__toggle-knob {
+  box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.35);
 }
 
 .notification-panel__filters {
@@ -229,5 +337,49 @@ onMounted(async () => {
 .notification-panel__load-more-btn {
   width: 100%;
   max-width: 220px;
+}
+
+.notification-panel--desktop-popover .notification-panel__header {
+  padding: 18px 14px 12px;
+  background: #ffffff;
+  border-bottom: 1px solid #eadfe3;
+}
+
+.notification-panel--desktop-popover .notification-panel__title-row {
+  margin-bottom: 12px;
+}
+
+.notification-panel--desktop-popover .notification-panel__title {
+  font-size: 18px;
+}
+
+.notification-panel--desktop-popover .notification-panel__filters {
+  gap: 6px;
+  padding-bottom: 2px;
+}
+
+.notification-panel--desktop-popover .notification-panel__filter {
+  padding: 8px 13px;
+  font-size: 12px;
+  color: #7a7477;
+}
+
+.notification-panel--desktop-popover .notification-panel__filter.is-active {
+  color: #ffffff !important;
+  box-shadow: none;
+}
+
+.notification-panel--desktop-popover .notification-panel__filter.is-active span {
+  color: #ffffff;
+}
+
+.notification-panel--desktop-popover .notification-panel__body {
+  overflow-y: auto;
+  padding-bottom: 0;
+  background: #ffffff;
+}
+
+.notification-panel--desktop-popover .notification-panel__list {
+  background: #ffffff;
 }
 </style>

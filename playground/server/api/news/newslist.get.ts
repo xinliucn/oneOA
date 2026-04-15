@@ -2,7 +2,6 @@ export default defineEventHandler(async (event) => {
   const config = useRuntimeConfig()
   const raw = config.mockEnabled
 
-  if (raw) {
     return {
       code: 1,
       data: {
@@ -40,10 +39,4 @@ export default defineEventHandler(async (event) => {
     }
   }
 
-  return {
-    code: 1,
-    data: {
-      list: []
-    }
-  }
-})
+  )

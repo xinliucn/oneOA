@@ -39,4 +39,5 @@ export interface ApprovalItem {
   attachments: ApprovalAttachment[]
   approvers: ApprovalTimelineItem[]
   fields: ApprovalField[]
+  requestmark: string
 }

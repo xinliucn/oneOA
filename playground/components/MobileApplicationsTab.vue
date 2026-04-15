@@ -1,7 +1,7 @@
 <template>
   <div class="mobile-applications">
     <div class="mobile-applications__header">
-      <h2 class="mobile-applications__title">Applications</h2>
+      <h2 class="mobile-applications__title">{{ t('desktopApps.title') }}</h2>
       <el-button circle class="search-btn">
         <IconCustom name="search" :size="20" />
       </el-button>
@@ -9,73 +9,67 @@
 
     <div class="mobile-applications__tabs">
       <div class="applications__tabs__box">
-        <button :class="['tab-btn', { active: activeTab === 'application' }]" @click="activeTab = 'application'">By
-          Application</button>
-        <button :class="['tab-btn', { active: activeTab === 'business' }]" @click="activeTab = 'business'">By
-          Business</button>
+        <button :class="['tab-btn', { active: activeTab === 'Application' }]" @click="activeTab = 'Application'">
+          {{ t('mobile.applications.tabs.byApplication') }}
+        </button>
+        <button :class="['tab-btn', { active: activeTab === 'Business' }]" @click="activeTab = 'Business'">
+          {{ t('mobile.applications.tabs.byBusiness') }}
+        </button>
       </div>
     </div>
 
     <!-- By Application -->
-    <div v-if="activeTab === 'application'" class="app-grid">
-      <div v-for="app in applications" :key="app.id" class="app-card" @click="handleAppClick(app)">
+    <div v-if="activeTab === 'Application'" class="app-grid">
+      <div v-for="app in catalog" :key="app.mainTable.id" class="app-card" @click="handleAppClick(app)">
         <div class="app-card__logo">
-          <img v-if="app.image" :src="app.image" :alt="app.name" class="app-card__img" />
-          <IconCustom v-else :name="app.icon" :size="36" />
+          <img v-if="app.mainTable.image" :src="app.mainTable.image" :alt="app.mainTable.name_en"
+            class="app-card__img" />
+          <IconCustom v-else :name="app.mainTable.icon" :size="36" />
         </div>
-        <div class="app-card__name">{{ app.name }}</div>
+        <div class="app-card__name">{{ app.mainTable.name_en }}</div>
       </div>
     </div>
 
     <!-- By Business -->
     <div v-else class="business-grid">
-      <div v-for="biz in businesses" :key="biz.id" class="biz-card" @click="handleBizClick(biz)">
+      <div v-for="biz in catalog" :key="biz.mainTable.id" class="biz-card" @click="handleBizClick(biz.mainTable)">
         <div class="biz-card__icon" :style="{ color: biz.color }">
           <IconCustom :name="biz.icon" :size="32" />
         </div>
-        <div class="biz-card__name">{{ biz.name }}</div>
-        <div class="biz-card__desc">{{ biz.description }}</div>
+        <div class="biz-card__name">{{ biz.mainTable.name_en }}</div>
+        <div class="biz-card__desc">{{ biz.mainTable.description_en }}</div>
       </div>
     </div>
   </div>
 </template>
 
 <script setup>
-import { computed, ref } from 'vue'
-import { applicationDepartments } from '~/composables/useApplicationCatalog'
-import eLeaveImg from '~/assets/images/applications/eLeave.png'
-import yonYouImg from '~/assets/images/applications/yonyou.png'
-import eAppraisalImg from '~/assets/images/applications/eAppraisal.png'
-import itServiceDeskImg from '~/assets/images/applications/ITServiceDesk.png'
-import italcant from '~/assets/images/applications/italcant.png'
+import { watch, ref } from 'vue'
 
-const activeTab = ref('application')
+const { t } = useAppI18n()
+const { catalog, getApplicationCatalogData } = useApplicationCatalog()
+const activeTab = ref('Application')
+const selectedBusiness = useState('mobile:selected-business', () => null)
 
-const applications = ref([
-  { id: 1, name: 'eLeave', icon: 'calendar', image: eLeaveImg },
-  { id: 2, name: 'YonYou', icon: 'briefcase', image: yonYouImg },
-  { id: 3, name: 'eLearning', icon: 'book', image: italcant },
-  { id: 4, name: 'eAppraisal', icon: 'laptop', image: eAppraisalImg },
-  { id: 5, name: 'IT Service Desk', icon: 'settings', image: itServiceDeskImg },
-])
-
-const businesses = computed(() =>
-  applicationDepartments.map((department) => ({
-    id: department.slug,
-    name: department.name,
-    icon: department.icon,
-    color: department.color,
-    description: department.description,
-  })),
-)
 
 const handleAppClick = (app) => {
-  console.log('App clicked:', app.name)
+  return window.open(app.mainTable.mobileurl, '_blank')
 }
 
 const handleBizClick = (biz) => {
-  return navigateTo(`/mobile/applications/${encodeURIComponent(biz.id)}`)
+  selectedBusiness.value = biz
+  console.log(selectedBusiness);
+
+  return navigateTo(`/mobile/applications/business/${encodeURIComponent(biz.id)}`)
 }
+
+watch(
+  activeTab,
+  async (tab) => {
+    await getApplicationCatalogData({ type: tab })
+  },
+  { immediate: true },
+)
 </script>
 
 <style scoped>

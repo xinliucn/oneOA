@@ -211,8 +211,9 @@ export const useNotification = () => {
   }
 
   /**
-   * 点击通知时调用：标记已读 → 获取跳转链接 → 导航
+   * 点击通知时调用：标记已读 → 获取跳转链接
    * 如果 item.link 为空，则请求详情接口获取链接
+   * 导航由调用方根据端类型自行决定
    */
   const openNotification = async (item: NotificationItem) => {
     await markAsRead(item.id)
@@ -228,8 +229,7 @@ export const useNotification = () => {
       }
     }
 
-    const fallback = `/desktop/notification/${encodeURIComponent(item.id)}`
-    await navigateTo(targetLink || fallback)
+    return targetLink || ''
   }
 
   /**

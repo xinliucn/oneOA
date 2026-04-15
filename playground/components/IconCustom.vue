@@ -40,7 +40,7 @@ import PersonnelIcon from './icons/svg/PersonnelIcon.vue'
 import FilterIcon from './icons/svg/FilterIcon.vue'
 import StarIcon from './icons/svg/StarIcon.vue'
 import ClockIcon from './icons/svg/ColckIcon.vue'
-import DownArrowIcon from './icons/svg/downArrowIcon.vue'
+import DownArrowIcon from './icons/svg/DownArrowIcon.vue'
 
 const props = withDefaults(
   defineProps<{

@@ -1,5 +1,8 @@
 <template>
-  <button class="notification-item" :class="{ unread: !item.readAt }" @click="handleClick">
+  <button
+    :class="['notification-item', `notification-item--${props.variant}`, { unread: !item.readAt }]"
+    @click="handleClick"
+  >
     <div class="notification-item__main">
       <div class="notification-item__top">
         <span class="notification-item__title">{{ item.title }}</span>
@@ -17,9 +20,12 @@
 <script setup lang="ts">
 import type { NotificationItem as NotificationItemModel } from '~/types/notification'
 
-const props = defineProps<{
+const props = withDefaults(defineProps<{
   item: NotificationItemModel
-}>()
+  variant?: 'page' | 'desktop-popover'
+}>(), {
+  variant: 'page',
+})
 
 const emit = defineEmits<{
   select: [item: NotificationItemModel]
@@ -136,5 +142,33 @@ const handleClick = () => {
   height: 14px;
   border-radius: 999px;
   background: #b10f49;
+}
+
+.notification-item--desktop-popover {
+  padding: 14px 14px 13px;
+}
+
+.notification-item--desktop-popover .notification-item__title {
+  font-size: 14px;
+  line-height: 1.32;
+}
+
+.notification-item--desktop-popover .notification-item__subtitle {
+  font-size: 12px;
+  margin-top: 3px;
+}
+
+.notification-item--desktop-popover .notification-item__reference {
+  font-size: 11px;
+  margin-top: 3px;
+}
+
+.notification-item--desktop-popover .notification-item__time {
+  font-size: 11px;
+}
+
+.notification-item--desktop-popover .notification-item__dot {
+  width: 13px;
+  height: 13px;
 }
 </style>

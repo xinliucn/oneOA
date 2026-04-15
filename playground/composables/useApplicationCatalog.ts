@@ -3,15 +3,21 @@ export interface ApplicationCatalogItem {
   name: string
   type: string
   regions: string[]
+  business: string
+  homepageUrl: string
+  mobileUrl: string
+  description: string
+  icon: string
+  raw: Record<string, any>,
+  mainTable: any
 }
-
 export interface ApplicationCatalogGroup {
   id: string
   title: string
   items: ApplicationCatalogItem[]
 }
 
-export interface ApplicationDepartment {
+export interface ApplicationBusiness {
   id: string
   slug: string
   name: string
@@ -21,100 +27,258 @@ export interface ApplicationDepartment {
   intranetLabel: string
   regions: string[]
   groups: ApplicationCatalogGroup[]
+  items: ApplicationCatalogItem[]
 }
 
-export const applicationDepartments: ApplicationDepartment[] = [
-  {
-    id: 'dt',
-    slug: 'digital-technology',
-    name: 'Digital & Technology',
-    icon: 'digital-technology',
-    color: '#3C8AFF',
-    description: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore.',
-    intranetLabel: 'Digital & Technology Intranet',
-    regions: ['CN', 'HK', 'SEA'],
-    groups: [
-      {
-        id: 'forms',
-        title: 'New Forms',
-        items: [
-          { id: 'dt-1', name: 'Order Engagement Approval', type: 'Weaver Process', regions: ['CN', 'HK', 'SEA'] },
-          { id: 'dt-2', name: 'IT Demand Creation', type: 'Weaver Process Form', regions: ['CN', 'HK', 'SEA'] },
-          { id: 'dt-3', name: 'IT Project Change Submission', type: 'Weaver Process Form', regions: ['CN', 'HK', 'SEA'] },
-          { id: 'dt-4', name: 'IT Project Creation', type: 'Weaver Process Form', regions: ['CN', 'HK', 'SEA'] },
-        ],
-      },
-      {
-        id: 'data',
-        title: 'Data',
-        items: [
-          { id: 'dt-5', name: 'Order List', type: 'Weaver Data', regions: ['CN', 'HK', 'SEA'] },
-          { id: 'dt-6', name: 'IT Demand List', type: 'Weaver Data', regions: ['CN', 'HK', 'SEA'] },
-          { id: 'dt-7', name: 'IT Project List', type: 'Weaver Data', regions: ['CN', 'HK', 'SEA'] },
-        ],
-      },
-    ],
-  },
-  {
-    id: 'finance',
-    slug: 'finance',
-    name: 'Finance',
-    icon: 'finance-bars',
-    color: '#009A88',
-    description: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore.',
-    intranetLabel: 'Finance Intranet',
-    regions: ['CN', 'HK', 'SEA'],
-    groups: [
-      {
-        id: 'forms',
-        title: 'New Forms',
-        items: [
-          { id: 'finance-1', name: 'Bounced Cheque Record', type: 'Weaver Process Form', regions: ['CN', 'HK', 'SEA'] },
-          { id: 'finance-2', name: 'Bounced Cheque Refund Application', type: 'Weaver Process Form', regions: ['CN', 'HK', 'SEA'] },
-          { id: 'finance-3', name: 'TBC', type: 'Redirect to []', regions: ['CN', 'HK', 'SEA'] },
-        ],
-      },
-      {
-        id: 'data',
-        title: 'Data',
-        items: [
-          { id: 'finance-4', name: 'Bounced Cheque Data List', type: 'Weaver Data', regions: ['CN', 'HK', 'SEA'] },
-        ],
-      },
-    ],
-  },
-  {
-    id: 'legal',
-    slug: 'legal-compliance',
-    name: 'Legal & Compliance',
-    icon: 'legal-compliance',
-    color: '#D7008F',
-    description: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore.',
-    intranetLabel: 'Legal & Compliance Intranet',
-    regions: ['CN', 'HK', 'SEA'],
-    groups: [
-      {
-        id: 'forms',
-        title: 'New Forms',
-        items: [
-          { id: 'legal-1', name: 'Dispute Submission', type: 'Weaver Process Form', regions: ['CN', 'HK', 'SEA'] },
-          { id: 'legal-2', name: 'Group Contract Clearance & Approval', type: 'Weaver Process Form', regions: ['CN', 'HK', 'SEA'] },
-          { id: 'legal-3', name: 'Signed Contract Submission (Group)', type: 'Weaver Process Form', regions: ['CN', 'HK', 'SEA'] },
-          { id: 'legal-4', name: 'Trademark Registration', type: 'Weaver Process Form', regions: ['CN', 'HK', 'SEA'] },
-        ],
-      },
-      {
-        id: 'data',
-        title: 'Data',
-        items: [
-          { id: 'legal-5', name: 'Contract List', type: 'Weaver Data', regions: ['CN', 'HK', 'SEA'] },
-          { id: 'legal-6', name: 'Dispute Tracker', type: 'Weaver Data', regions: ['CN', 'HK', 'SEA'] },
-        ],
-      },
-    ],
-  },
-]
+interface ApplicationCatalogRawMainTable {
+  id?: string
+  application?: string
+  type?: string
+  tag?: string
+  business?: string
+  homepage_url?: string
+  mobileurl?: string
+  description_en?: string
+  description_sc?: string
+  description_tc?: string
+  iconx64?: string
+  name_en?: string
+  name_sc?: string
+  name_tc?: string
+  [key: string]: any
+}
 
-export const getApplicationDepartmentBySlug = (slug: string) => {
-  return applicationDepartments.find((department) => department.slug === slug) || null
+export interface ApplicationCatalogFilters {
+  type?: string | string[]
+  tag?: string
+}
+
+const normalizeString = (value?: string | null) => {
+  return typeof value === 'string' ? value.trim() : ''
+}
+
+const uniq = <T>(items: T[]) => {
+  return Array.from(new Set(items))
+}
+
+const slugify = (value: string) => {
+  return normalizeString(value)
+    .toLowerCase()
+    .replace(/&/g, 'and')
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '')
+}
+
+const buildBusinessMeta = (business: string) => {
+  const normalizedBusiness = normalizeString(business)
+  const lowerBusiness = normalizedBusiness.toLowerCase()
+
+  if (lowerBusiness.includes('digital') || lowerBusiness.includes('technology') || lowerBusiness.includes('it')) {
+    return {
+      slug: 'digital-technology',
+      name: 'Digital & Technology',
+      icon: 'digital-technology',
+      color: '#3C8AFF',
+    }
+  }
+
+  if (lowerBusiness.includes('finance')) {
+    return {
+      slug: 'finance',
+      name: 'Finance',
+      icon: 'finance-bars',
+      color: '#009A88',
+    }
+  }
+
+  if (lowerBusiness.includes('legal') || lowerBusiness.includes('compliance')) {
+    return {
+      slug: 'legal-compliance',
+      name: 'Legal & Compliance',
+      icon: 'legal-compliance',
+      color: '#D7008F',
+    }
+  }
+
+  if (lowerBusiness.includes('human resources') || lowerBusiness.includes('hr')) {
+    return {
+      slug: 'human-resources',
+      name: 'Human Resources',
+      icon: 'personnel',
+      color: '#A60A3A',
+    }
+  }
+
+  if (lowerBusiness.includes('china')) {
+    return {
+      slug: 'china-business',
+      name: 'China Business',
+      icon: 'building',
+      color: '#C77800',
+    }
+  }
+
+  if (normalizedBusiness) {
+    return {
+      slug: slugify(normalizedBusiness),
+      name: normalizedBusiness.replace(/^group\s+/i, ''),
+      icon: 'apps',
+      color: '#A60A3A',
+    }
+  }
+
+  return {
+    slug: 'others',
+    name: 'Others',
+    icon: 'apps',
+    color: '#A60A3A',
+  }
+}
+
+const groupCatalogByBusiness = (catalog: ApplicationCatalogItem[]): ApplicationBusiness[] => {
+  const businessMap = new Map<string, ApplicationCatalogItem[]>()
+
+  for (const item of catalog) {
+    const business = item.business || 'Others'
+    const currentItems = businessMap.get(business) || []
+    businessMap.set(business, [...currentItems, item])
+  }
+
+  return Array.from(businessMap.entries()).map(([business, items]) => {
+    const meta = buildBusinessMeta(business)
+    const groupMap = new Map<string, ApplicationCatalogItem[]>()
+
+    for (const item of items) {
+      const groupTitle = item.type || 'Applications'
+      const currentItems = groupMap.get(groupTitle) || []
+      groupMap.set(groupTitle, [...currentItems, item])
+    }
+
+    return {
+      id: meta.slug,
+      slug: meta.slug,
+      name: meta.name,
+      icon: meta.icon,
+      color: meta.color,
+      description: items.find(item => item.description)?.description || '',
+      intranetLabel: `${meta.name} Intranet`,
+      regions: uniq(items.flatMap(item => item.regions)),
+      groups: Array.from(groupMap.entries()).map(([title, groupItems]) => ({
+        id: slugify(title) || 'applications',
+        title,
+        items: groupItems,
+      })),
+      items,
+    }
+  })
+}
+
+export const useApplicationCatalog = () => {
+  const catalog = useState<ApplicationCatalogItem[]>('applications:catalog', () => [])
+  const loading = useState<boolean>('applications:catalog:loading', () => false)
+  const syncing = useState<boolean>('applications:catalog:syncing', () => false)
+  const bootstrapped = useState<boolean>('applications:catalog:bootstrapped', () => false)
+  const form = useState<any>('applications:catalog:form', () => null)
+  const businesses = computed(() => groupCatalogByBusiness(catalog.value))
+
+  const refreshFromServer = async (filters: ApplicationCatalogFilters = {}) => {
+    if (syncing.value) {
+      return catalog.value
+    }
+
+    syncing.value = true
+    loading.value = true
+
+    try {
+      const response = await $fetch<any[]>('/api/applications/catlog', {
+        method: 'POST',
+        body: filters,
+      })
+
+      catalog.value = response
+
+    } catch (error) {
+      console.error('Fetch application catalog failed:', error)
+      catalog.value = []
+    } finally {
+      loading.value = false
+      syncing.value = false
+    }
+
+    return catalog.value
+  }
+
+  const bootstrap = async () => {
+    if (bootstrapped.value && catalog.value.length > 0) {
+      return catalog.value
+    }
+
+    const data = await refreshFromServer()
+    bootstrapped.value = true
+    return data
+  }
+  const getApplicationCatalogData = async (filters: ApplicationCatalogFilters = {}) => {
+    return refreshFromServer({
+      'type': filters.type,
+      'tag': filters.tag,
+    })
+  }
+
+  const getApplicationById = (id: string) => {
+    return catalog.value.find(item => item.id === id) || null
+  }
+
+  const getApplicationsByBusiness = (business: string) => {
+    const targetBusiness = normalizeString(business).toLowerCase()
+    if (!targetBusiness) {
+      return []
+    }
+
+    return catalog.value.filter(item => item.business.toLowerCase() === targetBusiness)
+  }
+
+  const getBusinessBySlug = (slug: string) => {
+    return businesses.value.find(item => item.slug === slug) || null
+  }
+
+  const getFormData = async (id: string) => {
+    try {
+      const response = await $fetch<any>('/api/todo/form', {
+        method: 'POST',
+        body: {
+          "workflowid": 111,
+          "languageid": 6,
+          "isFree": 0,
+          "isAllowNodeFreeFlow": 0,
+          "isReadOnlyModel": true,
+          "isFlowModel": 0,
+          "showForecastNode": 1,
+          "requestid": "798953",
+          "nodeid": "700"
+        },
+      })
+
+      form.value = response
+
+    } catch (error) {
+      console.error('Fetch application catalog failed:', error)
+      form.value = null
+    } 
+  }
+
+  return {
+    catalog,
+    businesses,
+    loading,
+    syncing,
+    bootstrapped,
+    form,
+    bootstrap,
+    refreshFromServer,
+    getApplicationCatalogData,
+    getApplicationById,
+    getApplicationsByBusiness,
+    getBusinessBySlug,
+    getFormData,
+  }
 }
