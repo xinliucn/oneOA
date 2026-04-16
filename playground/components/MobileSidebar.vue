@@ -16,7 +16,7 @@
             v-for="item in menuItems"
             :key="item.label"
             class="sidebar__item"
-            @click="onNavigateTo(item.path)"
+            @click="onNavigateTo(item.path, item.tabIndex)"
           >
             <div class="sidebar__icon">
               <IconCustom :name="item.icon" :size="22" />
@@ -35,24 +35,30 @@ import { computed } from 'vue'
 const props = defineProps<{ modelValue: boolean }>()
 const emit = defineEmits(['update:modelValue'])
 const { t } = useAppI18n()
+const activeTab = useState('mobile:activeTab', () => 1)
 
 const menuItems = computed(() => [
   { icon: 'document', label: t('nav.news'), path: '/mobile/news' },
-  { icon: 'info', label: t('nav.companyInformation') },
-  { icon: 'download', label: t('nav.companyDocuments') },
-  { icon: 'apps', label: t('nav.applications') },
-  { icon: 'building', label: t('nav.departmentIntranets') },
+  { icon: 'info', label: t('nav.companyInformation'), path: '/mobile/companyInformation' },
+  { icon: 'download', label: t('nav.companyDocuments'), path: '/mobile/companyDocuments' },
+  { icon: 'apps', label: t('nav.applications'), path: '/mobile', tabIndex: 3 },
+  { icon: 'building', label: t('nav.departmentIntranets'), path: '/mobile/departmentIntranets'  },
   { icon: 'dashboard', label: t('nav.dashboards') },
-  { icon: 'todo', label: t('nav.todo') },
+  { icon: 'todo', label: t('nav.todo'),path: '/mobile', tabIndex: 1 },
   { icon: 'education', label: t('nav.eLearning') },
   { icon: 'shop', label: t('nav.eShop') },
 ])
 
-const onNavigateTo = (path?: string) => {
+const onNavigateTo = (path?: string, tabIndex?: number) => {
   emit('update:modelValue', false)
+  if (tabIndex) {
+    activeTab.value = tabIndex
+  }
+
   if (!path) {
     return
   }
+
   navigateTo(path)
 }
 </script>

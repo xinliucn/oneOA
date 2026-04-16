@@ -1,54 +1,110 @@
-import { normalizeNotification } from '../../utils/notification'
-import { getNotificationApiPrefix, proxyWindmill } from '../../utils/windmillProxy'
-
 export default defineEventHandler(async (event) => {
-  // 从动态路由中提取通知 ID
-  // const id = getRouterParam(event, 'id')
+  const id = String(getRouterParam(event, 'id') || '')
 
-  // if (!id) {
-  //   throw createError({
-  //     statusCode: 400,
-  //     message: '通知 ID 不能为空',
-  //   })
-  // }
-
-  // try {
-
-  //   const query = getQuery(event)
-  //   // 当前没有完整登录态串联时，先保留 user_id 的兜底逻辑
-  //   const userId = typeof query.user_id === 'string' && query.user_id.trim() ? query.user_id.trim() : 'anonymous'
-  //   const params = new URLSearchParams({
-  //     user_id: userId,
-  //     id,
-  //   })
-
-  //   const path = `${getNotificationApiPrefix()}/detail?${params.toString()}`
-  //   // 转发到 Windmill 详情接口，并把返回结果规整成统一结构
-  //   const response = await proxyWindmill<any>(event, path, { method: 'GET', skipCookies: false })
-  //   const candidate = response?.data?.item || response?.data || response?.item || response
-
-  //   return {
-  //     item: candidate ? normalizeNotification(candidate) : null,
-  //   }
-  // } catch (error: any) {
-  //   console.error('Get notification detail API error:', error)
-
-  //   // 统一转换成前端可消费的 HTTP 错误
-  //   throw createError({
-  //     statusCode: error.statusCode || 500,
-  //     message: error.message || '获取通知详情失败',
-  //   })
-  // }
-  return {
-    "id": 1,
-    "body": "系统将于今晚 22:00 进行维护升级",
-    "icon": "/icons/icon-192.png",
-    "title": "系统更新通知",
-    "is_read": 1,
-    "read_at": "2026-03-09T18:14:21.783Z",
-    "category": "system",
-    "action_url": null,
-    "created_at": "2026-03-09T17:41:26.320Z",
-    "updated_at": "2026-03-09T18:14:21.783Z"
+  const mockMap = {
+    '169': {
+      item: {
+        id: '169',
+        title: 'Demand & Business Case Approval (GDT)',
+        summary: 'WOA-DPM-26010001 Pending',
+        content:
+          'Submitted by Victor Ho via WOA-DPM. Process status is Pending (Registration). Portfolio is Workflow and Optimization, business unit is Group Internal Audit (GIA).',
+        link: 'https://outlook.office.com/',
+        source: 'Victor Ho via WOA-DPM',
+        category: 'order',
+        createdAt: '2026-01-01T15:13:00.000Z',
+        readAt: null,
+        payload: {
+          variant: 'approval',
+          user_id: 'demo-user',
+          author: 'Victor Ho',
+          approval: {
+            reference: 'WOA-DPM-26010001',
+            status: 'Pending',
+            submittedLabel: 'Submitted by:',
+            submittedBy: 'Victor Ho via WOA-DPM',
+            submittedDate: '2026-01-01',
+            submittedTime: '15:13',
+            timeline: [
+              {
+                name: 'Ideation',
+                status: 'Approved',
+                date: 'Approved 2026-02-01 at 14:47',
+              },
+              {
+                name: 'Pre-Approval Assessment',
+                status: 'Approved',
+                date: 'Approved 2026-02-03 at 17:21',
+              },
+              {
+                name: 'Registration',
+                status: 'Pending',
+                date: 'Pending',
+              },
+            ],
+            attachments: [
+              { name: 'File 1.png' },
+              { name: 'File 2.png' },
+              { name: 'File 3.png' },
+            ],
+            fields: [
+              { label: 'Reference Number', value: 'WOA-DPM-26010001' },
+              { label: 'Process Status', value: 'Pending (Registration)' },
+              { label: 'Requestor', value: 'Victor Ho' },
+              { label: 'Request Date', value: '2026-01-01' },
+              { label: 'Portfolio', value: 'Workflow and Optimization' },
+              { label: 'Business Unit', value: 'Group Internal Audit (GIA)' },
+            ],
+            detailLabel: 'View details in WOA-DPM >',
+          },
+        },
+      },
+    },
+    '170': {
+      item: {
+        id: '170',
+        title: 'Lorem ipsum dolor',
+        summary: 'Sofia Johnson sent you a long-form update.',
+        content:
+          'Lorem ipsum is simply dummy text of the printing and typesetting industry. It has survived not only five centuries, but also the leap into electronic typesetting, remaining essentially unchanged.',
+        link: 'https://outlook.office.com/',
+        source: 'Sofia Johnson',
+        category: 'order',
+        createdAt: '2025-10-24T15:13:00.000Z',
+        readAt: null,
+        payload: {
+          variant: 'message',
+          user_id: 'demo-user',
+          author: 'Sofia Johnson',
+          message: {
+            author: 'Sofia Johnson',
+            recipient: 'to me',
+            date: '2025-10-24',
+            time: '15:13',
+            linkLabel: 'Open in Outlook>',
+          },
+        },
+      },
+    },
+    '171': {
+      item: {
+        id: '171',
+        title: 'Lorem ipsum dolor',
+        summary: 'Printing and typesetting summary',
+        content:
+          'Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry standard dummy text since the 1500s and remains common in publishing software.',
+        link: '',
+        source: 'Latest Updates',
+        category: 'order',
+        createdAt: '2025-10-23T10:08:00.000Z',
+        readAt: null,
+        payload: {
+          variant: 'article',
+          user_id: 'demo-user',
+        },
+      },
+    },
   }
+
+  return mockMap[id as keyof typeof mockMap] || { item: null }
 })

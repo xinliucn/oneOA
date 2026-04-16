@@ -13,7 +13,42 @@
         >
           <span class="notification-panel__toggle-knob" />
         </button>
-        <span v-else class="notification-panel__accent">•••</span>
+        <el-dropdown
+          v-else
+          trigger="click"
+          placement="bottom-end"
+          popper-class="notification-panel__dropdown-popper"
+          @command="handlePageSubscriptionCommand"
+        >
+          <button
+            type="button"
+            class="notification-panel__accent-button"
+            :disabled="isPushToggleLoading"
+          >
+            •••
+          </button>
+
+          <template #dropdown>
+            <el-dropdown-menu class="notification-panel__dropdown-menu">
+              <el-dropdown-item command="enable">
+                <span class="notification-panel__dropdown-item">
+                  <span class="notification-panel__dropdown-check">
+                    {{ desktopToggleOn ? '✓' : '' }}
+                  </span>
+                  <span>Enabled</span>
+                </span>
+              </el-dropdown-item>
+              <el-dropdown-item command="disable">
+                <span class="notification-panel__dropdown-item">
+                  <span class="notification-panel__dropdown-check">
+                    {{ !desktopToggleOn ? '✓' : '' }}
+                  </span>
+                  <span>Disabled</span>
+                </span>
+              </el-dropdown-item>
+            </el-dropdown-menu>
+          </template>
+        </el-dropdown>
       </div>
 
       <div class="notification-panel__filters">
@@ -184,6 +219,33 @@ const toggleDesktopSubscription = async () => {
   }
 }
 
+const handlePageSubscriptionCommand = async (command: string | number | object) => {
+  if (isPushToggleLoading.value) {
+    return
+  }
+
+  if (command !== 'enable' && command !== 'disable') {
+    return
+  }
+
+  isPushToggleLoading.value = true
+
+  try {
+    if (command === 'enable') {
+      if (!desktopToggleOn.value) {
+        await subscribe()
+      }
+      return
+    }
+
+    if (desktopToggleOn.value) {
+      await unsubscribe()
+    }
+  } finally {
+    isPushToggleLoading.value = false
+  }
+}
+
 onMounted(async () => {
   await bootstrap()
   await initPushSubscription()
@@ -238,6 +300,26 @@ onMounted(async () => {
   font-size: 15px;
   line-height: 1;
   letter-spacing: 1px;
+}
+
+.notification-panel__accent-button {
+  width: 24px;
+  height: 24px;
+  border: 0;
+  padding: 0;
+  background: transparent;
+  color: #b10f49;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  line-height: 1;
+  letter-spacing: 0;
+  cursor: pointer;
+}
+
+.notification-panel__accent-button:disabled {
+  opacity: 0.6;
 }
 
 .notification-panel__toggle {
@@ -381,5 +463,61 @@ onMounted(async () => {
 
 .notification-panel--desktop-popover .notification-panel__list {
   background: #ffffff;
+}
+
+:global(.notification-panel__dropdown-popper.el-popper) {
+  border: 0 !important;
+  border-radius: 14px !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  padding: 6px 0 0 !important;
+}
+
+:global(.notification-panel__dropdown-popper .el-popper__arrow) {
+  display: none;
+}
+
+:global(.notification-panel__dropdown-menu.el-dropdown-menu) {
+  width: 86px;
+  min-width: 86px;
+  padding: 10px 0;
+  border: 0;
+  border-radius: 14px;
+  background: #ffffff;
+  box-shadow: 0 10px 28px rgba(17, 24, 39, 0.18);
+}
+
+:global(.notification-panel__dropdown-menu .el-dropdown-menu__item) {
+  min-height: 36px;
+  padding: 0 12px;
+  color: #161616;
+  font-size: 16px;
+  font-weight: 600;
+  line-height: 1;
+}
+
+:global(.notification-panel__dropdown-menu .el-dropdown-menu__item:focus) {
+  background: #fff7fa;
+  color: #161616;
+}
+
+:global(.notification-panel__dropdown-menu .el-dropdown-menu__item:not(.is-disabled):hover) {
+  background: #fff7fa;
+  color: #161616;
+}
+
+.notification-panel__dropdown-item {
+  width: 100%;
+  display: grid;
+  grid-template-columns: 12px 1fr;
+  align-items: center;
+  gap: 8px;
+}
+
+.notification-panel__dropdown-check {
+  width: 12px;
+  color: #b10f49;
+  font-size: 13px;
+  font-weight: 700;
 }
 </style>
