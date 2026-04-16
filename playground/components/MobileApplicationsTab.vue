@@ -1,43 +1,93 @@
 <template>
   <div class="mobile-applications">
     <div class="mobile-applications__header">
-      <h2 class="mobile-applications__title">{{ t('desktopApps.title') }}</h2>
-      <el-button circle class="search-btn">
-        <IconCustom name="search" :size="20" />
+      <h2 class="mobile-applications__title">
+        {{ t('desktopApps.title') }}
+      </h2>
+      <el-button
+        circle
+        class="search-btn"
+      >
+        <IconCustom
+          name="search"
+          :size="20"
+        />
       </el-button>
     </div>
 
     <div class="mobile-applications__tabs">
       <div class="applications__tabs__box">
-        <button :class="['tab-btn', { active: activeTab === 'Application' }]" @click="activeTab = 'Application'">
+        <button
+          :class="['tab-btn', { active: activeTab === 'Application' }]"
+          @click="activeTab = 'Application'"
+        >
           {{ t('mobile.applications.tabs.byApplication') }}
         </button>
-        <button :class="['tab-btn', { active: activeTab === 'Business' }]" @click="activeTab = 'Business'">
+        <button
+          :class="['tab-btn', { active: activeTab === 'Business' }]"
+          @click="activeTab = 'Business'"
+        >
           {{ t('mobile.applications.tabs.byBusiness') }}
         </button>
       </div>
     </div>
 
     <!-- By Application -->
-    <div v-if="activeTab === 'Application'" class="app-grid">
-      <div v-for="app in catalog" :key="app.mainTable.id" class="app-card" @click="handleAppClick(app)">
+    <div
+      v-if="activeTab === 'Application'"
+      class="app-grid"
+    >
+      <div
+        v-for="app in catalog"
+        :key="app.mainTable.id"
+        class="app-card"
+        @click="handleAppClick(app)"
+      >
         <div class="app-card__logo">
-          <img v-if="app.mainTable.image" :src="app.mainTable.image" :alt="app.mainTable.name_en"
-            class="app-card__img" />
-          <IconCustom v-else :name="app.mainTable.icon" :size="36" />
+          <img
+            v-if="app.mainTable.image"
+            :src="app.mainTable.image"
+            :alt="app.mainTable.name_en"
+            class="app-card__img"
+          >
+          <IconCustom
+            v-else
+            :name="app.mainTable.icon"
+            :size="36"
+          />
         </div>
-        <div class="app-card__name">{{ app.mainTable.name_en }}</div>
+        <div class="app-card__name">
+          {{ app.mainTable.name_en }}
+        </div>
       </div>
     </div>
 
     <!-- By Business -->
-    <div v-else class="business-grid">
-      <div v-for="biz in catalog" :key="biz.mainTable.id" class="biz-card" @click="handleBizClick(biz.mainTable)">
-        <div class="biz-card__icon" :style="{ color: biz.color }">
-          <IconCustom :name="biz.icon" :size="32" />
+    <div
+      v-else
+      class="business-grid"
+    >
+      <div
+        v-for="biz in catalog"
+        :key="biz.mainTable.id"
+        class="biz-card"
+        @click="handleBizClick(biz.mainTable)"
+      >
+        <div
+          class="biz-card__icon"
+          :style="{ color: biz.color }"
+        >
+          <IconCustom
+            :name="biz.icon"
+            :size="32"
+          />
         </div>
-        <div class="biz-card__name">{{ biz.mainTable.name_en }}</div>
-        <div class="biz-card__desc">{{ biz.mainTable.description_en }}</div>
+        <div class="biz-card__name">
+          {{ biz.mainTable.name_en }}
+        </div>
+        <div class="biz-card__desc">
+          {{ biz.mainTable.description_en }}
+        </div>
       </div>
     </div>
   </div>
@@ -48,18 +98,25 @@ import { watch, ref } from 'vue'
 
 const { t } = useAppI18n()
 const { catalog, getApplicationCatalogData } = useApplicationCatalog()
+const { openGuardedUrl } = useNetworkGuard()
 const activeTab = ref('Application')
 const selectedBusiness = useState('mobile:selected-business', () => null)
 
+const getApplicationUrl = (app) => {
+  return app?.mainTable?.mobileurl || app?.mainTable?.homepage_url || app?.mobileUrl || app?.homepageUrl || ''
+}
 
-const handleAppClick = (app) => {
-  return window.open(app.mainTable.mobileurl, '_blank')
+const handleAppClick = async (app) => {
+  const url = getApplicationUrl(app)
+  if (!url) {
+    return
+  }
+
+  await openGuardedUrl(url, '_blank')
 }
 
 const handleBizClick = (biz) => {
   selectedBusiness.value = biz
-  console.log(selectedBusiness);
-
   return navigateTo(`/mobile/applications/business/${encodeURIComponent(biz.id)}`)
 }
 

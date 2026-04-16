@@ -1,19 +1,43 @@
 <template>
-  <div v-if="catalog" class="mobile-app-detail">
+  <div
+    v-if="catalog && selectedBusiness"
+    class="mobile-app-detail"
+  >
     <div class="mobile-app-detail__breadcrumb">
-      <button type="button" class="mobile-app-detail__back" @click="handleBack">
-        <IconCustom name="chevron-right" :size="16" :rotate="180" color="#A60A3A" />
+      <button
+        type="button"
+        class="mobile-app-detail__back"
+        @click="handleBack"
+      >
+        <IconCustom
+          name="chevron-right"
+          :size="16"
+          :rotate="180"
+          color="#A60A3A"
+        />
         <span>Applications</span>
       </button>
     </div>
 
     <section class="mobile-app-detail__hero">
-      <div class="mobile-app-detail__icon" >
-        <IconCustom :name="selectedBusiness.icon" :size="48" />
+      <div class="mobile-app-detail__icon">
+        <IconCustom
+          :name="selectedBusiness.icon || 'apps'"
+          :size="48"
+        />
       </div>
-      <h1 class="mobile-app-detail__title">{{ selectedBusiness.name_en }}</h1>
-      <p class="mobile-app-detail__description">{{ selectedBusiness.description_en }}</p>
-      <button type="button" class="mobile-app-detail__intranet" :style="{ color: selectedBusiness.color }">
+      <h1 class="mobile-app-detail__title">
+        {{ selectedBusiness.name_en }}
+      </h1>
+      <p class="mobile-app-detail__description">
+        {{ selectedBusiness.description_en }}
+      </p>
+      <button
+        type="button"
+        class="mobile-app-detail__intranet"
+        :style="{ color: selectedBusiness.color }"
+        @click="handleIntranetClick"
+      >
         {{ selectedBusiness.intranetLabel }}
       </button>
     </section>
@@ -46,72 +70,109 @@
         />
       </button> -->
 
-      <div v-for="item in catalog" class="mobile-app-detail__group-list">
+      <div
+        v-for="item in catalog"
+        :key="item.mainTable.id"
+        class="mobile-app-detail__group-list"
+      >
         <button
-          :key="item.mainTable.id"
           type="button"
           class="mobile-app-detail__item"
-          @click="handleItemClick(item.mainTable.id)"
+          @click="handleItemClick(item)"
         >
           <div class="mobile-app-detail__item-info">
-            <div class="mobile-app-detail__item-name">{{ item.mainTable.name_en }}</div>
-            <div class="mobile-app-detail__item-type">{{ item.mainTable.description_en }}</div>
+            <div class="mobile-app-detail__item-name">
+              {{ item.mainTable.name_en }}
+            </div>
+            <div class="mobile-app-detail__item-type">
+              {{ item.mainTable.description_en }}
+            </div>
           </div>
-          <IconCustom name="chevron-right" :size="18" color="#A60A3A" />
+          <IconCustom
+            name="chevron-right"
+            :size="18"
+            color="#A60A3A"
+          />
         </button>
       </div>
     </section>
   </div>
 
-  <div v-else class="mobile-app-detail__empty">
-    <p class="mobile-app-detail__empty-title">Application group not found</p>
-    <button type="button" class="mobile-app-detail__empty-back" @click="handleBack">Back to Applications</button>
+  <div
+    v-else
+    class="mobile-app-detail__empty"
+  >
+    <p class="mobile-app-detail__empty-title">
+      Application group not found
+    </p>
+    <button
+      type="button"
+      class="mobile-app-detail__empty-back"
+      @click="handleBack"
+    >
+      Back to Applications
+    </button>
   </div>
 </template>
 
-
 <script setup lang="ts">
-import type { ApplicationBusiness } from '~/composables/useApplicationCatalog'
+type BusinessSummary = {
+  icon?: string
+  name_en?: string
+  description_en?: string
+  color?: string
+  intranetLabel?: string
+}
+
+type ApplicationCatalogEntry = {
+  mainTable?: {
+    id?: string
+    mobileurl?: string
+    homepage_url?: string
+    name_en?: string
+    description_en?: string
+  }
+  mobileUrl?: string
+  homepageUrl?: string
+}
+
 const { catalog, getApplicationCatalogData } = useApplicationCatalog()
-const selectedBusiness:any = useState('mobile:selected-business', () => null)
-console.log('selectedBusiness:', selectedBusiness)
+const { openGuardedUrl } = useNetworkGuard()
+const selectedBusiness = useState<BusinessSummary | null>('mobile:selected-business', () => null)
 
 definePageMeta({
   layout: 'mobile',
   middleware: 'auth',
 })
 
-const route = useRoute()
 const activeTab = useState<number>('mobile:activeTab', () => 3)
 const selectedRegion = ref<string>('CN')
-const openGroups = ref<string[]>([])
-
-const departmentSlug = computed(() => String(route.params.id || ''))
-
-
-const isGroupOpen = (groupId: string) => openGroups.value.includes(groupId)
-
-const toggleGroup = (groupId: string) => {
-  if (isGroupOpen(groupId)) {
-    openGroups.value = openGroups.value.filter((id) => id !== groupId)
-    return
-  }
-
-  openGroups.value = [...openGroups.value, groupId]
-}
 
 const handleBack = () => {
   activeTab.value = 3
   return navigateTo('/mobile')
 }
 
-const handleItemClick = (itemName: string) => {
-  console.log('Application item clicked:', itemName)
+const getApplicationUrl = (item: ApplicationCatalogEntry) => {
+  return item?.mainTable?.mobileurl || item?.mainTable?.homepage_url || item?.mobileUrl || item?.homepageUrl || ''
+}
+
+const handleIntranetClick = async () => {
+  await openGuardedUrl('https://intranet.dch.com.hk/', '_blank')
+}
+
+const handleItemClick = async (item: ApplicationCatalogEntry) => {
+  const url = getApplicationUrl(item)
+  if (!url) {
+    return
+  }
+
+  await openGuardedUrl(url, '_blank')
 }
 
 watch(
   selectedRegion,
-  async (tab) => {
+  async () => {
     await getApplicationCatalogData({ tag: selectedRegion.value })
   },
   { immediate: true },

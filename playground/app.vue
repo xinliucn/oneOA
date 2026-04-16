@@ -2,6 +2,7 @@
   <NuxtLayout>
     <NuxtPage />
   </NuxtLayout>
+  <NetworkGuardOverlay />
 </template>
 
 <script setup lang="ts">
@@ -11,8 +12,8 @@ useHead(() => ({
   title: t('common.appName'),
   meta: [
     { charset: 'utf-8' },
-    { name: 'viewport', content: 'width=device-width, initial-scale=1' }
-  ]
+    { name: 'viewport', content: 'width=device-width, initial-scale=1' },
+  ],
 }))
 </script>
 

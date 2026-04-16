@@ -1,6 +1,8 @@
 const DB_NAME = 'superapp_notifications'
 const DB_VERSION = 1
 const STORE_NOTIFICATIONS = 'notifications'
+const NETWORK_GUARD_DEFAULT_PROBE_URL = 'https://intranet.dch.com.hk/'
+const NETWORK_GUARD_DEFAULT_TIMEOUT_MS = 1500
 
 const openDatabase = () => {
   return new Promise((resolve, reject) => {
@@ -46,6 +48,67 @@ const saveNotification = async (item) => {
     tx.onabort = () => reject(tx.error || new Error('Save notification aborted in SW'))
   })
 }
+
+const probeInternalNetwork = async (probeUrl, timeoutMs) => {
+  const controller = new AbortController()
+  const timer = setTimeout(() => controller.abort(), timeoutMs)
+
+  try {
+    await fetch(probeUrl || NETWORK_GUARD_DEFAULT_PROBE_URL, {
+      method: 'GET',
+      mode: 'no-cors',
+      cache: 'no-store',
+      credentials: 'omit',
+      signal: controller.signal,
+    })
+
+    return true
+  } catch (_error) {
+    return false
+  } finally {
+    clearTimeout(timer)
+  }
+}
+
+const broadcastInternalNetworkStatus = async (payload) => {
+  const clientList = await self.clients.matchAll({
+    type: 'window',
+    includeUncontrolled: true,
+  })
+
+  for (const client of clientList) {
+    client.postMessage(payload)
+  }
+}
+
+self.addEventListener('message', (event) => {
+  const payload = event.data || {}
+
+  if (payload.type !== 'network-guard:probe') {
+    return
+  }
+
+  event.waitUntil(
+    (async () => {
+      const reachable = await probeInternalNetwork(
+        payload.probeUrl,
+        payload.timeoutMs || NETWORK_GUARD_DEFAULT_TIMEOUT_MS,
+      )
+      const response = {
+        type: 'network-guard:probe-result',
+        reachable,
+        checkedAt: Date.now(),
+      }
+
+      if (event.ports && event.ports[0]) {
+        event.ports[0].postMessage(response)
+        return
+      }
+
+      await broadcastInternalNetworkStatus(response)
+    })(),
+  )
+})
 
 self.addEventListener('push', (event) => {
   event.waitUntil(

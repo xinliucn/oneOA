@@ -1,11 +1,19 @@
 <template>
   <div class="mobile-notification-detail">
     <header class="mobile-notification-detail__header">
-      <button type="button" class="mobile-notification-detail__back" @click="handleBack">
-        <IconCustom name="chevron-right" :size="18" :rotate="180" />
+      <button
+        type="button"
+        class="mobile-notification-detail__back"
+        @click="handleBack"
+      >
+        <IconCustom
+          name="chevron-right"
+          :size="18"
+          :rotate="180"
+          color="#B10F49"
+        />
+        <span class="mobile-notification-detail__back-label">{{ headerTitle }}</span>
       </button>
-      <h1 class="mobile-notification-detail__header-title">{{ headerTitle }}</h1>
-      <div class="mobile-notification-detail__header-spacer" />
     </header>
 
     <main class="mobile-notification-detail__content">
@@ -48,7 +56,6 @@
 import type { NotificationItem } from '~/types/notification'
 
 definePageMeta({
-  layout: 'mobile',
   middleware: 'auth',
 })
 
@@ -67,10 +74,10 @@ const localText = (key: string, fallback: Record<string, string>) => {
 }
 
 const headerTitle = computed(() => {
-  return localText('mobile.notifications.detail.title', {
-    'zh-CN': '通知详情',
-    'zh-TW': '通知詳情',
-    en: 'Notification Detail',
+  return localText('mobile.notifications.title', {
+    'zh-CN': '通知',
+    'zh-TW': '通知',
+    en: 'Notifications',
   })
 })
 
@@ -190,39 +197,26 @@ watch(notificationId, async (id) => {
 }
 
 .mobile-notification-detail__header {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 16px;
+  padding: 18px 16px 14px;
   background: #ffffff;
   border-bottom: 1px solid #ece3e6;
 }
 
 .mobile-notification-detail__back {
-  width: 32px;
-  height: 32px;
   border: 0;
-  border-radius: 999px;
-  background: #fce4ec;
-  color: #a60a3a;
+  padding: 0;
+  background: transparent;
+  color: #b10f49;
   display: inline-flex;
   align-items: center;
-  justify-content: center;
+  gap: 6px;
 }
 
-.mobile-notification-detail__header-title {
-  flex: 1;
-  margin: 0;
-  font-size: 17px;
-  line-height: 1.3;
-  font-weight: 700;
-  color: #161616;
-  text-align: center;
-}
-
-.mobile-notification-detail__header-spacer {
-  width: 32px;
-  height: 32px;
+.mobile-notification-detail__back-label {
+  font-size: 15px;
+  line-height: 1.2;
+  font-weight: 500;
+  color: #b10f49;
 }
 
 .mobile-notification-detail__content {

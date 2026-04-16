@@ -148,7 +148,7 @@ const filteredNotifications = computed(() => {
 })
 
 const handleSelect = async (item: NotificationItem) => {
-  const targetLink = await openNotification(item)
+  // const targetLink = await openNotification(item)
   const isMobileRoute = route.path.startsWith('/mobile')
   const fallback = isMobileRoute
     ? `/mobile/notifications/${encodeURIComponent(item.id)}`
@@ -156,11 +156,11 @@ const handleSelect = async (item: NotificationItem) => {
 
   emit('close')
 
-  if (targetLink) {
-    const isExternalLink = /^https?:\/\//i.test(targetLink)
-    await navigateTo(targetLink, isExternalLink ? { external: true } : undefined)
-    return
-  }
+  // if (targetLink) {
+  //   const isExternalLink = /^https?:\/\//i.test(targetLink)
+  //   await navigateTo(targetLink, isExternalLink ? { external: true } : undefined)
+  //   return
+  // }
 
   await navigateTo(fallback)
 }
