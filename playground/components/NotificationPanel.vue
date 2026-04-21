@@ -318,10 +318,10 @@ onMounted(async () => {
 
 .notification-panel__title {
   margin: 0;
-  font-size: 20px;
+  font-size: 24px;
   line-height: 1.15;
-  font-weight: 700;
-  color: #161616;
+  font-weight: 600;
+  color: #000000;
 }
 
 .notification-panel__title-row .notification-panel__title {
@@ -415,7 +415,7 @@ onMounted(async () => {
   border-radius: 999px;
   background: #ffffff;
   color: #6d6d6d;
-  font-size: 12px;
+  font-size: 16px;
   line-height: 1;
   padding: 8px 12px;
   transition: all 0.2s ease;

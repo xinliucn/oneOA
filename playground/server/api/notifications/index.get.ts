@@ -65,7 +65,8 @@ export default defineEventHandler(async (event) => {
       method: 'GET',
       skipCookies: false,
     })
-
+    console.log('shuchu+++',response);
+    
     // 将不同来源的数据统一规整成前端使用的通知列表结构
     return normalizeNotificationList(response, page, pageSize)
   }
