@@ -30,24 +30,6 @@ export interface ApplicationBusiness {
   items: ApplicationCatalogItem[]
 }
 
-interface ApplicationCatalogRawMainTable {
-  id?: string
-  application?: string
-  type?: string
-  tag?: string
-  business?: string
-  homepage_url?: string
-  mobileurl?: string
-  description_en?: string
-  description_sc?: string
-  description_tc?: string
-  iconx64?: string
-  name_en?: string
-  name_sc?: string
-  name_tc?: string
-  [key: string]: any
-}
-
 export interface ApplicationCatalogFilters {
   type?: string | string[]
   tag?: string
@@ -59,6 +41,31 @@ const normalizeString = (value?: string | null) => {
 
 const uniq = <T>(items: T[]) => {
   return Array.from(new Set(items))
+}
+
+const applicationIconModules = import.meta.glob('~/assets/images/applications/*', {
+  eager: true,
+  import: 'default',
+}) as Record<string, string>
+
+const applicationIconMap = Object.fromEntries(
+  Object.entries(applicationIconModules).map(([path, resolvedUrl]) => [
+    path.split('/').pop() || '',
+    resolvedUrl,
+  ]),
+)
+
+const normalizeApplicationIconPath = (iconx64?: string | null) => {
+  const iconName = normalizeString(iconx64)
+  if (!iconName) {
+    return ''
+  }
+
+  if (/^(https?:)?\/\//.test(iconName) || iconName.startsWith('/')) {
+    return iconName
+  }
+
+  return applicationIconMap[iconName] || iconName
 }
 
 const slugify = (value: string) => {
@@ -195,7 +202,13 @@ export const useApplicationCatalog = () => {
         body: filters,
       })
 
-      catalog.value = response
+      catalog.value = (response || []).map((item) => ({
+        ...item,
+        mainTable: {
+          ...item?.mainTable,
+          iconx64: normalizeApplicationIconPath(item?.mainTable?.iconx64),
+        },
+      }))
 
     } catch (error) {
       console.error('Fetch application catalog failed:', error)

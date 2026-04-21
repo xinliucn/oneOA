@@ -4,13 +4,8 @@
       <template v-if="isSearchOpen">
         <div class="mobile-todo__search">
           <IconCustom name="search" :size="20" class="mobile-todo__search-icon" />
-          <input
-            ref="searchInputRef"
-            v-model.trim="searchQuery"
-            type="text"
-            class="mobile-todo__search-input"
-            :placeholder="searchPlaceholder"
-          >
+          <input ref="searchInputRef" v-model.trim="searchQuery" type="text" class="mobile-todo__search-input"
+            :placeholder="searchPlaceholder">
         </div>
         <button type="button" class="mobile-todo__search-cancel" @click="closeSearch">
           {{ text('mobile.todo.actions.cancel', { 'zh-CN': '取消', 'zh-TW': '取消', en: 'Cancel' }) }}
@@ -27,14 +22,8 @@
           </button>
 
           <div v-if="isDropdownOpen" class="mobile-todo__menu">
-            <button
-              v-for="option in todoOptions"
-              :key="option.value"
-              type="button"
-              class="mobile-todo__menu-item"
-              :class="{ 'is-active': selectedView.value === option.value }"
-              @click="selectView(option)"
-            >
+            <button v-for="option in todoOptions" :key="option.value" type="button" class="mobile-todo__menu-item"
+              :class="{ 'is-active': selectedView.value === option.value }" @click="selectView(option)">
               <span class="mobile-todo__menu-check" :class="{ 'is-visible': selectedView.value === option.value }" />
               <span>{{ option.label }}</span>
             </button>
@@ -43,7 +32,8 @@
 
         <div class="mobile-todo__actions">
           <div ref="filterTriggerRef" class="mobile-todo__filter-trigger">
-            <el-button circle class="action-btn_left" :class="{ 'is-active': isFilterPanelOpen }" @click="toggleFilterPanel">
+            <el-button circle class="action-btn_left" :class="{ 'is-active': isFilterPanelOpen }"
+              @click="toggleFilterPanel">
               <IconCustom name="filterIcon" :size="20" />
             </el-button>
           </div>
@@ -54,34 +44,30 @@
       </template>
     </div>
 
-    <div v-if="!isLoadingScreenVisible && isFilterPanelOpen && !isSearchOpen" ref="filterPanelRef" class="mobile-todo__filter-panel">
+    <div v-if="!isLoadingScreenVisible && isFilterPanelOpen && !isSearchOpen" ref="filterPanelRef"
+      class="mobile-todo__filter-panel">
       <div class="mobile-todo__filter-group">
-        <div class="mobile-todo__filter-label">{{ text('mobile.todo.filters.category', { 'zh-CN': '筛选 1', 'zh-TW': '篩選 1', en: 'Filter 1' }) }}</div>
+        <div class="mobile-todo__filter-label">{{ text('mobile.todo.filters.category', {
+          'zh-CN': '筛选 1', 'zh-TW': '篩選1',
+          en: 'Filter 1'
+        }) }}</div>
         <div class="mobile-todo__filter-options">
-          <button
-            v-for="filter in categoryFilters"
-            :key="filter.value"
-            type="button"
-            class="mobile-todo__filter-chip"
-            :class="{ 'is-active': draftCategoryFilter === filter.value }"
-            @click="draftCategoryFilter = filter.value"
-          >
+          <button v-for="filter in categoryFilters" :key="filter.value" type="button" class="mobile-todo__filter-chip"
+            :class="{ 'is-active': draftCategoryFilter === filter.value }" @click="draftCategoryFilter = filter.value">
             {{ filter.label }}{{ filter.count ? ` ${filter.count}` : '' }}
           </button>
         </div>
       </div>
 
       <div class="mobile-todo__filter-group">
-        <div class="mobile-todo__filter-label">{{ text('mobile.todo.filters.status', { 'zh-CN': '筛选 2', 'zh-TW': '篩選 2', en: 'Filter 2' }) }}</div>
+        <div class="mobile-todo__filter-label">{{ text('mobile.todo.filters.status', {
+          'zh-CN': '筛选 2', 'zh-TW': '篩選 2',
+          en:
+            'Filter 2'
+        }) }}</div>
         <div class="mobile-todo__filter-options">
-          <button
-            v-for="filter in statusFilters"
-            :key="filter.value"
-            type="button"
-            class="mobile-todo__filter-chip"
-            :class="{ 'is-active': draftStatusFilter === filter.value }"
-            @click="draftStatusFilter = filter.value"
-          >
+          <button v-for="filter in statusFilters" :key="filter.value" type="button" class="mobile-todo__filter-chip"
+            :class="{ 'is-active': draftStatusFilter === filter.value }" @click="draftStatusFilter = filter.value">
             {{ filter.label }}{{ filter.count ? ` ${filter.count}` : '' }}
           </button>
         </div>
@@ -106,78 +92,84 @@
           </div>
         </div>
       </div>
-      <div v-else-if="!loading && filteredTasks.length === 0" class="mobile-todo__state">{{ text('mobile.todo.states.empty', { 'zh-CN': '暂无消息', 'zh-TW': '暫無消息', en: 'No items' }) }}</div>
+      <div v-else-if="!loading && filteredTasks.length === 0" class="mobile-todo__state">{{
+        text('mobile.todo.states.empty',
+          { 'zh-CN': '暂无消息', 'zh-TW': '暫無消息', en: 'No items' }) }}</div>
       <template v-else>
-      <div v-if="selectedViewValue === 'approvals'" v-for="task in list" :key="task.id" class="todo-item" @click="handleTaskClick(selectedViewValue,task)">
-        <div class="todo-item__content">
-          <div class="todo-item__header">
-            <div class="todo-item__meta">
-              <span class="todo-item__code">{{ task.requestmark }}</span>
-              <span class="todo-item__status" :class="`status-pending`">
-                {{ t(`${task.status}`) }}
-              </span>
+        <div v-if="selectedViewValue === 'approvals'" v-for="task in filteredTasks" :key="task.id" class="todo-item"
+          @click="handleTaskClick(selectedViewValue, task)">
+          <div class="todo-item__content">
+            <div class="todo-item__header">
+              <div class="todo-item__meta">
+                <span class="todo-item__code">{{ task.requestmark }}</span>
+                <span class="todo-item__status" :class="`status-pending`">
+                  {{ t(`${task.status}`) }}
+                </span>
+              </div>
+              <div class="todo-item__date">{{ task.createTime }}</div>
             </div>
-            <div class="todo-item__date">{{ task.createTime }}</div>
+            <div class="todo-item__title">{{ task.requestName }}</div>
+            <div class="todo-item__subtitle">
+              <span>{{ task.creatorName }}</span>
+              <span>{{ ' | ' }}</span>
+              <span class="todo-item__portfolio">{{ task.workflowBaseInfo.workflowName
+              }}</span>
+            </div>
           </div>
-          <div class="todo-item__title">{{ task.requestName }}</div>
-          <div class="todo-item__subtitle">
-            <span>{{ task.creatorName }}</span>
-            <span>{{ ' | ' }}</span>
-            <span class="todo-item__portfolio">{{ task.workflowBaseInfo.workflowName
-            }}</span>
-          </div>
+          <IconCustom name="chevron-right" :size="20" color="#A60A3A" class="todo-item__arrow" />
         </div>
-        <IconCustom name="chevron-right" :size="20" color="#A60A3A" class="todo-item__arrow" />
-      </div>
-       <div v-if="selectedViewValue === 'requests'" v-for="task in list" :key="task.id" class="todo-item" @click="handleTaskClick(selectedViewValue,task)">
-        <div class="todo-item__content">
-          <div class="todo-item__header">
-            <div class="todo-item__meta">
-              <span class="todo-item__code">{{ task.requestmark }}</span>
-             
+        <div v-if="selectedViewValue === 'requests'" v-for="task in filteredTasks" :key="task.id" class="todo-item"
+          @click="handleTaskClick(selectedViewValue, task)">
+          <div class="todo-item__content">
+            <div class="todo-item__header">
+              <div class="todo-item__meta">
+                <span class="todo-item__code">{{ task.requestmark }}</span>
+
+              </div>
+
             </div>
-            
-          </div>
-          <div class="todo-item__title">{{ task.requestName }} <span class="todo-item__status" :class="`status-pending`">
+            <div class="todo-item__title">{{ task.requestName }} <span class="todo-item__status"
+                :class="`status-pending`">
                 {{ t(`${task.currentNodeName}`) }}
               </span>
-            <div class="todo-item__date">{{ task.createTime }}</div>
+              <div class="todo-item__date">{{ task.createTime }}</div>
             </div>
-               <div class="todo-item__title">
+            <div class="todo-item__title">
               <span>{{ task.creatorSubcompanyName }}</span>
               <span>-></span>
-              <span>{{ task.creatorDepartmentName }}</span>  
-              </div>
-          <div class="todo-item__subtitle">
-            <span>{{ task.creatorName }}</span>
-            <span>{{ ' | ' }}</span>
-            <span class="todo-item__portfolio">{{ task.workflowBaseInfo.workflowName
-            }}</span>
-          </div>
-        </div>
-      </div>
-      <div v-if="selectedViewValue === 'tasks'" v-for="task in list" :key="task.id" class="todo-item" @click="handleTaskClick(selectedViewValue,task)">
-        <div class="todo-item__content">
-          <div class="todo-item__header">
-            <div class="todo-item__meta">
-              <span class="todo-item__code">{{ task.requestmark }}</span>
-             
+              <span>{{ task.creatorDepartmentName }}</span>
             </div>
-            <div class="todo-item__date">{{ task.createTime }}</div>
-          </div>
-          <div class="todo-item__title">{{ task.requestName }}</div>
-           <span class="todo-item__status" :class="`status-pending`">
-                {{ t(`${task.status}`) }}
-              </span>
-          <div class="todo-item__subtitle">
-            <span>{{ task.creatorName }}</span>
-            <span>{{ ' | ' }}</span>
-            <span class="todo-item__portfolio">{{ task.workflowBaseInfo.workflowName
-            }}</span>
+            <div class="todo-item__subtitle">
+              <span>{{ task.creatorName }}</span>
+              <span>{{ ' | ' }}</span>
+              <span class="todo-item__portfolio">{{ task.workflowBaseInfo.workflowName
+              }}</span>
+            </div>
           </div>
         </div>
-    
-      </div>
+        <div v-if="selectedViewValue === 'tasks'" v-for="task in filteredTasks" :key="task.id" class="todo-item"
+          @click="handleTaskClick(selectedViewValue, task)">
+          <div class="todo-item__content">
+            <div class="todo-item__header">
+              <div class="todo-item__meta">
+                <span class="todo-item__code">{{ task.requestmark }}</span>
+
+              </div>
+              <div class="todo-item__date">{{ task.createTime }}</div>
+            </div>
+            <div class="todo-item__title">{{ task.requestName }}</div>
+            <span class="todo-item__status" :class="`status-pending`">
+              {{ t(`${task.status}`) }}
+            </span>
+            <div class="todo-item__subtitle">
+              <span>{{ task.creatorName }}</span>
+              <span>{{ ' | ' }}</span>
+              <span class="todo-item__portfolio">{{ task.workflowBaseInfo.workflowName
+              }}</span>
+            </div>
+          </div>
+
+        </div>
       </template>
     </div>
   </div>
@@ -186,7 +178,7 @@
 <script setup lang="ts">
 import { computed, nextTick, ref } from 'vue'
 import type { ApprovalItem } from '~/types/approval'
-const toDoFrom:any = useState('mobile:todo-form', () => null)
+const toDoFrom: any = useState('mobile:todo-form', () => null)
 
 type TodoOption = {
   label: string
@@ -208,7 +200,6 @@ const todoOptions = computed<TodoOption[]>(() => [
   { label: t('tasks.tabs.approval'), value: 'approvals' },
   { label: t('tasks.tabs.requests'), value: 'requests' },
   { label: t('tasks.tabs.tasks'), value: 'tasks' },
-  { label: t('tasks.tabs.watchlist'), value: 'watchlist' },
 ])
 const selectedViewValue = ref('approvals')
 const selectedView = computed<TodoOption>(() => {
@@ -261,57 +252,190 @@ const loadingLabel = computed(() => {
   })
 })
 
-const categoryFilters = computed(() => {
-  // const counts = approvals.value.reduce<Record<string, number>>((accumulator, task) => {
-  //   const category = task.category?.trim() || localizedFallbacks[locale.value]?.others || defaultFallbacks.others
-  //   accumulator[category] = (accumulator[category] || 0) + 1
-  //   return accumulator
-  // }, {})
+const normalizeFilterValue = (value?: string | null) => {
+  return String(value || '').trim().toLowerCase()
+}
 
-  // return [
-  //   { label: text('mobile.todo.filters.all', localizedFallbacks[locale.value] || defaultFallbacks), value: 'all', count: null },
-  //   ...Object.entries(counts)
-  //     .sort(([left], [right]) => left.localeCompare(right))
-  //     .map(([label, count]) => ({
-  //       label,
-  //       value: label.toLowerCase(),
-  //       count,
-  //     })),
-  // ]
+const getTaskStatus = (task: any) => {
+  return normalizeFilterValue(task.status || task.currentNodeName)
+}
+
+const getTaskStatusLabel = (task: any) => {
+  return String(task.status || task.currentNodeName || '').trim()
+}
+
+const getTaskSearchFields = (task: any) => {
+  return [
+    task.code,
+    task.title,
+    task.submittedBy,
+    task.portfolio,
+    task.category,
+    task.status,
+    task.requestmark,
+    task.requestName,
+    task.creatorName,
+    task.creatorDepartmentName,
+    task.creatorSubcompanyName,
+    task.currentNodeName,
+    task.workflowBaseInfo?.workflowName,
+    task.workflowBaseInfo?.workflowTypeName,
+  ].map(field => normalizeFilterValue(field))
+}
+
+const getTaskTitleCodeFields = (task: any) => {
+  return [
+    task.code,
+    task.title,
+    task.referenceNo,
+    task.requestmark,
+    task.requestName,
+  ].map(field => normalizeFilterValue(field))
+}
+
+const categoryFilterPresets = computed(() => {
+  return [
+    {
+      label: t('mobile.todo.filters.all'),
+      value: 'all',
+    },
+    {
+      label: t('mobile.todo.filters.it'),
+      value: 'IT',
+    },
+    {
+      label: t('Finance'),
+      value: 'Finance',
+    },
+    {
+      label: t('mobile.todo.filters.legal'),
+      value: 'Legal',
+    },
+    {
+      label: t('mobile.todo.filters.motor'),
+      value: 'Motor',
+    },
+  ]
 })
 
-const statusFilters = computed(() => {
+const getCategoryKeywords = (filterValue: string) => {
+  const normalizedFilterValue = normalizeFilterValue(filterValue)
+  const activeCategory = categoryFilterPresets.value.find((filter) => {
+    return normalizeFilterValue(filter.value) === normalizedFilterValue
+  })
 
-  // return [
-  //   { label: t('mobile.todo.filters.all'), value: 'all', count: null },
-  //   { label: t('tasks.status.pending'), value: 'pending', count: countBy('pending') },
-  //   { label: t('tasks.status.approved'), value: 'approved', count: countBy('approved') },
-  //   { label: t('tasks.status.rejected'), value: 'rejected', count: countBy('rejected') },
-  // ]
-})
+  return [
+    activeCategory?.label,
+    activeCategory?.value,
+    filterValue,
+  ]
+    .map(value => normalizeFilterValue(value))
+    .filter((value, index, values) => value && value !== 'all' && values.indexOf(value) === index)
+}
 
-const filteredTasks = computed(() => {
-  const keyword = searchQuery.value.trim().toLowerCase()
+const matchesCategoryFilter = (task: any, filterValue: string) => {
+  const normalizedFilterValue = normalizeFilterValue(filterValue)
+  if (normalizedFilterValue === 'all') {
+    return true
+  }
+
+  const categoryKeywords = getCategoryKeywords(filterValue)
+  const taskTitleCodeFields = getTaskTitleCodeFields(task)
+  return categoryKeywords.some(categoryKeyword => taskTitleCodeFields.some(field => field.includes(categoryKeyword)))
+}
+
+const matchesStatusFilter = (task: any, filterValue: string) => {
+  const normalizedFilterValue = normalizeFilterValue(filterValue)
+  return normalizedFilterValue === 'all'
+    || getTaskStatus(task) === normalizedFilterValue
+}
+
+const matchesSearchFilter = (task: any, keyword: string) => {
+  return !keyword
+    || getTaskSearchFields(task).some(field => field.includes(keyword))
+}
+
+const searchFilteredTasks = computed(() => {
+  const keyword = normalizeFilterValue(searchQuery.value)
 
   return list.value.filter((task) => {
-    const matchesCategory = appliedCategoryFilter.value === 'all'
-      || task.category.toLowerCase() === appliedCategoryFilter.value
-    const matchesStatus = appliedStatusFilter.value === 'all'
-      || task.status.toLowerCase() === appliedStatusFilter.value
-    const matchesSearch = !keyword || [
-      task.code,
-      task.title,
-      task.submittedBy,
-      task.portfolio,
-      task.category,
-      task.status,
-    ].some(field => field.toLowerCase().includes(keyword))
-
-    return matchesCategory && matchesStatus && matchesSearch
+    return matchesSearchFilter(task, keyword)
   })
 })
 
-const handleTaskClick = (selectedViewValue:string,task: ApprovalItem) => {
+const categoryCountBaseTasks = computed(() => {
+  return searchFilteredTasks.value.filter((task) => {
+    return matchesStatusFilter(task, appliedStatusFilter.value)
+  })
+})
+
+const categoryFilters = computed(() => {
+  return categoryFilterPresets.value.map((filter) => {
+    if (filter.value === 'all') {
+      return {
+        ...filter,
+        count: null,
+      }
+    }
+
+    const count = categoryCountBaseTasks.value.filter((task) => {
+      return matchesCategoryFilter(task, filter.value)
+    }).length
+
+    return {
+      ...filter,
+      count,
+    }
+  })
+})
+
+const statusCountBaseTasks = computed(() => {
+  return searchFilteredTasks.value.filter((task) => {
+    return matchesCategoryFilter(task, appliedCategoryFilter.value)
+  })
+})
+
+const statusFilters = computed(() => {
+  const statusMap = new Map<string, { label: string, value: string, count: number }>()
+
+  statusCountBaseTasks.value.forEach((task) => {
+    const value = getTaskStatus(task)
+    const label = getTaskStatusLabel(task)
+
+    if (!value || !label) {
+      return
+    }
+
+    const current = statusMap.get(value)
+    if (current) {
+      current.count += 1
+      return
+    }
+
+    statusMap.set(value, {
+      label,
+      value,
+      count: 1,
+    })
+  })
+
+  return [
+    {
+      label: t('mobile.todo.filters.all'),
+      value: 'all',
+      count: null,
+    },
+    ...Array.from(statusMap.values()),
+  ]
+})
+
+const filteredTasks = computed(() => {
+  return statusCountBaseTasks.value.filter((task) => {
+    return matchesStatusFilter(task, appliedStatusFilter.value)
+  })
+})
+
+const handleTaskClick = (selectedViewValue: string, task: ApprovalItem) => {
   toDoFrom.value = task
   return navigateTo(`/mobile/approval/${encodeURIComponent(task.requestmark)}`)
 }
@@ -348,10 +472,6 @@ const closeSearch = () => {
   isSearchOpen.value = false
 }
 
-const filterDropdown = async () => {
-  await openSearch()
-}
-
 const selectView = (option: TodoOption) => {
   selectedViewValue.value = option.value
   isDropdownOpen.value = false
@@ -385,6 +505,22 @@ const handleDocumentClick = (event: MouseEvent) => {
     isFilterPanelOpen.value = false
   }
 }
+
+watch(
+  statusFilters,
+  (filters) => {
+    const hasAppliedStatus = filters.some(filter => filter.value === appliedStatusFilter.value)
+    if (!hasAppliedStatus) {
+      appliedStatusFilter.value = 'all'
+    }
+
+    const hasDraftStatus = filters.some(filter => filter.value === draftStatusFilter.value)
+    if (!hasDraftStatus) {
+      draftStatusFilter.value = 'all'
+    }
+  },
+  { immediate: true },
+)
 
 watch(
   selectedViewValue,
@@ -591,7 +727,7 @@ onBeforeUnmount(() => {
   background: #ffffff;
 }
 
-.mobile-todo__filter-group + .mobile-todo__filter-group {
+.mobile-todo__filter-group+.mobile-todo__filter-group {
   margin-top: 12px;
 }
 
@@ -604,11 +740,21 @@ onBeforeUnmount(() => {
 
 .mobile-todo__filter-options {
   display: flex;
-  flex-wrap: wrap;
-  gap: 10px 8px;
+  flex-wrap: nowrap;
+  gap: 8px;
+  overflow-x: auto;
+  overflow-y: hidden;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.mobile-todo__filter-options::-webkit-scrollbar {
+  display: none;
 }
 
 .mobile-todo__filter-chip {
+  flex: 0 0 auto;
   border: 1px solid #d9d9d9;
   background: #ffffff;
   color: #666666;

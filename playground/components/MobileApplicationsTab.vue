@@ -45,16 +45,18 @@
       >
         <div class="app-card__logo">
           <img
-            v-if="app.mainTable.image"
-            :src="app.mainTable.image"
+            v-if="app.mainTable.iconx64"
+            :src="app.mainTable.iconx64"
             :alt="app.mainTable.name_en"
             class="app-card__img"
           >
-          <IconCustom
+          <div
             v-else
-            :name="app.mainTable.icon"
-            :size="36"
-          />
+            class="app-card__fallback"
+            :aria-label="app.mainTable.name_en"
+          >
+            <IconCustom name="apps" :size="26" />
+          </div>
         </div>
         <div class="app-card__name">
           {{ app.mainTable.name_en }}
@@ -75,12 +77,24 @@
       >
         <div
           class="biz-card__icon"
-          :style="{ color: biz.color }"
+          :style="{ color: getBusinessAccentColor(biz.mainTable.name_en, biz.color) }"
         >
-          <IconCustom
-            :name="biz.icon"
-            :size="32"
-          />
+          <div class="app-card__logo">
+            <img
+              v-if="biz.mainTable.iconx64"
+              :src="biz.mainTable.iconx64"
+              :alt="biz.mainTable.name_en"
+              class="app-card__img"
+            >
+            <div
+              v-else
+              class="app-card__fallback app-card__fallback--business"
+              :style="{ color: getBusinessAccentColor(biz.mainTable.name_en, biz.color) }"
+              :aria-label="biz.mainTable.name_en"
+            >
+              <IconCustom :name="getBusinessFallbackIcon(biz.mainTable.name_en)" :size="24" />
+            </div>
+          </div>
         </div>
         <div class="biz-card__name">
           {{ biz.mainTable.name_en }}
@@ -118,6 +132,58 @@ const handleAppClick = async (app) => {
 const handleBizClick = (biz) => {
   selectedBusiness.value = biz
   return navigateTo(`/mobile/applications/business/${encodeURIComponent(biz.id)}`)
+}
+
+const getBusinessFallbackIcon = (name) => {
+  const normalized = String(name || '').trim().toLowerCase()
+
+  if (normalized.includes('digital') || normalized.includes('technology') || normalized.includes('it')) {
+    return 'digital-technology'
+  }
+
+  if (normalized.includes('finance')) {
+    return 'finance-bars'
+  }
+
+  if (normalized.includes('legal') || normalized.includes('compliance')) {
+    return 'legal-compliance'
+  }
+
+  if (normalized.includes('human resources') || normalized.includes('hr')) {
+    return 'personnel'
+  }
+
+  if (normalized.includes('china')) {
+    return 'building'
+  }
+
+  return 'apps'
+}
+
+const getBusinessAccentColor = (name, color) => {
+  if (color) {
+    return color
+  }
+
+  const normalized = String(name || '').trim().toLowerCase()
+
+  if (normalized.includes('digital') || normalized.includes('technology') || normalized.includes('it')) {
+    return '#3c8aff'
+  }
+
+  if (normalized.includes('finance')) {
+    return '#009a88'
+  }
+
+  if (normalized.includes('legal') || normalized.includes('compliance')) {
+    return '#d7008f'
+  }
+
+  if (normalized.includes('human resources') || normalized.includes('hr')) {
+    return '#a60a3a'
+  }
+
+  return '#a60a3a'
 }
 
 watch(
@@ -240,6 +306,24 @@ watch(
   object-fit: contain;
 }
 
+.app-card__fallback {
+  width: 100%;
+  height: 100%;
+  border-radius: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(180deg, #f8eff2 0%, #f2e5ea 100%);
+  color: #a60a3a;
+  box-shadow: inset 0 0 0 1px rgba(166, 10, 58, 0.06);
+}
+
+.app-card__fallback--business {
+  border-radius: 999px;
+  background: #f7f7f7;
+  box-shadow: inset 0 0 0 1px rgba(17, 17, 17, 0.04);
+}
+
 .app-card__name {
   font-size: 14px;
   font-weight: 500;
@@ -261,21 +345,15 @@ watch(
 .biz-card {
   background: white;
   border-radius: 12px;
-  padding: 16px;
+  padding: 14px 12px;
+  min-height: 124px;
   display: flex;
   flex-direction: column;
   align-items: center;
+  justify-content: center;
   gap: 8px;
   cursor: pointer;
   transition: transform 0.2s;
-}
-
-.applications__tabs__box {
-  display: flex;
-  ;
-  align-items: center;
-  width: 100%;
-  box-shadow: 0 4px 12px #D9D9D9;
 }
 
 .biz-card:active {
@@ -283,23 +361,34 @@ watch(
 }
 
 .biz-card__icon {
-  width: 40px;
-  height: 40px;
+  width: 44px;
+  height: 44px;
   display: flex;
   align-items: center;
   justify-content: center;
+  flex: 0 0 auto;
+}
+
+.biz-card__icon .app-card__logo {
+  width: 44px;
+  height: 44px;
 }
 
 .biz-card__name {
   font-size: 14px;
   font-weight: 600;
   color: #000000;
+  line-height: 1.35;
+  text-align: center;
+  max-width: 128px;
+  margin: 0 auto;
 }
 
 .biz-card__desc {
   font-size: 12px;
   color: #666666;
   line-height: 1.4;
+  text-align: center;
   display: -webkit-box;
   -webkit-line-clamp: 2;
   line-clamp: 2;

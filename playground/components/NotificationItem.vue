@@ -9,11 +9,21 @@
         <span class="notification-item__time">{{ timeText }}</span>
       </div>
 
-      <p v-if="subtitle" class="notification-item__subtitle">{{ subtitle }}</p>
-      <p class="notification-item__reference">{{ referenceText }}</p>
+      <p
+        v-if="subtitle"
+        class="notification-item__subtitle"
+      >
+        {{ subtitle }}
+      </p>
+      <p class="notification-item__reference">
+        {{ referenceText }}
+      </p>
     </div>
 
-    <span v-if="!item.readAt" class="notification-item__dot" />
+    <span
+      v-if="!item.readAt"
+      class="notification-item__dot"
+    />
   </button>
 </template>
 
@@ -36,6 +46,10 @@ const subtitle = computed(() => {
 })
 
 const referenceText = computed(() => {
+  if (props.item.summary?.trim()) {
+    return props.item.summary
+  }
+
   const category = props.item.category?.trim()
   return category ? `${category.toUpperCase()}-${props.item.id}` : props.item.id
 })
@@ -68,21 +82,21 @@ const handleClick = () => {
   width: 100%;
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 10px;
   border: 0;
-  border-bottom: 1px solid #ece3e6;
+  border-bottom: 1px solid #e8e1e4;
   background: #ffffff;
-  padding: 16px 14px;
+  padding: 14px 14px 13px;
   text-align: left;
   transition: background-color 0.2s ease;
 }
 
 .notification-item:hover {
-  background: #fcf7f9;
+  background: #faf5f7;
 }
 
 .notification-item.unread {
-  background: #fbf3f6;
+  background: #f8eff2;
 }
 
 .notification-item__main {
@@ -101,12 +115,12 @@ const handleClick = () => {
   flex: 1;
   min-width: 0;
   font-size: 15px;
-  line-height: 1.35;
+  line-height: 1.3;
   font-weight: 600;
   color: #171717;
   display: -webkit-box;
   -webkit-box-orient: vertical;
-  -webkit-line-clamp: 2;
+  -webkit-line-clamp: 1;
   overflow: hidden;
 }
 
@@ -114,15 +128,15 @@ const handleClick = () => {
   flex-shrink: 0;
   font-size: 12px;
   line-height: 1.3;
-  color: #9a9a9a;
+  color: #9b97a0;
   white-space: nowrap;
 }
 
 .notification-item__subtitle {
-  margin: 4px 0 0;
-  font-size: 13px;
-  line-height: 1.35;
-  color: #1f1f1f;
+  margin: 3px 0 0;
+  font-size: 14px;
+  line-height: 1.3;
+  color: #242424;
   display: -webkit-box;
   -webkit-box-orient: vertical;
   -webkit-line-clamp: 1;
@@ -130,16 +144,16 @@ const handleClick = () => {
 }
 
 .notification-item__reference {
-  margin: 4px 0 0;
-  font-size: 12px;
+  margin: 2px 0 0;
+  font-size: 11px;
   line-height: 1.3;
-  color: #4b4b4b;
+  color: #6f6a71;
 }
 
 .notification-item__dot {
   flex-shrink: 0;
-  width: 14px;
-  height: 14px;
+  width: 13px;
+  height: 13px;
   border-radius: 999px;
   background: #b10f49;
 }

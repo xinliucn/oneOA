@@ -1,5 +1,22 @@
 import { normalizeNotificationList } from '../../utils/notification'
+import { getMockNotificationList } from '../../utils/notificationMock'
 import { getNotificationApiPrefix, proxyWindmill } from '../../utils/windmillProxy'
+
+const getErrorStatusCode = (error: unknown) => {
+  if (error && typeof error === 'object' && 'statusCode' in error && typeof error.statusCode === 'number') {
+    return error.statusCode
+  }
+
+  return 500
+}
+
+const getErrorMessage = (error: unknown, fallback: string) => {
+  if (error && typeof error === 'object' && 'message' in error && typeof error.message === 'string') {
+    return error.message
+  }
+
+  return fallback
+}
 
 export default defineEventHandler(async (event) => {
   const query = getQuery(event)
@@ -11,43 +28,18 @@ export default defineEventHandler(async (event) => {
   const config = useRuntimeConfig()
   const raw = config.mockEnabled
   if (raw) {
+    const items = getMockNotificationList()
     const response = {
-      "items": [
-        {
-          "id": "169",
-          "title": "通知标题",
-          "content": "通知正文",
-          "summary": "通知的摘要",
-          "link": "",
-          "source": "来源测试",
-          "category": "order",
-          "createdAt": "2026-03-16T17:56:20.065Z",
-          "readAt": null,
-          "payload": null
-        },
-        {
-          "id": "167",
-          "title": "通知标题",
-          "content": "通知正文",
-          "summary": "通知的摘要",
-          "link": "",
-          "source": "来源测试",
-          "category": "通知的分类/类型",
-          "createdAt": "2026-03-16T17:56:18.994Z",
-          "readAt": null,
-          "payload": null
-        }
-      ],
-      "total": 2,
-      "page": 1,
-      "pageSize": 20,
-      "unreadCount": 2,
-      "hasMore": false,
-      "syncedAt": 1773716103078
+      items,
+      total: items.length,
+      page: 1,
+      pageSize: 20,
+      unreadCount: items.filter(item => !item.readAt).length,
+      hasMore: false,
+      syncedAt: Date.now(),
     }
     return normalizeNotificationList(response, page, pageSize)
   }
-
 
   try {
     // 透传可选筛选条件，兼容前端列表查询
@@ -69,20 +61,20 @@ export default defineEventHandler(async (event) => {
 
     const path = `${getNotificationApiPrefix()}/list?${params.toString()}`
     // 这里原本应回源 Windmill，当前先保留本地联调用的静态返回
-    const response = await proxyWindmill<any>(event, path, {
+    const response = await proxyWindmill<Record<string, unknown>>(event, path, {
       method: 'GET',
       skipCookies: false,
     })
 
-
     // 将不同来源的数据统一规整成前端使用的通知列表结构
     return normalizeNotificationList(response, page, pageSize)
-  } catch (error: any) {
+  }
+  catch (error: unknown) {
     console.error('Get notifications API error:', error)
 
     throw createError({
-      statusCode: error.statusCode || 500,
-      message: error.message || '获取通知列表失败',
+      statusCode: getErrorStatusCode(error),
+      message: getErrorMessage(error, '获取通知列表失败'),
     })
   }
 })

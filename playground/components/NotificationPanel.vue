@@ -2,7 +2,9 @@
   <div :class="['notification-panel', `notification-panel--${props.variant}`]">
     <div class="notification-panel__header">
       <div class="notification-panel__title-row">
-        <h1 class="notification-panel__title">Notifications</h1>
+        <h1 class="notification-panel__title">
+          Notifications
+        </h1>
         <button
           v-if="props.variant === 'desktop-popover'"
           type="button"
@@ -59,15 +61,36 @@
           :class="['notification-panel__filter', { 'is-active': activeFilter === filter.value }]"
           @click="activeFilter = filter.value"
         >
-          {{ filter.label }}<span v-if="filter.count !== null"> {{ filter.count }}</span>
+          <span class="notification-panel__filter-label">
+            {{ filter.label }}
+          </span>
+          <span
+            v-if="filter.count !== null"
+            class="notification-panel__filter-count"
+          >
+            {{ filter.count }}
+          </span>
         </button>
       </div>
     </div>
 
     <div class="notification-panel__body">
-      <div v-if="loading && filteredNotifications.length === 0" class="notification-panel__state">加载中...</div>
-      <div v-else-if="filteredNotifications.length === 0" class="notification-panel__state">暂无消息</div>
-      <div v-else class="notification-panel__list">
+      <div
+        v-if="loading && filteredNotifications.length === 0"
+        class="notification-panel__state"
+      >
+        加载中...
+      </div>
+      <div
+        v-else-if="filteredNotifications.length === 0"
+        class="notification-panel__state"
+      >
+        暂无消息
+      </div>
+      <div
+        v-else
+        class="notification-panel__list"
+      >
         <NotificationItem
           v-for="item in filteredNotifications"
           :key="item.id"
@@ -77,8 +100,15 @@
         />
       </div>
 
-      <div v-if="hasMore" class="notification-panel__load-more">
-        <el-button class="notification-panel__load-more-btn" :loading="syncing" @click="loadMore">
+      <div
+        v-if="hasMore"
+        class="notification-panel__load-more"
+      >
+        <el-button
+          class="notification-panel__load-more-btn"
+          :loading="syncing"
+          @click="loadMore"
+        >
           Load more
         </el-button>
       </div>
@@ -107,7 +137,6 @@ const {
   syncing,
   bootstrap,
   loadMore,
-  openNotification,
 } = useNotification()
 const {
   status: pushStatus,
@@ -125,6 +154,10 @@ const formatCategoryLabel = (value?: string) => {
   const raw = value?.trim()
   if (!raw) {
     return ''
+  }
+
+  if (/^[a-z]{1,3}$/i.test(raw)) {
+    return raw.toUpperCase()
   }
 
   return raw
@@ -177,8 +210,7 @@ const filteredNotifications = computed(() => {
     const targetCategory = activeFilter.value.replace('category:', '')
     return notifications.value.filter(item => formatCategoryLabel(item.category) === targetCategory)
   }
-  
-  
+
   return notifications.value
 })
 
@@ -214,7 +246,8 @@ const toggleDesktopSubscription = async () => {
     }
 
     await subscribe()
-  } finally {
+  }
+  finally {
     isPushToggleLoading.value = false
   }
 }
@@ -241,7 +274,8 @@ const handlePageSubscriptionCommand = async (command: string | number | object) 
     if (desktopToggleOn.value) {
       await unsubscribe()
     }
-  } finally {
+  }
+  finally {
     isPushToggleLoading.value = false
   }
 }
@@ -257,7 +291,7 @@ onMounted(async () => {
   min-height: 100%;
   display: flex;
   flex-direction: column;
-  background: #f7f2f4;
+  background: #ffffff;
 }
 
 .notification-panel--desktop-popover {
@@ -271,22 +305,21 @@ onMounted(async () => {
   position: sticky;
   top: 0;
   z-index: 2;
-  padding: 18px 14px 14px;
-  background: linear-gradient(180deg, #ffffff 0%, #fbf8f9 100%);
-  border-bottom: 1px solid #e5d9de;
+  padding: 16px 14px 10px;
+  background: #ffffff;
 }
 
 .notification-panel__title-row {
   display: flex;
   align-items: center;
   gap: 8px;
-  margin-bottom: 14px;
+  margin-bottom: 12px;
 }
 
 .notification-panel__title {
   margin: 0;
-  font-size: 19px;
-  line-height: 1.2;
+  font-size: 20px;
+  line-height: 1.15;
   font-weight: 700;
   color: #161616;
 }
@@ -303,8 +336,8 @@ onMounted(async () => {
 }
 
 .notification-panel__accent-button {
-  width: 24px;
-  height: 24px;
+  width: 28px;
+  height: 28px;
   border: 0;
   padding: 0;
   background: transparent;
@@ -312,9 +345,9 @@ onMounted(async () => {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  font-size: 18px;
+  font-size: 20px;
   line-height: 1;
-  letter-spacing: 0;
+  letter-spacing: -1px;
   cursor: pointer;
 }
 
@@ -362,10 +395,11 @@ onMounted(async () => {
 
 .notification-panel__filters {
   display: flex;
-  gap: 8px;
+  gap: 7px;
   overflow-x: auto;
   -webkit-overflow-scrolling: touch;
   scrollbar-width: none;
+  padding-bottom: 2px;
 }
 
 .notification-panel__filters::-webkit-scrollbar {
@@ -374,13 +408,16 @@ onMounted(async () => {
 
 .notification-panel__filter {
   flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
   border: 1px solid #d7d0d3;
   border-radius: 999px;
   background: #ffffff;
   color: #6d6d6d;
-  font-size: 13px;
+  font-size: 12px;
   line-height: 1;
-  padding: 8px 14px;
+  padding: 8px 12px;
   transition: all 0.2s ease;
 }
 
@@ -388,17 +425,32 @@ onMounted(async () => {
   background: #b10f49;
   border-color: #b10f49;
   color: #ffffff;
-  box-shadow: 0 10px 18px rgba(177, 15, 73, 0.16);
+  box-shadow: none;
+}
+
+.notification-panel__filter-label,
+.notification-panel__filter-count {
+  line-height: 1;
+}
+
+.notification-panel__filter-count {
+  color: #8c8588;
+}
+
+.notification-panel__filter.is-active .notification-panel__filter-count {
+  color: #ffffff;
 }
 
 .notification-panel__body {
   flex: 1;
   display: flex;
   flex-direction: column;
-  padding-bottom: 20px;
+  padding-bottom: 0;
+  background: #ffffff;
 }
 
 .notification-panel__state {
+  padding: 32px 16px;
   text-align: center;
   font-size: 13px;
   color: #8b8b8b;
@@ -413,7 +465,7 @@ onMounted(async () => {
 .notification-panel__load-more {
   display: flex;
   justify-content: center;
-  padding: 18px 16px 0;
+  padding: 18px 16px 24px;
 }
 
 .notification-panel__load-more-btn {

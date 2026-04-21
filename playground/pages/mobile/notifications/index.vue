@@ -14,7 +14,7 @@ definePageMeta({
 <style scoped>
 .mobile-notifications {
   height: 100%;
-  background: #f5f5f5;
+  background: #ffffff;
   overflow-y: auto;
 }
 

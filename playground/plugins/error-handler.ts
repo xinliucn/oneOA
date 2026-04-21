@@ -1,8 +1,38 @@
+const resolveRequestPath = (request: Request | string | URL) => {
+  if (typeof request === 'string') {
+    try {
+      return new URL(request, 'http://localhost').pathname
+    } catch {
+      return request
+    }
+  }
+
+  if (request instanceof URL) {
+    return request.pathname
+  }
+
+  try {
+    return new URL(request.url, 'http://localhost').pathname
+  } catch {
+    return request.url || ''
+  }
+}
+
+const shouldSkipAutoErrorRedirect = (requestPath: string) => {
+  return requestPath.startsWith('/api/auth/')
+}
+
 export default defineNuxtPlugin((nuxtApp) => {
   // 创建自定义 fetch 实例，配置错误处理
   const customFetch = $fetch.create({
-    onResponseError({ response }) {
-      console.error('HTTP Error:', response.status, response.statusText)
+    onResponseError({ request, response }) {
+      const requestPath = resolveRequestPath(request)
+      console.error('HTTP Error:', response.status, response.statusText, requestPath)
+
+      // 登录态探测、登录/登出等认证接口由调用方自己处理，避免先跳 500 再被鉴权逻辑跳回主页。
+      if (shouldSkipAutoErrorRedirect(requestPath)) {
+        return
+      }
 
       // 当响应状态码为 403 或 500 时，跳转到对应错误页面
       if (response.status === 403) {

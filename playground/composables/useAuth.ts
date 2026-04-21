@@ -93,6 +93,7 @@ export const useAuth = () => {
       lastCheckTime.value = 0
       return false
     } catch (error: any) {
+      console.error('Check auth failed:', error)
       user.value = null
       isLoggedIn.value = false
       lastCheckTime.value = 0

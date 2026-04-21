@@ -120,7 +120,6 @@ export const useNotification = () => {
           pageSize: pageSize.value,
           ...(getCurrentUserId() ? { user_id: getCurrentUserId() } : {}),
           is_read: 0,
-          category: 'order',
         },
       })
 

@@ -91,6 +91,7 @@ export const useNetworkGuard = () => {
   const probeUrl = String(runtimeConfig.public.internalNetworkProbeUrl || 'https://intranet.dch.com.hk/')
   const internalHosts = normalizeHosts(String(runtimeConfig.public.internalNetworkHosts || 'intranet.dch.com.hk'))
   const alertMessage = String(runtimeConfig.public.internalNetworkAlertMessage || 'Please connect DCH network to access websites')
+  const shouldSkipProbe = import.meta.dev
 
   const isInternal = useState<boolean | null>('network-guard:is-internal', () => null)
   const checking = useState<boolean>('network-guard:checking', () => false)
@@ -127,6 +128,13 @@ export const useNetworkGuard = () => {
       return true
     }
 
+    if (shouldSkipProbe) {
+      isInternal.value = true
+      lastCheckedAt.value = Date.now()
+      hideNetworkAlert()
+      return true
+    }
+
     const now = Date.now()
     if (!force && isInternal.value !== null && now - lastCheckedAt.value < PROBE_CACHE_TTL_MS) {
       return isInternal.value
@@ -135,11 +143,20 @@ export const useNetworkGuard = () => {
     checking.value = true
 
     try {
+      const previousReachable = isInternal.value
       const serviceWorkerResult = await probeWithServiceWorker(probeUrl)
       const reachable = serviceWorkerResult ?? await probeWithFetch(probeUrl)
 
       isInternal.value = reachable
       lastCheckedAt.value = Date.now()
+
+      if (reachable) {
+        hideNetworkAlert()
+      }
+      else if (previousReachable !== false) {
+        showNetworkAlert()
+      }
+
       return reachable
     }
     finally {
@@ -150,6 +167,16 @@ export const useNetworkGuard = () => {
   const openGuardedUrl = async (url?: string | null, target = '_blank') => {
     if (!import.meta.client || !url) {
       return false
+    }
+
+    if (shouldSkipProbe) {
+      if (target === '_self') {
+        window.location.href = url
+        return true
+      }
+
+      window.open(url, target, 'noopener,noreferrer')
+      return true
     }
 
     if (isInternalUrl(url)) {
@@ -176,6 +203,13 @@ export const useNetworkGuard = () => {
     }
 
     bootstrapStarted = true
+
+    if (shouldSkipProbe) {
+      isInternal.value = true
+      lastCheckedAt.value = Date.now()
+      hideNetworkAlert()
+      return
+    }
 
     void probeInternalAccess({ force: true })
 

@@ -55,7 +55,10 @@ export const appMessages = {
         filters: {
           category: '筛选 1',
           status: '筛选 2',
-          all: '全部'
+          all: '全部',
+          it: 'IT',
+          legal: 'Legal',
+          motor: 'Motor'
         },
         actions: {
           cancel: '取消',
@@ -203,7 +206,10 @@ export const appMessages = {
         filters: {
           category: '篩選 1',
           status: '篩選 2',
-          all: '全部'
+          all: '全部',
+          it: 'IT',
+          legal: 'Legal',
+          motor: 'Motor'
         },
         actions: {
           cancel: '取消',
@@ -351,7 +357,10 @@ export const appMessages = {
         filters: {
           category: 'Filter 1',
           status: 'Filter 2',
-          all: 'All'
+          all: 'All',
+          it: 'IT',
+          legal: 'Legal',
+          motor: 'Motor'
         },
         actions: {
           cancel: 'Cancel',
