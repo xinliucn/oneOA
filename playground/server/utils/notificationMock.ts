@@ -10,8 +10,15 @@ const buildReadTime = (minutesAgo: number) => {
   return new Date(Date.now() - minutesAgo * 60 * 1000 + 30 * 1000).toISOString()
 }
 
+const withNotificationFields = (item: Omit<NotificationItem, 'created_at' | 'updated_at' | 'is_read'> & { payload: NotificationPayload }) => ({
+  ...item,
+  created_at: item.createdAt,
+  updated_at: item.readAt || item.createdAt,
+  is_read: item.readAt ? '1' : '0',
+})
+
 const mockNotifications: Array<NotificationItem & { payload: NotificationPayload }> = [
-  {
+  withNotificationFields({
     id: '169',
     title: 'Action Required: Demand & Business Case Approval',
     content: 'Submitted by Victor Ho via WOA-DPM. Please review the latest demand and business case approval request.',
@@ -64,8 +71,8 @@ const mockNotifications: Array<NotificationItem & { payload: NotificationPayload
         detailLabel: 'View details in WOA-DPM >',
       },
     },
-  },
-  {
+  }),
+  withNotificationFields({
     id: '170',
     title: 'Submission: Contract Clearance Request',
     content: 'Kelvin Leung submitted a new contract clearance request in YonYou-CCA.',
@@ -87,8 +94,8 @@ const mockNotifications: Array<NotificationItem & { payload: NotificationPayload
         linkLabel: 'Open in Outlook >',
       },
     },
-  },
-  {
+  }),
+  withNotificationFields({
     id: '171',
     title: 'Action Required: 2025 eAppraisal Approval (Bob Wan)',
     content: 'Bob Wan submitted a 2025 eAppraisal item that has already been reviewed.',
@@ -102,8 +109,8 @@ const mockNotifications: Array<NotificationItem & { payload: NotificationPayload
       variant: 'article',
       user_id: 'demo-user',
     },
-  },
-  {
+  }),
+  withNotificationFields({
     id: '172',
     title: 'Submission: eCAPEX Request',
     content: 'Kelvin Leung submitted an eCAPEX request for your review.',
@@ -117,8 +124,8 @@ const mockNotifications: Array<NotificationItem & { payload: NotificationPayload
       variant: 'article',
       user_id: 'demo-user',
     },
-  },
-  {
+  }),
+  withNotificationFields({
     id: '173',
     title: 'Submission: eClaim Request (China)',
     content: 'Kelvin Leung submitted an eClaim request for China entity.',
@@ -132,8 +139,8 @@ const mockNotifications: Array<NotificationItem & { payload: NotificationPayload
       variant: 'article',
       user_id: 'demo-user',
     },
-  },
-  {
+  }),
+  withNotificationFields({
     id: '174',
     title: 'Submission: eTravel Request (Singapore)',
     content: 'Kelvin Leung submitted a travel request for Singapore itinerary.',
@@ -147,7 +154,7 @@ const mockNotifications: Array<NotificationItem & { payload: NotificationPayload
       variant: 'article',
       user_id: 'demo-user',
     },
-  },
+  }),
 ]
 
 export const getMockNotificationList = () => {

@@ -44,7 +44,7 @@ const menuItems = computed(() => [
   { icon: 'apps', label: t('nav.applications'), path: '/mobile', tabIndex: 3 },
   { icon: 'building', label: t('nav.departmentIntranets'), path: '/mobile/departmentIntranets'  },
   { icon: 'dashboard', label: t('nav.dashboards') },
-  { icon: 'todo', label: t('nav.todo'),path: '/mobile', tabIndex: 1 },
+  { icon: 'todo', label: t('nav.todo'),path: '/mobile', tabIndex: 2 },
   { icon: 'education', label: t('nav.eLearning') },
   { icon: 'shop', label: t('nav.eShop') },
 ])

@@ -11,11 +11,11 @@
     <main class="mobile-approval__content">
       <section class="mobile-approval__sheet">
         <div class="mobile-approval__meta">
-          <span class="mobile-approval__ref">{{ toDoFrom.requestmark }}</span>
-          <span class="mobile-approval__status-text" :class="statusClass">{{ toDoFrom.status }}</span>
+          <span class="mobile-approval__ref">{{ approvalSummary.referenceNumber }}</span>
+          <span class="mobile-approval__status-text" :class="statusClass">{{ approvalSummary.status }}</span>
         </div>
 
-        <h2 class="mobile-approval__title">{{ toDoFrom.requestName }}</h2>
+        <h2 class="mobile-approval__title">{{ approvalSummary.title }}</h2>
 
         <div class="mobile-approval__submitter">
           <div class="mobile-approval__submitter-avatar">
@@ -23,33 +23,30 @@
           </div>
           <div class="mobile-approval__submitter-info">
             <span class="mobile-approval__submitter-label">Submitted by</span>
-            <span class="mobile-approval__submitter-name">{{ toDoFrom.creatorName }}</span>
+            <span class="mobile-approval__submitter-name">{{ approvalSummary.submittedBy }}</span>
           </div>
-          <span class="mobile-approval__submitter-date">{{ toDoFrom.receiveTime }}</span>
+          <span class="mobile-approval__submitter-date">{{ approvalSummary.submittedDate }}</span>
         </div>
 
         <div class="mobile-approval__progress">
-          <div class="mobile-approval__progress-bar" :class="statusClass">{{ toDoFrom.status }}</div>
+          <div class="mobile-approval__progress-bar" :class="statusClass">{{ approvalSummary.status }}</div>
           <div class="mobile-approval__timeline">
-            <div v-for="(approver, index) in form?.processInfo?.workflowRequestLogs" :key="approver.id"
+            <div v-for="approver in visibleTimelineItems" :key="approver.id"
               class="mobile-approval__timeline-item">
               <div class="mobile-approval__timeline-marker">
                 <div class="mobile-approval__timeline-avatar" :class="getApproverStatusClass(approver.action)">
                   <IconCustom name="personnel" :size="14" color="#ffffff" />
                 </div>
-                <!-- <div
-                  v-if="index < visibleApprovers.length - 1"
-                  class="mobile-approval__timeline-line"
-                /> -->
               </div>
               <div class="mobile-approval__timeline-info">
                 <span class="mobile-approval__timeline-name">{{ approver.nodeName }}</span>
                 <span class="mobile-approval__timeline-date">
-                  {{ approver.operateType }}<template v-if="approver.operateDate"> {{ approver.operateDate }}</template>
+                  {{ approver.action }}<template v-if="approver.date"> {{ approver.date }}</template>
                 </span>
               </div>
             </div>
-            <button type="button" class="mobile-approval__show-more" @click="showAllApprovers = !showAllApprovers">
+            <button v-if="timelineItems.length > timelinePreviewCount" type="button" class="mobile-approval__show-more"
+              @click="showAllApprovers = !showAllApprovers">
               {{ showAllApprovers ? 'Show less' : 'Show more' }}
             </button>
           </div>
@@ -66,7 +63,7 @@
         </div>
 
         <div class="mobile-approval__fields">
-          <div v-for="field in formFileds" :key="field.label" class="mobile-approval__field">
+          <div v-for="field in formFields" :key="field.label" class="mobile-approval__field">
             <span class="mobile-approval__field-label">{{ field.label }}</span>
             <span class="mobile-approval__field-value">{{ field.value }}</span>
           </div>
@@ -100,7 +97,7 @@
         </button>
       </div>
       <button type="button" class="mobile-approval__confirm" :disabled="!selectedAction" @click="handleConfirm">
-        Confirm
+        {{ submitButtonName }}
       </button>
     </footer>
   </div>
@@ -124,62 +121,208 @@ definePageMeta({
 
 const route = useRoute()
 const approvalId = computed(() => String(route.params.id || ''))
+const requestId = computed(() => String(route.query.requestId || toDoFrom.value?.requestId || ''))
 const showAllApprovers = ref(false)
 const selectedAction = ref<ApprovalAction | ''>('')
-const formFileds = ref<any[]>([
-  {
-    label: 'Reference Number',
-    value: 'WOA-DPM-26010001',
-  },
-  {
-    label: 'Process Status',
-    value: 'Pending (Registration)',
-  },
-  {
-    label: 'Requestor',
-    value: 'Victor Ho',
-  },
-  {
-    label: 'Request Date',
-    value: '2026-01-01',
-  },
-  {
-    label: 'Portfolio',
-    value: 'Workflow and Optimization',
-  },
-  {
-    label: 'Business Unit',
-    value: 'Group Internal Audit (GIA)',
-  },
-])
 const actionComment = ref('')
+const timelinePreviewCount = 2
 
-// View details in WOA-DPM >
+type WorkflowField = {
+  fieldId?: string
+  fieldName?: string
+  fieldShowName?: string
+  fieldValue?: string
+  fieldShowValue?: string
+  filedHtmlShow?: string
+  view?: boolean
+  edit?: boolean
+  mand?: boolean
+}
 
-const attachments = computed(() => {
+type TimelineItem = {
+  id: string
+  nodeName: string
+  action: string
+  date: string
+}
+
+const processInfo = computed(() => form.value?.processInfo ?? {})
+const workflowBaseInfo = computed(() => processInfo.value?.workflowBaseInfo ?? toDoFrom.value?.workflowBaseInfo ?? {})
+const workflowFields = computed<WorkflowField[]>(() => {
+  return processInfo.value?.workflowMainTableInfo?.requestRecords?.[0]?.workflowRequestTableFields ?? []
+})
+
+const stripHtml = (value?: string | number | null) => {
+  if (value === null || value === undefined) {
+    return ''
+  }
+
+  return String(value)
+    .replace(/<br\s*\/?>/gi, ' ')
+    .replace(/<[^>]*>/g, '')
+    .replace(/&nbsp;/g, ' ')
+    .replace(/&gt;/g, '>')
+    .replace(/&lt;/g, '<')
+    .replace(/&amp;/g, '&')
+    .replace(/\s+/g, ' ')
+    .trim()
+}
+
+const formatDate = (value?: string | null) => {
+  const normalized = stripHtml(value)
+  return normalized.split(' ')[0] || ''
+}
+
+const formatDateTime = (date?: string | null, time?: string | null) => {
+  return [formatDate(date), stripHtml(time)].filter(Boolean).join(' at ')
+}
+
+const getFieldByName = (name: string) => {
+  return workflowFields.value.find(field => field.fieldName === name)
+}
+
+const getFieldById = (id: string) => {
+  return workflowFields.value.find(field => String(field.fieldId) === id)
+}
+
+const getFieldDisplayValue = (field?: WorkflowField) => {
+  if (!field) {
+    return ''
+  }
+
+  return stripHtml(field.fieldShowValue || field.filedHtmlShow || field.fieldValue)
+}
+
+const getFieldValue = (name: string, fallbackFieldId?: string) => {
+  return getFieldDisplayValue(getFieldByName(name) || (fallbackFieldId ? getFieldById(fallbackFieldId) : undefined))
+}
+
+const approvalSummary = computed(() => {
+  const requestMark = toDoFrom.value?.requestmark || getFieldValue('casenumber', '14904') || approvalId.value
+  const status = processInfo.value?.status || toDoFrom.value?.status || 'Pending'
+  const currentNodeName = processInfo.value?.currentNodeName || toDoFrom.value?.currentNodeName || ''
+
+  return {
+    referenceNumber: requestMark,
+    status,
+    processStatus: currentNodeName ? `${status} (${currentNodeName})` : status,
+    title: processInfo.value?.requestName || toDoFrom.value?.requestName || requestMark,
+    submittedBy: processInfo.value?.creatorName || toDoFrom.value?.creatorName || '-',
+    submittedDate: formatDate(processInfo.value?.createTime || toDoFrom.value?.createTime || toDoFrom.value?.receiveTime),
+    requestDate: formatDate(processInfo.value?.createTime || toDoFrom.value?.createTime),
+    portfolio: workflowBaseInfo.value?.workflowTypeName || workflowBaseInfo.value?.workflowName || '-',
+    businessUnit: getFieldValue('bu', '14576') || toDoFrom.value?.userSubcompanyName || '-',
+  }
+})
+
+const formFields = computed(() => {
   return [
     {
-      id: 'mock-attachment-1',
-      name: 'Purchase_Request_Q2.pdf',
+      label: 'Reference Number',
+      value: approvalSummary.value.referenceNumber,
     },
     {
-      id: 'mock-attachment-2',
-      name: 'Budget_Summary.xlsx',
+      label: 'Process Status',
+      value: approvalSummary.value.processStatus,
     },
     {
-      id: 'mock-attachment-3',
-      name: 'Vendor_Quotation.docx',
+      label: 'Requestor',
+      value: approvalSummary.value.submittedBy,
+    },
+    {
+      label: 'Request Date',
+      value: approvalSummary.value.requestDate || '-',
+    },
+    {
+      label: 'Portfolio',
+      value: approvalSummary.value.portfolio,
+    },
+    {
+      label: 'Business Unit',
+      value: approvalSummary.value.businessUnit,
     },
   ]
 })
 
+const attachments = computed(() => {
+  const fileDatas = form.value?.formInfo?.maindata?.field14582?.specialobj?.filedatas
+
+  if (!Array.isArray(fileDatas)) {
+    return []
+  }
+
+  return fileDatas.map((file: Record<string, any>, index: number) => ({
+    id: String(file.fileid || file.id || index),
+    name: stripHtml(file.filename || file.name || file.fileName || `File ${index + 1}`),
+  }))
+})
+
 const statusClass = computed(() => {
+  const status = approvalSummary.value.status.toLowerCase()
+  if (status.includes('reject') || status.includes('驳回')) {
+    return 'is-rejected'
+  }
+
+  if (status.includes('approv') || status.includes('complete') || status.includes('submitted')) {
+    return 'is-approved'
+  }
+
   return 'is-pending'
 })
 
 const getApproverStatusClass = (action: string) => {
+  const normalizedAction = action.toLowerCase()
+  if (normalizedAction.includes('reject') || normalizedAction.includes('驳回')) {
+    return 'is-rejected'
+  }
+
+  if (normalizedAction.includes('pending')) {
+    return 'is-pending'
+  }
+
   return 'is-approved'
 }
+
+const timelineItems = computed<TimelineItem[]>(() => {
+  const logs = processInfo.value?.workflowRequestLogs
+  const items: TimelineItem[] = Array.isArray(logs)
+    ? logs.map((log: Record<string, any>, index: number) => ({
+      id: String(log.id || `${log.nodeId || 'log'}-${index}`),
+      nodeName: stripHtml(log.nodeName || log.operatorName || `Step ${index + 1}`),
+      action: stripHtml(log.operateType || 'Processed'),
+      date: formatDateTime(log.operateDate, log.operateTime),
+    }))
+    : []
+
+  const currentNodeName = stripHtml(processInfo.value?.currentNodeName || toDoFrom.value?.currentNodeName)
+  if (currentNodeName && !items.some(item => item.nodeName === currentNodeName)) {
+    items.push({
+      id: `current-${processInfo.value?.currentNodeId || toDoFrom.value?.currentNodeId || 'node'}`,
+      nodeName: currentNodeName,
+      action: approvalSummary.value.status,
+      date: '',
+    })
+  }
+
+  return items
+})
+
+const visibleTimelineItems = computed(() => {
+  if (showAllApprovers.value) {
+    return timelineItems.value
+  }
+
+  return timelineItems.value.slice(0, timelinePreviewCount)
+})
+
+const submitButtonName = computed(() => {
+  const label = stripHtml(processInfo.value?.submitButtonName)
+  if (!label || label === '提交') {
+    return 'Submit'
+  }
+
+  return label
+})
 
 const handleBack = () => navigateTo('/mobile')
 
@@ -201,13 +344,13 @@ const handleConfirm = () => {
 //   await ensureApproval(approvalId.value)
 // })
 watch(
-  approvalId,
-  async (id) => {
-    if (!id) {
+  [approvalId, requestId],
+  async ([id, currentRequestId]) => {
+    if (!id && !currentRequestId) {
       return
     }
 
-    await getFormData(id)
+    await getFormData(currentRequestId || id)
   },
   { immediate: true },
 )
@@ -225,7 +368,7 @@ watch(
   display: flex;
   align-items: center;
   gap: 12px;
-  padding: 18px 18px 12px;
+  padding: 14px 16px 10px;
   color: #3d2f2f;
 }
 
@@ -262,7 +405,7 @@ watch(
 .mobile-approval__sheet {
   background: #ffffff;
   border-radius: 0;
-  padding: 8px 16px 18px;
+  padding: 6px 16px 18px;
   min-height: auto;
   box-shadow: none;
 }
@@ -290,8 +433,9 @@ watch(
 
 .mobile-approval__title {
   margin: 0 0 14px;
-  font-size: 24px;
-  line-height: 1.18;
+  font-size: 18px;
+  line-height: 1.3;
+  font-weight: 700;
   color: #181818;
 }
 
@@ -307,7 +451,7 @@ watch(
   width: 32px;
   height: 32px;
   border-radius: 999px;
-  background: #d9d9d9;
+  background: #d2d6db;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -347,7 +491,7 @@ watch(
 }
 
 .mobile-approval__timeline {
-  background: #f2f2f2;
+  background: #f3f3f3;
   border-radius: 0 0 10px 10px;
   padding: 10px 12px 12px;
 }
@@ -457,8 +601,9 @@ watch(
 }
 
 .mobile-approval__field-label {
-  font-size: 11px;
-  color: #858585;
+  font-size: 10px;
+  color: #5f5f5f;
+  font-weight: 600;
 }
 
 .mobile-approval__field-value {
@@ -478,6 +623,8 @@ watch(
 }
 
 .mobile-approval__footer {
+  position: sticky;
+  bottom: 0;
   padding: 12px 12px calc(14px + env(safe-area-inset-bottom, 0px));
   background: #ffffff;
   border-top: 1px solid #efefef;

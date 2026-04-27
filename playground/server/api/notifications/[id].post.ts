@@ -1,53 +1,99 @@
-import { getNotificationApiPrefix, proxyWindmill } from '../../utils/windmillProxy'
+import type { H3Event } from 'h3'
+
+const getErrorStatusCode = (error: unknown) => {
+  if (error && typeof error === 'object' && 'statusCode' in error && typeof error.statusCode === 'number') {
+    return error.statusCode
+  }
+
+  return 500
+}
+
+const getErrorMessage = (error: unknown, fallback: string) => {
+  if (error && typeof error === 'object' && 'message' in error && typeof error.message === 'string') {
+    return error.message
+  }
+
+  return fallback
+}
+
+const getForwardHeaders = (event: H3Event) => {
+  const cookieHeader = getRequestHeader(event, 'cookie')
+  const userAgent = getRequestHeader(event, 'user-agent')
+  const referer = getRequestHeader(event, 'referer')
+  const forwardedIp = getHeader(event, 'x-forwarded-for') || getHeader(event, 'x-real-ip') || ''
+
+  return {
+    ...(cookieHeader ? { cookie: cookieHeader } : {}),
+    ...(userAgent ? { 'user-agent': userAgent } : {}),
+    ...(referer ? { referer } : {}),
+    'X-Real-IP': forwardedIp,
+    'X-Forwarded-For': forwardedIp,
+  }
+}
+
+const forwardSetCookieHeaders = (event: H3Event, response: { headers: Headers }) => {
+  const rawHeaders = response.headers as Headers & { getSetCookie?: () => string[] }
+  const setCookies = rawHeaders.getSetCookie?.() || []
+
+  if (setCookies.length > 0) {
+    setHeader(event, 'set-cookie', setCookies)
+    return
+  }
+
+  const singleSetCookie = response.headers.get('set-cookie')
+  if (singleSetCookie) {
+    setHeader(event, 'set-cookie', singleSetCookie)
+  }
+}
 
 export default defineEventHandler(async (event) => {
-  // 从动态路由中提取要标记已读的通知 ID
-  // const id = getRouterParam(event, 'id')
+  const id = String(getRouterParam(event, 'id') || '').trim()
 
-  // if (!id) {
-  //   throw createError({
-  //     statusCode: 400,
-  //     message: '通知 ID 不能为空',
-  //   })
-  // }
+  if (!id) {
+    throw createError({
+      statusCode: 400,
+      message: '通知 ID 不能为空',
+    })
+  }
 
-  // try {
-  //   // 请求体目前主要兼容 readAt 等扩展字段
-  //   const body: Record<string, any> = await readBody<Record<string, any>>(event).catch(() => ({} as Record<string, any>))
+  const config = useRuntimeConfig()
 
-  //   const path = `${getNotificationApiPrefix()}/mark-read`
-  //   const userId = typeof body.user_id === 'string' && body.user_id.trim() ? body.user_id.trim() : 'anonymous'
-
-  //   // 非 mock 模式下，将已读请求代理到 Windmill
-  //   const response = await proxyWindmill<any>(event, path, {
-  //     method: 'POST',
-  //     body: {
-  //       user_id: userId,
-  //       id: Number(id),
-  //     },
-  //     skipCookies: false,
-  //   })
-
-  //   return {
-  //     success: true,
-  //     id,
-  //     data: response,
-  //   }
-  // } catch (error: any) {
-  //   console.error('Mark notification as read API error:', error)
-
-  //   // 统一转换成前端可消费的 HTTP 错误
-  //   throw createError({
-  //     statusCode: error.statusCode || 500,
-  //     message: error.message || '标记通知已读失败',
-  //   })
-  // }
-  return {
-    "success": true,
-    "id": "25",
-    "data": {
-      "success": true,
-      "affected_rows": 1
+  if (config.mockEnabled) {
+    return {
+      success: true,
+      id,
+      data: {
+        success: true,
+        affected_rows: 1,
+      },
     }
+  }
+
+  try {
+    const body: Record<string, any> = await readBody<Record<string, any>>(event).catch(() => ({}))
+    const notificationApiPrefix = config.public.notificationApiPrefix || '/api/r/notification'
+    const response = await $fetch.raw<Record<string, unknown>>(`${config.public.apiBase}${notificationApiPrefix}/mark-read`, {
+      method: 'POST',
+      headers: getForwardHeaders(event),
+      body: {
+        id: Number.isNaN(Number(id)) ? id : Number(id),
+      },
+    })
+
+    forwardSetCookieHeaders(event, response)
+
+    return {
+      success: true,
+      id,
+      data: response._data,
+    }
+  }
+  catch (error: unknown) {
+    console.error('Mark notification as read API error:', error)
+
+    throw createError({
+      statusCode: getErrorStatusCode(error),
+      message: getErrorMessage(error, '标记通知已读失败'),
+    })
   }
 })

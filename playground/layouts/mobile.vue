@@ -8,15 +8,15 @@
                 </div>
             </div>
             <div class="mobile__header-right">
-                <el-button circle class="action-btn active-btn">
+                <!-- <el-button circle class="action-btn active-btn">
                     <IconCustom name="share" :size="20" />
-                </el-button>
+                </el-button> -->
                 <LocaleDropdown variant="mobile" placement="bottom-end" />
-                <NotificationBell
+                <!-- <NotificationBell
                     :button-size="36"
                     :icon-size="20"
                 />
-                <el-avatar :size="40" src="/favicon.png" />
+                <el-avatar :size="40" src="/favicon.png" /> -->
             </div>
         </header>
         <main class="mobile__main">
@@ -30,7 +30,14 @@
                     :class="['tab-item', { active: displayActiveTab === tab.index }]"
                     @click="handleTabClick(tab.index)"
                 >
-                    <IconCustom :name="tab.icon" :size="24" />
+                    <template v-if="tab.type === 'profile'">
+                        <div class="tab-item__profile-avatar">
+                            {{ profileInitials }}
+                        </div>
+                    </template>
+                    <template v-else>
+                        <IconCustom :name="tab.icon" :size="24" />
+                    </template>
                     <span class="tab-label">{{ tab.label }}</span>
                 </div>
             </div>
@@ -50,13 +57,23 @@ const { t } = useAppI18n()
 const route = useRoute()
 const activeTab = useState('mobile:activeTab', () => 1)
 const isSidebarOpen = useState('mobile:isSidebarOpen', () => false)
+const displayName = computed(() => user.value?.name || user.value?.displayName || user.value?.username || 'Profile')
+const profileInitials = computed(() => {
+  const source = displayName.value.trim()
+  if (!source) {
+    return 'P'
+  }
+
+  const parts = source.split(/\s+/).filter(Boolean)
+  return parts.slice(0, 2).map(part => part[0]?.toUpperCase() || '').join('') || 'P'
+})
 
 
 const tabs = computed(() => [
-    { index: 1, icon: 'document', label: t('mobile.tabs.todo') },
-    { index: 2, icon: 'bell', label: t('mobile.tabs.favourites') },
+    { index: 1, icon: 'home', label: t('mobile.tabs.home') },
+    { index: 2, icon: 'todo', label: t('mobile.tabs.todo') },
     { index: 3, icon: 'apps', label: t('mobile.tabs.applications') },
-    { index: 4, icon: 'search', label: t('mobile.tabs.search') }
+    { index: 4, icon: 'search', label: 'Profile', type: 'profile' }
 ])
 
 const displayActiveTab = computed<number | null>(() => {
@@ -64,12 +81,20 @@ const displayActiveTab = computed<number | null>(() => {
     return activeTab.value
   }
 
+  if (route.path.startsWith('/mobile/search')) {
+    return null
+  }
+
+  if (route.path.startsWith('/mobile/notifications')) {
+    return null
+  }
+
   if (route.path.startsWith('/mobile/applications')) {
     return 3
   }
 
   if (route.path.startsWith('/mobile/approval')) {
-    return 1
+    return 2
   }
 
   return null
@@ -92,13 +117,21 @@ provide('activeTab', activeTab)
 watch(
     () => route.path,
     (path) => {
+        if (path.startsWith('/mobile/search')) {
+            return
+        }
+
+        if (path.startsWith('/mobile/notifications')) {
+            return
+        }
+
         if (path.startsWith('/mobile/applications')) {
             activeTab.value = 3
             return
         }
 
         if (path.startsWith('/mobile/approval')) {
-            activeTab.value = 1
+            activeTab.value = 2
         }
     },
     { immediate: true }
@@ -197,8 +230,9 @@ onBeforeUnmount(() => {
 
 .mobile__footer {
     background-color: #ffffff;
-    border-top: 1px solid #e0e0e0;
-    padding: 8px 0;
+    border-top: 0;
+    padding: 8px 0 6px;
+    box-shadow: 0 -6px 18px rgba(0, 0, 0, 0.04);
 }
 
 .tab-bar {
@@ -224,24 +258,33 @@ onBeforeUnmount(() => {
     }
 
     .tab-label {
-        font-size: 12px;
+        font-size: 10px;
         line-height: 1.2;
     }
 
     &.active {
         color: #A60A3A;
-
-        &::after {
-            content: '';
-            position: absolute;
-            bottom: -8px;
-            left: 50%;
-            transform: translateX(-50%);
-            width: 60%;
-            height: 3px;
-            background-color: #A60A3A;
-            border-radius: 2px;
-        }
     }
+}
+
+.tab-item__profile-avatar {
+    width: 30px;
+    height: 30px;
+    border-radius: 999px;
+    background: linear-gradient(135deg, #cb7291 0%, #8b0f3b 100%);
+    color: #ffffff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.03em;
+    margin-bottom: 4px;
+    box-shadow: 0 6px 12px rgba(166, 10, 58, 0.16);
+}
+
+.tab-item.active .tab-item__profile-avatar {
+    box-shadow: 0 8px 16px rgba(166, 10, 58, 0.22);
+    transform: translateY(-1px);
 }
 </style>

@@ -1,8 +1,5 @@
 <template>
-  <div
-    v-if="group"
-    class="mobile-company-document-group"
-  >
+  <div class="mobile-company-document-group">
     <div class="mobile-company-document-group__toolbar">
       <button
         type="button"
@@ -31,16 +28,16 @@
     </div>
 
     <div class="mobile-company-document-group__banner">
-      {{ group.title }} ({{ group.documents.length }})
+      {{ groupTitle }} ({{ documents.length }})
     </div>
 
     <main class="mobile-company-document-group__list">
       <button
-        v-for="document in group.documents"
+        v-for="document in documents"
         :key="document.slug"
         type="button"
         class="mobile-company-document-group__item"
-        @click="handleDocumentClick(document.slug)"
+        @click="handleDocumentClick(document)"
       >
         <span class="mobile-company-document-group__item-content">
           <span class="mobile-company-document-group__item-title">{{ document.title }}</span>
@@ -57,19 +54,41 @@
           color="#A60A3A"
         />
       </button>
-    </main>
-  </div>
 
-  <div
-    v-else
-    class="mobile-company-document-group__empty"
-  >
-    Document group not found
+      <div
+        v-if="!pending && !documents.length"
+        class="mobile-company-document-group__empty"
+      >
+        No documents found
+      </div>
+    </main>
   </div>
 </template>
 
 <script setup lang="ts">
-import { findCompanyDocumentGroup } from '../data'
+type CompanyDocumentStatus = 'Acknowledged' | 'Not Acknowledged'
+
+interface CompanyDocumentDetailResponseItem {
+  mainTable?: {
+    id?: string | number
+    RequestName?: string
+    Number_Version?: string
+    RequestPublishDate?: string
+    createddate?: string
+    readstatus?: string
+    acknowledgedate_display?: string
+  }
+}
+
+interface CompanyDocumentItem {
+  slug: string
+  title: string
+  code: string
+  version: string
+  summaryDate: string
+  status: CompanyDocumentStatus
+  raw: CompanyDocumentDetailResponseItem
+}
 
 definePageMeta({
   layout: 'mobile',
@@ -78,12 +97,99 @@ definePageMeta({
 
 const route = useRoute()
 const groupSlug = computed(() => String(route.params.group || ''))
-const group = computed(() => findCompanyDocumentGroup(groupSlug.value))
+const groupTitle = computed(() => String(route.query.title || 'Company Documents'))
+const selectedDocumentDetail = useState<CompanyDocumentDetailResponseItem | null>('company-document:selected-detail', () => null)
+
+const normalizeCompanyDocumentDetailResponse = (response: any): CompanyDocumentDetailResponseItem[] => {
+  if (Array.isArray(response)) {
+    return response
+  }
+
+  if (Array.isArray(response?.data)) {
+    return response.data
+  }
+
+  if (Array.isArray(response?.data?.data)) {
+    return response.data.data
+  }
+
+  return []
+}
+
+const getStatus = (item: CompanyDocumentDetailResponseItem): CompanyDocumentStatus => {
+  const readstatus = item.mainTable?.readstatus || ''
+
+  if (readstatus === '已签署' || readstatus === 'Acknowledged' || item.mainTable?.acknowledgedate_display) {
+    return 'Acknowledged'
+  }
+
+  return 'Not Acknowledged'
+}
+
+const getDocumentCodeAndVersion = (numberVersion?: string) => {
+  const value = numberVersion || ''
+  const match = value.match(/^(.*?)(\[[^\]]+\])$/)
+
+  return {
+    code: match?.[1] || value,
+    version: match?.[2] || '',
+  }
+}
+
+const formatSummaryDate = (date?: string) => {
+  return date?.split(' ')[0] || ''
+}
+
+const fetchCompanyDocumentDetail = $fetch as typeof $fetch<unknown>
+
+const { data: companyDocumentDetailResponse, pending } = await useAsyncData(
+  'company-document-detail',
+  () => fetchCompanyDocumentDetail('/api/ecologyOa/companyDocumentDetail', {
+    method: 'POST',
+    body: {
+      id: groupSlug.value,
+      folderId: groupSlug.value,
+      groupId: groupSlug.value,
+    },
+  }),
+  {
+    watch: [groupSlug],
+  },
+)
+
+const documents = computed<CompanyDocumentItem[]>(() => {
+  return normalizeCompanyDocumentDetailResponse(companyDocumentDetailResponse.value).map((item) => {
+    const mainTable = item.mainTable || {}
+    const { code, version } = getDocumentCodeAndVersion(mainTable.Number_Version)
+    const title = mainTable.RequestName || code || String(mainTable.id || '')
+
+    return {
+      slug: String(mainTable.id || title),
+      title,
+      code,
+      version,
+      summaryDate: formatSummaryDate(mainTable.RequestPublishDate || mainTable.createddate),
+      status: getStatus(item),
+      raw: item,
+    }
+  })
+})
 
 const handleBack = () => navigateTo('/mobile/companyDocuments')
 
-const handleDocumentClick = (documentSlug: string) => {
-  return navigateTo(`/mobile/companyDocuments/${encodeURIComponent(groupSlug.value)}/${encodeURIComponent(documentSlug)}`)
+const handleDocumentClick = (document: CompanyDocumentItem) => {
+  selectedDocumentDetail.value = document.raw
+
+  return navigateTo({
+    path: `/mobile/companyDocuments/${encodeURIComponent(groupSlug.value)}/${encodeURIComponent(document.slug)}`,
+    query: {
+      groupTitle: groupTitle.value,
+      title: document.title,
+      code: document.code,
+      version: document.version,
+      summaryDate: document.summaryDate,
+    },
+  })
 }
 </script>
 

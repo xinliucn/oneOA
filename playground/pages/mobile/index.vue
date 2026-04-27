@@ -1,13 +1,13 @@
 <template>
     <div class="mobile-page">
-        <!-- To-Do Tab -->
+        <!-- Home Tab -->
         <div v-if="activeTab === 1" class="tab-content">
-            <MobileTodoTab />
+            <MobileHomeTab />
         </div>
 
-        <!-- My Favourites Tab -->
+        <!-- To-Do Tab -->
         <div v-else-if="activeTab === 2" class="tab-content">
-            <MobileFavouritesTab />
+            <MobileTodoTab />
         </div>
 
         <!-- Applications Tab -->
@@ -15,9 +15,9 @@
             <MobileApplicationsTab />
         </div>
 
-        <!-- Search Tab -->
+        <!-- Profile Tab -->
         <div v-else-if="activeTab === 4" class="tab-content">
-            <MobileSearchTab />
+            <MobileProfileTab />
         </div>
     </div>
 </template>

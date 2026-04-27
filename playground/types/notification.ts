@@ -3,12 +3,16 @@ export interface NotificationItem {
   title: string
   content: string
   summary?: string
+  referenceId?: string
   link?: string
   source?: string
   category?: string
   createdAt: string
   readAt?: string | null
   payload?: Record<string, any> | null
+  created_at: string
+  updated_at: string
+  is_read: string
 }
 
 export interface NotificationListResponse {

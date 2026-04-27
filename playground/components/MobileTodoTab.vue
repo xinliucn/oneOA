@@ -101,7 +101,7 @@
           <div class="todo-item__content">
             <div class="todo-item__header">
               <div class="todo-item__meta">
-                <span class="todo-item__code">{{ task.requestmark }}</span>
+                <span class="todo-item__code">{{ getTaskReference(task) }}</span>
                 <span class="todo-item__status" :class="`status-pending`">
                   {{ t(`${task.status}`) }}
                 </span>
@@ -113,7 +113,7 @@
               <span>{{ task.creatorName }}</span>
               <span>{{ ' | ' }}</span>
               <span class="todo-item__portfolio">{{ task.workflowBaseInfo.workflowName
-              }}</span>
+                }}</span>
             </div>
           </div>
           <IconCustom name="chevron-right" :size="20" color="#A60A3A" class="todo-item__arrow" />
@@ -124,9 +124,7 @@
             <div class="todo-item__header">
               <div class="todo-item__meta">
                 <span class="todo-item__code">{{ task.requestmark }}</span>
-
               </div>
-
             </div>
             <div class="todo-item__title">{{ task.requestName }} <span class="todo-item__status"
                 :class="`status-pending`">
@@ -143,7 +141,7 @@
               <span>{{ task.creatorName }}</span>
               <span>{{ ' | ' }}</span>
               <span class="todo-item__portfolio">{{ task.workflowBaseInfo.workflowName
-              }}</span>
+                }}</span>
             </div>
           </div>
         </div>
@@ -152,8 +150,7 @@
           <div class="todo-item__content">
             <div class="todo-item__header">
               <div class="todo-item__meta">
-                <span class="todo-item__code">{{ task.requestmark }}</span>
-
+                <span class="todo-item__code">{{ getTaskReference(task) }}</span>
               </div>
               <div class="todo-item__date">{{ task.createTime }}</div>
             </div>
@@ -165,7 +162,7 @@
               <span>{{ task.creatorName }}</span>
               <span>{{ ' | ' }}</span>
               <span class="todo-item__portfolio">{{ task.workflowBaseInfo.workflowName
-              }}</span>
+                }}</span>
             </div>
           </div>
 
@@ -293,6 +290,10 @@ const getTaskTitleCodeFields = (task: any) => {
   ].map(field => normalizeFilterValue(field))
 }
 
+const getTaskReference = (task: any) => {
+  return String(task?.requestmark || task?.requestId || task?.id || '').trim()
+}
+
 const categoryFilterPresets = computed(() => {
   return [
     {
@@ -357,7 +358,6 @@ const matchesSearchFilter = (task: any, keyword: string) => {
 
 const searchFilteredTasks = computed(() => {
   const keyword = normalizeFilterValue(searchQuery.value)
-
   return list.value.filter((task) => {
     return matchesSearchFilter(task, keyword)
   })
@@ -437,7 +437,18 @@ const filteredTasks = computed(() => {
 
 const handleTaskClick = (selectedViewValue: string, task: ApprovalItem) => {
   toDoFrom.value = task
-  return navigateTo(`/mobile/approval/${encodeURIComponent(task.requestmark)}`)
+  const targetId = getTaskReference(task)
+
+  if (!targetId) {
+    return
+  }
+
+  return navigateTo({
+    path: `/mobile/approval/${encodeURIComponent(targetId)}`,
+    query: {
+      requestId: task.requestId,
+    },
+  })
 }
 
 const toggleDropdown = () => {

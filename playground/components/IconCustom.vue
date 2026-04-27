@@ -37,6 +37,7 @@ import ShareIcon from './icons/svg/ShareIcon.vue'
 import ChevronRightIcon from './icons/svg/ChevronRightIcon.vue'
 import TodoIcon from './icons/svg/TodoIcon.vue'
 import PersonnelIcon from './icons/svg/PersonnelIcon.vue'
+import HomeIcon from './icons/svg/HomeIcon.vue'
 import FilterIcon from './icons/svg/FilterIcon.vue'
 import StarIcon from './icons/svg/StarIcon.vue'
 import ClockIcon from './icons/svg/ColckIcon.vue'
@@ -88,6 +89,7 @@ const iconMap: Record<string, any> = {
   'chevron-right': ChevronRightIcon,
   todo: TodoIcon,
   personnel: PersonnelIcon,
+  home: HomeIcon,
   filterIcon: FilterIcon,
   starIcon: StarIcon,
   clockIcon:ClockIcon,

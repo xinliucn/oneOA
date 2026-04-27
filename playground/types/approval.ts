@@ -40,4 +40,12 @@ export interface ApprovalItem {
   approvers: ApprovalTimelineItem[]
   fields: ApprovalField[]
   requestmark: string
+  requestId?: string
+  currentNodeId?: string
+  workflowBaseInfo?: {
+    workflowId?: string
+    workflowName?: string
+    workflowTypeId?: string
+    workflowTypeName?: string
+  }
 }

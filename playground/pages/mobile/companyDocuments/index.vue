@@ -35,10 +35,10 @@
         :key="group.slug"
         type="button"
         class="mobile-company-documents__item"
-        @click="handleGroupClick(group.slug)"
+        @click="handleGroupClick(group)"
       >
         <span class="mobile-company-documents__item-content">
-          <span class="mobile-company-documents__item-title">{{ group.title }} ({{ group.documents.length }})</span>
+          <span class="mobile-company-documents__item-title">{{ group.title }} ({{ group.count }})</span>
           <span class="mobile-company-documents__item-category">{{ group.category }}</span>
         </span>
         <IconCustom
@@ -52,7 +52,32 @@
 </template>
 
 <script setup lang="ts">
-import { companyDocumentGroups } from './data'
+type CompanyDocumentStatus = 'Acknowledged' | 'Not Acknowledged'
+
+interface CompanyDocumentGroupResponseItem {
+  id?: string | number
+  osid?: string | number
+  count?: string | number
+  FolderTitle?: string
+  FolderDescription?: string
+  status?: string
+  readstatus?: string
+  readstatus_display?: string
+  acknowledgedate?: string
+  acknowledgedate_display?: string
+  acknowledgedCount?: string | number
+  notAcknowledgedCount?: string | number
+}
+
+interface CompanyDocumentGroup {
+  slug: string
+  title: string
+  category: string
+  count: number
+  acknowledgedCount: number
+  notAcknowledgedCount: number
+  status?: CompanyDocumentStatus
+}
 
 definePageMeta({
   layout: 'mobile',
@@ -65,22 +90,91 @@ const pageTitle = computed(() => t('pages.companyDocuments.title'))
 const tabs = ['All', 'Acknowledged', 'Not Acknowledged']
 const activeTab = ref(tabs[0])
 
+const normalizeCompanyDocumentResponse = (response: any): CompanyDocumentGroupResponseItem[] => {
+  if (Array.isArray(response)) {
+    return response
+  }
+
+  if (Array.isArray(response?.data)) {
+    return response.data
+  }
+
+  if (Array.isArray(response?.data?.data)) {
+    return response.data.data
+  }
+
+  return []
+}
+
+const getNumber = (value: unknown) => {
+  const numberValue = Number(value)
+  return Number.isFinite(numberValue) ? numberValue : 0
+}
+
+const getStatus = (item: CompanyDocumentGroupResponseItem): CompanyDocumentStatus | undefined => {
+  const rawStatus = item.status || item.readstatus || item.readstatus_display || ''
+
+  if (rawStatus === 'Acknowledged' || rawStatus === '已签署') {
+    return 'Acknowledged'
+  }
+
+  if (rawStatus === 'Not Acknowledged' || rawStatus === '未签署') {
+    return 'Not Acknowledged'
+  }
+
+  if (item.acknowledgedate || item.acknowledgedate_display) {
+    return 'Acknowledged'
+  }
+}
+
+const { data: companyDocumentResponse } = await useAsyncData('company-document-groups', () => {
+  return $fetch('/api/ecologyOa/companyDocument', {
+    method: 'POST',
+  })
+})
+
+const companyDocumentGroups = computed<CompanyDocumentGroup[]>(() => {
+  return normalizeCompanyDocumentResponse(companyDocumentResponse.value).map((item) => {
+    const count = getNumber(item.count)
+    const acknowledgedCount = getNumber(item.acknowledgedCount)
+    const notAcknowledgedCount = getNumber(item.notAcknowledgedCount)
+    const title = item.FolderTitle || ''
+    const slug = String(item.id || item.osid || title)
+
+    return {
+      slug,
+      title,
+      category: item.FolderDescription || title,
+      count,
+      acknowledgedCount,
+      notAcknowledgedCount,
+      status: getStatus(item),
+    }
+  })
+})
+
 const filteredGroups = computed(() => {
   if (activeTab.value === 'Acknowledged') {
-    return companyDocumentGroups.filter(group =>
-      group.documents.every(document => document.status === 'Acknowledged'))
+    return companyDocumentGroups.value.filter(group =>
+      group.status === 'Acknowledged' || group.acknowledgedCount > 0)
   }
 
   if (activeTab.value === 'Not Acknowledged') {
-    return companyDocumentGroups.filter(group =>
-      group.documents.some(document => document.status === 'Not Acknowledged'))
+    return companyDocumentGroups.value.filter(group =>
+      group.status === 'Not Acknowledged' || group.notAcknowledgedCount > 0)
   }
 
-  return companyDocumentGroups
+  return companyDocumentGroups.value
 })
 
-const handleGroupClick = (groupSlug: string) => {
-  return navigateTo(`/mobile/companyDocuments/${encodeURIComponent(groupSlug)}`)
+const handleGroupClick = (group: CompanyDocumentGroup) => {
+  return navigateTo({
+    path: `/mobile/companyDocuments/${encodeURIComponent(group.slug)}`,
+    query: {
+      title: group.title,
+      count: group.count,
+    },
+  })
 }
 </script>
 

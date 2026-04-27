@@ -7,6 +7,7 @@
       <el-button
         circle
         class="search-btn"
+        @click="navigateTo('/mobile/search')"
       >
         <IconCustom
           name="search"
@@ -18,27 +19,22 @@
     <div class="mobile-applications__tabs">
       <div class="applications__tabs__box">
         <button
-          :class="['tab-btn', { active: activeTab === 'Application' }]"
-          @click="activeTab = 'Application'"
+          v-for="tab in primaryTabs"
+          :key="tab.key"
+          :class="['tab-btn', { active: activePrimaryTab === tab.key }]"
+          @click="selectPrimaryTab(tab.key)"
         >
-          {{ t('mobile.applications.tabs.byApplication') }}
-        </button>
-        <button
-          :class="['tab-btn', { active: activeTab === 'Business' }]"
-          @click="activeTab = 'Business'"
-        >
-          {{ t('mobile.applications.tabs.byBusiness') }}
+          {{ tab.label }}
         </button>
       </div>
     </div>
 
-    <!-- By Application -->
     <div
-      v-if="activeTab === 'Application'"
+      v-if="!isBusinessTab"
       class="app-grid"
     >
       <div
-        v-for="app in catalog"
+        v-for="app in catalogEntries"
         :key="app.mainTable.id"
         class="app-card"
         @click="handleAppClick(app)"
@@ -64,13 +60,12 @@
       </div>
     </div>
 
-    <!-- By Business -->
     <div
       v-else
       class="business-grid"
     >
       <div
-        v-for="biz in catalog"
+        v-for="biz in catalogEntries"
         :key="biz.mainTable.id"
         class="biz-card"
         @click="handleBizClick(biz.mainTable)"
@@ -100,27 +95,114 @@
           {{ biz.mainTable.name_en }}
         </div>
         <div class="biz-card__desc">
-          {{ biz.mainTable.description_en }}
+          {{ getBusinessDescription(biz) }}
         </div>
       </div>
     </div>
   </div>
 </template>
 
-<script setup>
-import { watch, ref } from 'vue'
+<script setup lang="ts">
+import { computed, ref, watch } from 'vue'
+import { APPLICATION_BUSINESS_FILTER } from '~/composables/useApplicationCatalog'
+import type { ApplicationCatalogFilters, ApplicationCatalogItem } from '~/composables/useApplicationCatalog'
+
+type CatalogEntry = ApplicationCatalogItem & {
+  color?: string
+  business?: string
+  tag?: string
+  type?: string
+  mainTable?: {
+    id?: string
+    name_en?: string
+    description_en?: string
+    iconx64?: string
+    color?: string
+    mobileurl?: string
+    homepage_url?: string
+    business?: string
+    tag?: string
+    type?: string
+  }
+}
+
+type PrimaryTabKey = 'business' | 'application'
+
+type PrimaryTab = {
+  key: PrimaryTabKey
+  label: string
+}
+
+type SelectedBusinessSummary = {
+  id?: string
+  icon?: string
+  name_en?: string
+  business?: string
+  description_en?: string
+  color?: string
+  intranetLabel?: string
+  intranetUrl?: string
+}
 
 const { t } = useAppI18n()
 const { catalog, getApplicationCatalogData } = useApplicationCatalog()
 const { openGuardedUrl } = useNetworkGuard()
-const activeTab = ref('Application')
-const selectedBusiness = useState('mobile:selected-business', () => null)
+const primaryTabs: PrimaryTab[] = [
+  { key: 'application', label: t('mobile.applications.tabs.byApplication') },
+  { key: 'business', label: t('mobile.applications.tabs.byBusiness') },
+]
 
-const getApplicationUrl = (app) => {
+const catalogFiltersByTab: Record<PrimaryTabKey, ApplicationCatalogFilters> = {
+  business: APPLICATION_BUSINESS_FILTER,
+  application: { type: 'Application' },
+}
+
+const getCatalogFilters = (tabKey: PrimaryTabKey): ApplicationCatalogFilters => ({
+  ...catalogFiltersByTab[tabKey],
+})
+
+const activePrimaryTab = ref<PrimaryTabKey>('application')
+const selectedBusiness = useState<SelectedBusinessSummary | null>('mobile:selected-business', () => null)
+const isBusinessTab = computed(() => activePrimaryTab.value === 'business')
+const catalogEntries = computed(() => catalog.value as CatalogEntry[])
+const regionOrder = ['HK', 'CN', 'SEA']
+const detailRouteTypes = ['Data', 'Form']
+
+const normalizeString = (value?: string | null) => {
+  return typeof value === 'string' ? value.trim() : ''
+}
+
+const splitMultiValue = (value?: string | null) => {
+  return normalizeString(value)
+    .split(/[\/,]/)
+    .map(item => item.trim())
+    .filter(Boolean)
+}
+
+const sortByKnownOrder = (items: string[], order: string[]) => {
+  return [...items].sort((left, right) => {
+    const leftIndex = order.indexOf(left)
+    const rightIndex = order.indexOf(right)
+    const safeLeft = leftIndex === -1 ? order.length : leftIndex
+    const safeRight = rightIndex === -1 ? order.length : rightIndex
+
+    if (safeLeft !== safeRight) {
+      return safeLeft - safeRight
+    }
+
+    return left.localeCompare(right)
+  })
+}
+
+const selectPrimaryTab = (tabKey: PrimaryTabKey) => {
+  activePrimaryTab.value = tabKey
+}
+
+const getApplicationUrl = (app: CatalogEntry) => {
   return app?.mainTable?.mobileurl || app?.mainTable?.homepage_url || app?.mobileUrl || app?.homepageUrl || ''
 }
 
-const handleAppClick = async (app) => {
+const handleAppClick = async (app: CatalogEntry) => {
   const url = getApplicationUrl(app)
   if (!url) {
     return
@@ -129,12 +211,90 @@ const handleAppClick = async (app) => {
   await openGuardedUrl(url, '_blank')
 }
 
-const handleBizClick = (biz) => {
-  selectedBusiness.value = biz
-  return navigateTo(`/mobile/applications/business/${encodeURIComponent(biz.id)}`)
+const getBusinessDisplayName = (name?: string) => {
+  const normalized = String(name || '').trim()
+  const lowerName = normalized.toLowerCase()
+
+  if (lowerName.includes('digital') || lowerName.includes('technology') || lowerName.includes('it')) {
+    return 'Digital & Technology'
+  }
+
+  if (lowerName.includes('finance')) {
+    return 'Finance'
+  }
+
+  if (lowerName.includes('legal') || lowerName.includes('compliance')) {
+    return 'Legal & Compliance'
+  }
+
+  if (lowerName.includes('human resources') || lowerName.includes('hr')) {
+    return 'Human Resources'
+  }
+
+  return normalized.replace(/^group\s+/i, '') || 'Business'
 }
 
-const getBusinessFallbackIcon = (name) => {
+const getBusinessDescription = (entry: CatalogEntry) => {
+  const description = String(entry.mainTable?.description_en || '').trim()
+  if (description) {
+    return description
+  }
+
+  const businessName = String(entry.mainTable?.name_en || '')
+  const lowerName = businessName.toLowerCase()
+
+  if (lowerName.includes('digital') || lowerName.includes('technology') || lowerName.includes('it')) {
+    return 'Core applications for infrastructure, collaboration, and operational support.'
+  }
+
+  if (lowerName.includes('finance')) {
+    return 'Finance operations, reporting tools, and workflow entry points.'
+  }
+
+  if (lowerName.includes('legal') || lowerName.includes('compliance')) {
+    return 'Legal, compliance, and governance related applications.'
+  }
+
+  if (lowerName.includes('human resources') || lowerName.includes('hr')) {
+    return 'People operations, leave, payroll, and related HR services.'
+  }
+
+  return 'Business applications, workflows, and related entry points.'
+}
+
+const getBusinessRouteParams = (biz: CatalogEntry['mainTable']) => {
+  const businessName = normalizeString(biz?.business || biz?.name_en)
+  const tags = sortByKnownOrder(splitMultiValue(biz?.tag), regionOrder)
+
+  return {
+    business: businessName,
+    tag: (tags.length ? tags : regionOrder).join('/'),
+    type: detailRouteTypes.join('/'),
+  }
+}
+
+const handleBizClick = async (biz: CatalogEntry['mainTable']) => {
+  const businessName = normalizeString(biz?.business || biz?.name_en)
+  const displayName = getBusinessDisplayName(biz?.name_en)
+  const routeParams = getBusinessRouteParams(biz)
+
+  selectedBusiness.value = {
+    id: businessName,
+    icon: getBusinessFallbackIcon(biz?.name_en),
+    name_en: displayName,
+    business: businessName,
+    description_en: getBusinessDescription({ mainTable: biz } as CatalogEntry),
+    color: getBusinessAccentColor(biz?.name_en, biz?.color),
+    intranetLabel: `${displayName} Intranet >`,
+    intranetUrl: biz?.homepage_url || biz?.mobileurl || 'https://intranet.dch.com.hk/',
+  }
+
+  return navigateTo(
+    `/mobile/applications/business/${encodeURIComponent(routeParams.business)}/${encodeURIComponent(routeParams.tag)}/${encodeURIComponent(routeParams.type)}`,
+  )
+}
+
+const getBusinessFallbackIcon = (name?: string) => {
   const normalized = String(name || '').trim().toLowerCase()
 
   if (normalized.includes('digital') || normalized.includes('technology') || normalized.includes('it')) {
@@ -160,7 +320,7 @@ const getBusinessFallbackIcon = (name) => {
   return 'apps'
 }
 
-const getBusinessAccentColor = (name, color) => {
+const getBusinessAccentColor = (name?: string, color?: string) => {
   if (color) {
     return color
   }
@@ -187,9 +347,9 @@ const getBusinessAccentColor = (name, color) => {
 }
 
 watch(
-  activeTab,
-  async (tab) => {
-    await getApplicationCatalogData({ type: tab })
+  activePrimaryTab,
+  async (tabKey) => {
+    await getApplicationCatalogData(getCatalogFilters(tabKey))
   },
   { immediate: true },
 )
@@ -229,7 +389,7 @@ watch(
 }
 
 .mobile-applications__tabs {
-  padding: 12px 16px;
+  padding: 10px 16px 14px;
   background: white;
   border-bottom: 1px solid #f2f2f2;
 }
@@ -237,21 +397,21 @@ watch(
 .applications__tabs__box {
   display: flex;
   align-items: center;
-  gap: 4px;
-  padding: 4px;
-  background: #ffffff;
+  gap: 0;
+  padding: 3px;
+  background: linear-gradient(180deg, #ffffff 0%, #faf8f9 100%);
   border-radius: 999px;
-  box-shadow: 0 6px 18px rgba(217, 217, 217, 0.75);
+  box-shadow: 0 8px 18px rgba(23, 23, 23, 0.08);
 }
 
 .tab-btn {
   flex: 1;
-  min-height: 48px;
+  min-height: 44px;
   padding: 0 20px;
   border: 0;
   background: transparent;
   border-radius: 999px;
-  font-size: 16px;
+  font-size: 14px;
   font-weight: 600;
   color: #171717;
   cursor: pointer;
@@ -277,14 +437,15 @@ watch(
 
 .app-card {
   background: white;
-  border-radius: 12px;
-  padding: 20px 12px 16px;
+  border-radius: 14px;
+  padding: 22px 12px 14px;
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 12px;
   cursor: pointer;
   transition: transform 0.2s;
+  box-shadow: 0 14px 24px rgba(17, 17, 17, 0.07);
 }
 
 .app-card:active {
@@ -292,8 +453,8 @@ watch(
 }
 
 .app-card__logo {
-  width: 64px;
-  height: 64px;
+  width: 58px;
+  height: 58px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -326,9 +487,10 @@ watch(
 
 .app-card__name {
   font-size: 14px;
-  font-weight: 500;
+  font-weight: 600;
   color: #000000;
   text-align: center;
+  line-height: 1.35;
 }
 
 /* By Business Grid */
@@ -344,16 +506,17 @@ watch(
 
 .biz-card {
   background: white;
-  border-radius: 12px;
-  padding: 14px 12px;
-  min-height: 124px;
+  border-radius: 14px;
+  padding: 16px 12px 14px;
+  min-height: 132px;
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
-  gap: 8px;
+  justify-content: flex-start;
+  gap: 10px;
   cursor: pointer;
   transition: transform 0.2s;
+  box-shadow: 0 14px 24px rgba(17, 17, 17, 0.07);
 }
 
 .biz-card:active {
@@ -361,8 +524,8 @@ watch(
 }
 
 .biz-card__icon {
-  width: 44px;
-  height: 44px;
+  width: 46px;
+  height: 46px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -370,8 +533,8 @@ watch(
 }
 
 .biz-card__icon .app-card__logo {
-  width: 44px;
-  height: 44px;
+  width: 46px;
+  height: 46px;
 }
 
 .biz-card__name {

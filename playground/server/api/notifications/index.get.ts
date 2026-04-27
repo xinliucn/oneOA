@@ -1,12 +1,10 @@
+import type { H3Event } from 'h3'
 import { normalizeNotificationList } from '../../utils/notification'
-import { getMockNotificationList } from '../../utils/notificationMock'
-import { getNotificationApiPrefix, proxyWindmill } from '../../utils/windmillProxy'
 
 const getErrorStatusCode = (error: unknown) => {
   if (error && typeof error === 'object' && 'statusCode' in error && typeof error.statusCode === 'number') {
     return error.statusCode
   }
-
   return 500
 }
 
@@ -14,61 +12,253 @@ const getErrorMessage = (error: unknown, fallback: string) => {
   if (error && typeof error === 'object' && 'message' in error && typeof error.message === 'string') {
     return error.message
   }
-
   return fallback
 }
 
+const forwardSetCookieHeaders = (event: H3Event, response: { headers: Headers }) => {
+  const rawHeaders = response.headers as Headers & { getSetCookie?: () => string[] }
+  const setCookies = rawHeaders.getSetCookie?.() || []
+
+  if (setCookies.length > 0) {
+    setHeader(event, 'set-cookie', setCookies)
+    return
+  }
+
+  const singleSetCookie = response.headers.get('set-cookie')
+  if (singleSetCookie) {
+    setHeader(event, 'set-cookie', singleSetCookie)
+  }
+}
+
 export default defineEventHandler(async (event) => {
-  const query = getQuery(event)
-  // 前端分页参数统一做一次兜底和边界收敛，避免异常值直接透传
-  const rawPage = Number.parseInt(String(query.page || '1'), 10)
-  const rawPageSize = Number.parseInt(String(query.pageSize || '20'), 10)
-  const page = Number.isFinite(rawPage) && rawPage > 0 ? rawPage : 1
-  const pageSize = Number.isFinite(rawPageSize) && rawPageSize > 0 ? Math.min(rawPageSize, 100) : 20
   const config = useRuntimeConfig()
   const raw = config.mockEnabled
+  const page = 1
+  const pageSize = 20
+
   if (raw) {
-    const items = getMockNotificationList()
     const response = {
-      items,
-      total: items.length,
-      page: 1,
-      pageSize: 20,
-      unreadCount: items.filter(item => !item.readAt).length,
-      hasMore: false,
-      syncedAt: Date.now(),
+      "page": 1,
+      "items": [
+        {
+          "id": 31,
+          "body": "这是一条用于验证 user_id → user_email 迁移的端到端测试消息",
+          "icon": "/icons/icon-192.png",
+          "title": "测试通知 - user_email 全链路验证",
+          "is_read": 1,
+          "user_id": null,
+          "subtitle": "预计 3-5 天送达",
+          "msg_group": "order",
+          "action_url": "https://superapp.dchbipoc.cc/orders/12345",
+          "created_at": "2026-04-16T17:26:18.664Z",
+          "request_id": "req-20260409-001",
+          "updated_at": "2026-04-16T17:26:35.906Z",
+          "msg_category": "order",
+          "msg_publish_at": "2026-04-09T15:00:00.000Z"
+        },
+        {
+          "id": 30,
+          "body": "这是一条用于验证 user_id → user_email 迁移的端到端测试消息",
+          "icon": "/icons/icon-192.png",
+          "title": "测试通知 - user_email 全链路验证",
+          "is_read": 0,
+          "user_id": null,
+          "subtitle": "预计 3-5 天送达",
+          "msg_group": "order",
+          "action_url": "https://superapp.dchbipoc.cc/orders/12345",
+          "created_at": "2026-04-16T17:26:18.651Z",
+          "request_id": "req-20260409-001",
+          "updated_at": "2026-04-16T17:26:18.651Z",
+          "msg_category": "order",
+          "msg_publish_at": "2026-04-09T15:00:00.000Z"
+        },
+        {
+          "id": 18,
+          "body": "这是一条用于验证 user_id → user_email 迁移的端到端测试消息",
+          "icon": "/icons/icon-192.png",
+          "title": "测试通知 - user_email 全链路验证",
+          "is_read": 0,
+          "user_id": null,
+          "subtitle": "预计 3-5 天送达",
+          "msg_group": "order",
+          "action_url": "https://superapp.dchbipoc.cc/orders/12345",
+          "created_at": "2026-04-10T10:53:15.930Z",
+          "request_id": "req-20260409-001",
+          "updated_at": "2026-04-10T10:53:15.930Z",
+          "msg_category": "order",
+          "msg_publish_at": "2026-04-09T15:00:00.000Z"
+        },
+        {
+          "id": 17,
+          "body": "这是一条用于验证 user_id → user_email 迁移的端到端测试消息",
+          "icon": "/icons/icon-192.png",
+          "title": "测试通知 - user_email 全链路验证",
+          "is_read": 0,
+          "user_id": null,
+          "subtitle": "预计 3-5 天送达",
+          "msg_group": "order",
+          "action_url": "https://superapp.dchbipoc.cc/orders/12345",
+          "created_at": "2026-04-10T10:53:15.920Z",
+          "request_id": "req-20260409-001",
+          "updated_at": "2026-04-10T10:53:15.920Z",
+          "msg_category": "order",
+          "msg_publish_at": "2026-04-09T15:00:00.000Z"
+        },
+        {
+          "id": 12,
+          "body": "这是一条用于验证 user_id → user_email 迁移的端到端测试消息",
+          "icon": "/icons/icon-192.png",
+          "title": "测试通知 - user_email 全链路验证",
+          "is_read": 0,
+          "user_id": null,
+          "subtitle": "预计 3-5 天送达",
+          "msg_group": "order",
+          "action_url": "https://superapp.dchbipoc.cc/orders/12345",
+          "created_at": "2026-04-09T18:32:51.870Z",
+          "request_id": "req-20260409-001",
+          "updated_at": "2026-04-09T18:32:51.870Z",
+          "msg_category": "process",
+          "msg_publish_at": "2026-04-09T15:00:00.000Z"
+        },
+        {
+          "id": 11,
+          "body": "这是一条用于验证 user_id → user_email 迁移的端到端测试消息",
+          "icon": "/icons/icon-192.png",
+          "title": "测试通知 - user_email 全链路验证",
+          "is_read": 0,
+          "user_id": null,
+          "subtitle": "预计 3-5 天送达",
+          "msg_group": "order",
+          "action_url": "https://superapp.dchbipoc.cc/orders/12345",
+          "created_at": "2026-04-09T18:32:51.854Z",
+          "request_id": "req-20260409-001",
+          "updated_at": "2026-04-09T18:32:51.854Z",
+          "msg_category": "process",
+          "msg_publish_at": "2026-04-09T15:00:00.000Z"
+        },
+        {
+          "id": 10,
+          "body": "这是一条用于验证 user_id → user_email 迁移的端到端测试消息",
+          "icon": "/icons/icon-192.png",
+          "title": "测试通知 - user_email 全链路验证",
+          "is_read": 0,
+          "user_id": null,
+          "subtitle": "预计 3-5 天送达",
+          "msg_group": "order",
+          "action_url": "https://superapp.dchbipoc.cc/orders/12345",
+          "created_at": "2026-04-09T18:25:43.342Z",
+          "request_id": "req-20260409-001",
+          "updated_at": "2026-04-09T18:25:43.342Z",
+          "msg_category": "process",
+          "msg_publish_at": "2026-04-09T15:00:00.000Z"
+        },
+        {
+          "id": 9,
+          "body": "这是一条用于验证 user_id → user_email 迁移的端到端测试消息",
+          "icon": "/icons/icon-192.png",
+          "title": "测试通知 - user_email 全链路验证",
+          "is_read": 0,
+          "user_id": null,
+          "subtitle": "预计 3-5 天送达",
+          "msg_group": "order",
+          "action_url": "https://superapp.dchbipoc.cc/orders/12345",
+          "created_at": "2026-04-09T18:25:43.328Z",
+          "request_id": "req-20260409-001",
+          "updated_at": "2026-04-09T18:25:43.328Z",
+          "msg_category": "process",
+          "msg_publish_at": "2026-04-09T15:00:00.000Z"
+        },
+        {
+          "id": 4,
+          "body": "这是一条用于验证 user_id → user_email 迁移的端到端测试消息",
+          "icon": "/icons/icon-192.png",
+          "title": "测试通知 - user_email 全链路验证",
+          "is_read": 0,
+          "user_id": null,
+          "subtitle": "预计 3-5 天送达",
+          "msg_group": "order",
+          "action_url": "https://superapp.dchbipoc.cc/orders/12345",
+          "created_at": "2026-04-09T18:14:52.706Z",
+          "request_id": "req-20260409-001",
+          "updated_at": "2026-04-09T18:14:52.706Z",
+          "msg_category": "process",
+          "msg_publish_at": "2026-04-09T15:00:00.000Z"
+        },
+        {
+          "id": 3,
+          "body": "这是一条用于验证 user_id → user_email 迁移的端到端测试消息",
+          "icon": "/icons/icon-192.png",
+          "title": "测试通知 - user_email 全链路验证",
+          "is_read": 0,
+          "user_id": null,
+          "subtitle": "预计 3-5 天送达",
+          "msg_group": "order",
+          "action_url": "https://superapp.dchbipoc.cc/orders/12345",
+          "created_at": "2026-04-09T18:14:52.691Z",
+          "request_id": "req-20260409-001",
+          "updated_at": "2026-04-09T18:14:52.691Z",
+          "msg_category": "process",
+          "msg_publish_at": "2026-04-09T15:00:00.000Z"
+        },
+        {
+          "id": 2,
+          "body": "通知正文",
+          "icon": "/icons/icon-192.png",
+          "title": "通知主标题",
+          "is_read": 0,
+          "user_id": null,
+          "subtitle": "通知子标题",
+          "msg_group": null,
+          "action_url": null,
+          "created_at": "2026-04-09T17:59:25.326Z",
+          "request_id": null,
+          "updated_at": "2026-04-09T17:59:25.326Z",
+          "msg_category": "general",
+          "msg_publish_at": null
+        },
+        {
+          "id": 1,
+          "body": "通知正文",
+          "icon": "/icons/icon-192.png",
+          "title": "通知主标题",
+          "is_read": 0,
+          "user_id": null,
+          "subtitle": "通知子标题",
+          "msg_group": null,
+          "action_url": null,
+          "created_at": "2026-04-09T17:59:25.313Z",
+          "request_id": null,
+          "updated_at": "2026-04-09T17:59:25.313Z",
+          "msg_category": "general",
+          "msg_publish_at": null
+        }
+      ],
+      "has_more": false,
+      "page_size": 20,
+      "total_unread": 11
     }
     return normalizeNotificationList(response, page, pageSize)
   }
 
   try {
-    // 透传可选筛选条件，兼容前端列表查询
-    const keyword = typeof query.keyword === 'string' ? query.keyword : ''
-    const userId = typeof query.user_id === 'string' ? query.user_id : ''
-    const isRead = typeof query.is_read === 'string' ? query.is_read : ''
-    const category = typeof query.category === 'string' ? query.category : ''
+    const cookieHeader = getRequestHeader(event, 'cookie')
+    const userAgent = getRequestHeader(event, 'user-agent')
+    const referer = getRequestHeader(event, 'referer')
+    const forwardedIp = getHeader(event, 'x-forwarded-for') || getHeader(event, 'x-real-ip') || ''
 
-    // 将前端参数转换成 Windmill 侧约定的查询参数格式
-    const params = new URLSearchParams({
-      page: String(page),
-      page_size: String(pageSize),
-    })
-
-    if (userId) params.set('user_id', userId)
-    if (isRead !== '') params.set('is_read', isRead)
-    if (category) params.set('category', category)
-    if (keyword) params.set('keyword', keyword)
-
-    const path = `${getNotificationApiPrefix()}/list?${params.toString()}`
-    // 这里原本应回源 Windmill，当前先保留本地联调用的静态返回
-    const response = await proxyWindmill<Record<string, unknown>>(event, path, {
+    const response = await $fetch.raw<Record<string, unknown>>(`${config.public.apiBase}/api/r/notification/list`, {
       method: 'GET',
-      skipCookies: false,
+      headers: {
+        ...(cookieHeader ? { cookie: cookieHeader } : {}),
+        ...(userAgent ? { 'user-agent': userAgent } : {}),
+        ...(referer ? { referer } : {}),
+        'X-Real-IP': forwardedIp,
+        'X-Forwarded-For': forwardedIp,
+      },
     })
-    console.log('shuchu+++',response);
-    
-    // 将不同来源的数据统一规整成前端使用的通知列表结构
-    return normalizeNotificationList(response, page, pageSize)
+
+    forwardSetCookieHeaders(event, response)
+    return normalizeNotificationList(response._data, page, pageSize)
   }
   catch (error: unknown) {
     console.error('Get notifications API error:', error)

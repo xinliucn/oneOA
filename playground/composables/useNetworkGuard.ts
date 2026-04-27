@@ -11,6 +11,24 @@ const PROBE_CACHE_TTL_MS = 15 * 1000
 let bootstrapStarted = false
 let probeTimer: ReturnType<typeof setInterval> | null = null
 
+const toBoolean = (value: unknown, fallback = false) => {
+  if (typeof value === 'boolean') {
+    return value
+  }
+
+  if (typeof value === 'string') {
+    const normalized = value.trim().toLowerCase()
+    if (['true', '1', 'yes', 'on'].includes(normalized)) {
+      return true
+    }
+    if (['false', '0', 'no', 'off', ''].includes(normalized)) {
+      return false
+    }
+  }
+
+  return fallback
+}
+
 const normalizeHosts = (hosts: string) => {
   return hosts
     .split(',')
@@ -88,6 +106,7 @@ const probeWithServiceWorker = async (probeUrl: string) => {
 
 export const useNetworkGuard = () => {
   const runtimeConfig = useRuntimeConfig()
+  const enabled = toBoolean(runtimeConfig.public.internalNetworkGuardEnabled, false)
   const probeUrl = String(runtimeConfig.public.internalNetworkProbeUrl || 'https://intranet.dch.com.hk/')
   const internalHosts = normalizeHosts(String(runtimeConfig.public.internalNetworkHosts || 'intranet.dch.com.hk'))
   const alertMessage = String(runtimeConfig.public.internalNetworkAlertMessage || 'Please connect DCH network to access websites')
@@ -115,6 +134,10 @@ export const useNetworkGuard = () => {
   }
 
   const showNetworkAlert = (message = alertMessage) => {
+    if (!enabled) {
+      return
+    }
+
     overlayMessage.value = message
     overlayVisible.value = true
   }
@@ -125,6 +148,13 @@ export const useNetworkGuard = () => {
 
   const probeInternalAccess = async ({ force = false }: { force?: boolean } = {}) => {
     if (!import.meta.client) {
+      return true
+    }
+
+    if (!enabled) {
+      isInternal.value = true
+      lastCheckedAt.value = Date.now()
+      hideNetworkAlert()
       return true
     }
 
@@ -169,6 +199,18 @@ export const useNetworkGuard = () => {
       return false
     }
 
+    if (!enabled) {
+      hideNetworkAlert()
+
+      if (target === '_self') {
+        window.location.href = url
+        return true
+      }
+
+      window.open(url, target, 'noopener,noreferrer')
+      return true
+    }
+
     if (shouldSkipProbe) {
       if (target === '_self') {
         window.location.href = url
@@ -199,6 +241,13 @@ export const useNetworkGuard = () => {
 
   const bootstrap = () => {
     if (!import.meta.client || bootstrapStarted) {
+      return
+    }
+
+    if (!enabled) {
+      isInternal.value = true
+      lastCheckedAt.value = Date.now()
+      hideNetworkAlert()
       return
     }
 
@@ -239,6 +288,7 @@ export const useNetworkGuard = () => {
 
   return {
     isInternal,
+    enabled,
     checking,
     lastCheckedAt,
     overlayVisible,

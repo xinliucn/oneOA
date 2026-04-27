@@ -1,4 +1,5 @@
 import type { NotificationItem } from '~/types/notification'
+import { sortNotificationsForDisplay } from '~/utils/notification'
 
 const DB_NAME = 'superapp_notifications'
 const DB_VERSION = 1
@@ -76,9 +77,7 @@ export const useNotificationDB = () => {
     const store = tx.objectStore(STORE_NOTIFICATIONS)
     const records = await requestToPromise(store.getAll())
 
-    return (records as NotificationItem[]).sort((a, b) => {
-      return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-    })
+    return sortNotificationsForDisplay(records as NotificationItem[])
   }
 
   const writeNotifications = async (notifications: NotificationItem[]) => {
@@ -123,6 +122,7 @@ export const useNotificationDB = () => {
       store.put({
         ...record,
         readAt,
+        is_read: '1',
       })
     }
 

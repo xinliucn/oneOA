@@ -13,6 +13,7 @@ export default defineNuxtConfig({
       logrocketAppId: process.env.NUXT_PUBLIC_LOGROCKET_APP_ID || '',
       apiBase: process.env.NUXT_PUBLIC_API_BASE || 'https://windmill-uat.dchbi.app',
       notificationApiPrefix: process.env.NUXT_PUBLIC_NOTIFICATION_API_PREFIX || '/api/r/notification',
+      internalNetworkGuardEnabled: process.env.NUXT_PUBLIC_INTERNAL_NETWORK_GUARD_ENABLED || 'false',
       internalNetworkProbeUrl: process.env.NUXT_PUBLIC_INTERNAL_NETWORK_PROBE_URL || 'https://intranet.dch.com.hk/',
       internalNetworkHosts: process.env.NUXT_PUBLIC_INTERNAL_NETWORK_HOSTS || 'intranet.dch.com.hk',
       internalNetworkAlertMessage: process.env.NUXT_PUBLIC_INTERNAL_NETWORK_ALERT_MESSAGE || 'Please connect DCH network to access websites',

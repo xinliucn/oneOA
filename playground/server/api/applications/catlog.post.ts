@@ -1,1372 +1,1274 @@
+const normalizeString = (value?: string | null) => {
+  return typeof value === 'string' ? value.trim() : ''
+}
+
+const splitFilterValues = (value?: string | string[] | null): string[] => {
+  if (Array.isArray(value)) {
+    return value
+      .flatMap((item: string) => splitFilterValues(item))
+      .filter(Boolean)
+  }
+
+  return normalizeString(value)
+    .split(/[\/,]/)
+    .map(item => item.trim())
+    .filter(Boolean)
+}
+
+const matchesBusinessFilter = (candidate?: string | null, filter?: string | null) => {
+  const normalizedFilter = normalizeString(filter).toLowerCase()
+  if (!normalizedFilter) {
+    return true
+  }
+
+  const normalizedCandidate = normalizeString(candidate).toLowerCase()
+  return normalizedCandidate === normalizedFilter || normalizedCandidate.startsWith(`${normalizedFilter} -`)
+}
+
+const matchesDiscreteFilter = (candidate?: string | null, filter?: string | string[] | null) => {
+  const normalizedFilters = splitFilterValues(filter).map((item: string) => item.toLowerCase())
+  if (normalizedFilters.length === 0) {
+    return true
+  }
+
+  const candidateValues = splitFilterValues(candidate).map((item: string) => item.toLowerCase())
+  return normalizedFilters.some((item: string) => candidateValues.includes(item))
+}
+
+const filterApplicationCatalog = (items: Array<Record<string, any>>, filters: Record<string, any>) => {
+  return items.filter((item) => {
+    const mainTable = item?.mainTable || {}
+    return matchesBusinessFilter(mainTable.business, filters.business)
+      && matchesDiscreteFilter(mainTable.tag, filters.tag)
+      && matchesDiscreteFilter(mainTable.type, filters.type)
+  })
+}
 
 export default defineEventHandler(async (event) => {
-  const businessData = [
-    {
+  const config = useRuntimeConfig()
+  const body: Record<string, any> = await readBody<Record<string, any>>(event).catch(() => ({}))
+  if (config.mockEnabled) {
+    const mockData = [
+      {
         "mainTable": {
-            "name_tc": "集團法律與合規",
-            "allowroles": "安全级别为0-100的所有人",
-            "business": "Group Legal & Compliance",
-            "name_sc": "集团法律与合规",
-            "order_number": "3000",
-            "homepage_url": "",
-            "description_en": "",
-            "type": "Business",
-            "iconx64": "user_attributes_24dp_E3E3E3_FILL1_wght400_GRAD0_opsz24 2.png",
-            "application": "",
-            "description_sc": "",
-            "description_tc": "",
-            "mobileurl": "",
-            "id": "4",
-            "tag": "HK",
-            "name_en": "Group Legal & Compliance"
+          "id": "1",
+          "tag": "HK",
+          "type": "Application",
+          "iconx64": "ITServiceDesk.png",
+          "name_en": "IT Service Portal",
+          "name_sc": "IT 服务门户",
+          "name_tc": "IT 服務門戶",
+          "business": "Group Digital & Technology",
+          "category": "",
+          "mobileurl": "https://dch.service-now.com/sp",
+          "allowroles": "角色( 系统管理员角色)共享级别=部门  安全级别为0-100的角色成员，角色( CRM管理员)共享级别=部门  安全级别为0-100的角色成员",
+          "application": "IT Service Portal",
+          "homepage_url": "https://dch.service-now.com/sp",
+          "order_number": "1200",
+          "description_en": "Group IT support platform",
+          "description_sc": "集團 IT 支持平台",
+          "description_tc": "集團 IT 支援平台"
         }
-    },
-    {
+      },
+      {
         "mainTable": {
-            "name_tc": "Group Digital & Technology",
-            "allowroles": "安全级别为0-100的所有人",
-            "business": "Group Digital & Technology",
-            "name_sc": "Group Digital & Technology",
-            "order_number": "1000",
-            "homepage_url": "",
-            "description_en": "",
-            "type": "Business",
-            "iconx64": "desktop_windows_24dp_E3E3E3_FILL1_wght400_GRAD0_opsz24 1.png",
-            "application": "",
-            "description_sc": "",
-            "description_tc": "",
-            "mobileurl": "",
-            "id": "5",
-            "tag": "HK",
-            "name_en": "Group Digital & Technology"
+          "id": "2",
+          "tag": "HK",
+          "type": "Form",
+          "iconx64": "",
+          "name_en": "Open a Service Request",
+          "name_sc": "一般 IT 服務和應用程式請求",
+          "name_tc": "一般 IT 服務和應用程式請求",
+          "business": "Group Digital & Technology",
+          "category": "",
+          "mobileurl": "https://dch.service-now.com/sp?id=sc_cat_item&sys_id=ea6aef15db3d91908e9ddf0bd3961922&sysparm_category=22c62651db7991908e9ddf0bd39619d2",
+          "allowroles": "安全级别为0-100的所有人",
+          "application": "IT Service Portal",
+          "homepage_url": "https://dch.service-now.com/sp?id=sc_cat_item&sys_id=ea6aef15db3d91908e9ddf0bd3961922&sysparm_category=22c62651db7991908e9ddf0bd39619d2",
+          "order_number": "1210",
+          "description_en": "EN: Request IT services or support简: 申请信息技术服务繁: 申請資訊技術服務",
+          "description_sc": "",
+          "description_tc": ""
         }
-    },
-    {
+      },
+      {
         "mainTable": {
-            "name_tc": "集團人力資源",
-            "allowroles": "安全级别为0-100的所有人",
-            "business": "Group Human Resource",
-            "name_sc": "集团人力资源",
-            "order_number": "4000",
-            "homepage_url": "",
-            "description_en": "",
-            "type": "Business",
-            "iconx64": "",
-            "application": "",
-            "description_sc": "",
-            "description_tc": "",
-            "mobileurl": "",
-            "id": "19",
-            "tag": "HK",
-            "name_en": "Group Human Resources"
+          "id": "3",
+          "tag": "HK,CN,SEA",
+          "type": "Application",
+          "iconx64": "",
+          "name_en": "OA",
+          "name_sc": "办公自动化系统",
+          "name_tc": "辦公自動化系統",
+          "business": "Group Service",
+          "category": "",
+          "mobileurl": "",
+          "allowroles": "安全级别为0-100的所有人",
+          "application": "OA",
+          "homepage_url": "https://oa.dchbipoc.cc/",
+          "order_number": "1",
+          "description_en": "",
+          "description_sc": "",
+          "description_tc": ""
         }
-    },
-    {
+      },
+      {
         "mainTable": {
-            "name_tc": "Group Finance",
-            "allowroles": "安全级别为0-100的所有人",
-            "business": "Group Finance",
-            "name_sc": "Group Finance",
-            "order_number": "10000",
-            "homepage_url": "",
-            "description_en": "",
-            "type": "Business",
-            "iconx64": "finance_24dp_E3E3E3_FILL1_wght400_GRAD0_opsz24 1.png",
-            "application": "",
-            "description_sc": "",
-            "description_tc": "",
-            "mobileurl": "",
-            "id": "20",
-            "tag": "HK",
-            "name_en": "Group Finance"
+          "id": "4",
+          "tag": "HK",
+          "type": "Business",
+          "iconx64": "user_attributes_24dp_E3E3E3_FILL1_wght400_GRAD0_opsz24 2.png",
+          "name_en": "Group Legal & Compliance",
+          "name_sc": "集团法律与合规",
+          "name_tc": "集團法律與合規",
+          "business": "Group Legal & Compliance",
+          "category": "",
+          "mobileurl": "",
+          "allowroles": "安全级别为0-100的所有人",
+          "application": "",
+          "homepage_url": "",
+          "order_number": "3000",
+          "description_en": "",
+          "description_sc": "",
+          "description_tc": ""
         }
-    }
-]
-  const applicationData = [
-    {
+      },
+      {
         "mainTable": {
-            "name_tc": "IT 服務門戶",
-            "allowroles": "角色( 系统管理员角色)共享级别=部门  安全级别为0-100的角色成员，角色( CRM管理员)共享级别=部门  安全级别为0-100的角色成员",
-            "business": "Group Digital & Technology",
-            "name_sc": "IT 服务门户",
-            "order_number": "1200",
-            "homepage_url": "https://dch.service-now.com/sp",
-            "description_en": "Group IT support platform",
-            "type": "Application",
-            "iconx64": "ITServiceDesk.png",
-            "application": "IT Service Portal",
-            "description_sc": "集團 IT 支持平台",
-            "description_tc": "集團 IT 支援平台",
-            "mobileurl": "https://dch.service-now.com/sp",
-            "id": "1",
-            "tag": "HK",
-            "name_en": "IT Service Portal"
+          "id": "5",
+          "tag": "HK",
+          "type": "Business",
+          "iconx64": "desktop_windows_24dp_E3E3E3_FILL1_wght400_GRAD0_opsz24 1.png",
+          "name_en": "Group Digital & Technology",
+          "name_sc": "Group Digital & Technology",
+          "name_tc": "Group Digital & Technology",
+          "business": "Group Digital & Technology",
+          "category": "",
+          "mobileurl": "",
+          "allowroles": "安全级别为0-100的所有人",
+          "application": "",
+          "homepage_url": "",
+          "order_number": "1000",
+          "description_en": "",
+          "description_sc": "",
+          "description_tc": ""
         }
-    },
-    {
+      },
+      {
         "mainTable": {
-            "name_tc": "辦公自動化系統",
-            "allowroles": "安全级别为0-100的所有人",
-            "business": "Group Service",
-            "name_sc": "办公自动化系统",
-            "order_number": "1",
-            "homepage_url": "https://oa.dchbipoc.cc/",
-            "description_en": "",
-            "type": "Application",
-            "iconx64": "",
-            "application": "OA",
-            "description_sc": "",
-            "description_tc": "",
-            "mobileurl": "",
-            "id": "3",
-            "tag": "HK,CN,SEA",
-            "name_en": "OA"
+          "id": "6",
+          "tag": "HK",
+          "type": "Application",
+          "iconx64": "yonyou.png",
+          "name_en": "Yonyou",
+          "name_sc": "用友",
+          "name_tc": "用友",
+          "business": "Group Finance",
+          "category": "",
+          "mobileurl": "",
+          "allowroles": "安全级别为0-100的所有人",
+          "application": "Yonyou",
+          "homepage_url": "1",
+          "order_number": "3",
+          "description_en": "EN: Financial management system简: 财务管理系统繁: 財務管理系統",
+          "description_sc": "",
+          "description_tc": ""
         }
-    },
-    {
+      },
+      {
         "mainTable": {
-            "name_tc": "用友",
-            "allowroles": "安全级别为0-100的所有人",
-            "business": "Group Finance",
-            "name_sc": "用友",
-            "order_number": "3",
-            "homepage_url": "1",
-            "description_en": "EN: Financial management system简: 财务管理系统繁: 財務管理系統",
-            "type": "Application",
-            "iconx64": "yonyou.png",
-            "application": "Yonyou",
-            "description_sc": "",
-            "description_tc": "",
-            "mobileurl": "",
-            "id": "6",
-            "tag": "HK",
-            "name_en": "Yonyou"
+          "id": "7",
+          "tag": "HK",
+          "type": "Application",
+          "iconx64": "italcant.png",
+          "name_en": "Learning Management System",
+          "name_sc": "学习管理系统",
+          "name_tc": "學習管理系統",
+          "business": "Group Service",
+          "category": "",
+          "mobileurl": "",
+          "allowroles": "安全级别为0-100的所有人",
+          "application": "Learning Management System",
+          "homepage_url": "",
+          "order_number": "5",
+          "description_en": "",
+          "description_sc": "",
+          "description_tc": ""
         }
-    },
-    {
+      },
+      {
         "mainTable": {
-            "name_tc": "學習管理系統",
-            "allowroles": "安全级别为0-100的所有人",
-            "business": "Group Service",
-            "name_sc": "学习管理系统",
-            "order_number": "5",
-            "homepage_url": "",
-            "description_en": "",
-            "type": "Application",
-            "iconx64": "italcant.png",
-            "application": "Learning Management System",
-            "description_sc": "",
-            "description_tc": "",
-            "mobileurl": "",
-            "id": "7",
-            "tag": "HK",
-            "name_en": "Learning Management System"
+          "id": "8",
+          "tag": "HK",
+          "type": "Application",
+          "iconx64": "",
+          "name_en": "HRMS",
+          "name_sc": "人力资源管理系统",
+          "name_tc": "人力資源管理系統",
+          "business": "Group Human Resources",
+          "category": "",
+          "mobileurl": "",
+          "allowroles": "安全级别为0-100的所有人",
+          "application": "HRMS",
+          "homepage_url": "https://hrms.dch.com.hk/hrms/Login/LoginWithSAML?redirect_uri=https://hrms.dch.com.hk/hrms/",
+          "order_number": "4",
+          "description_en": "",
+          "description_sc": "",
+          "description_tc": ""
         }
-    },
-    {
+      },
+      {
         "mainTable": {
-            "name_tc": "人力資源管理系統",
-            "allowroles": "安全级别为0-100的所有人",
-            "business": "Group Human Resources",
-            "name_sc": "人力资源管理系统",
-            "order_number": "4",
-            "homepage_url": "https://hrms.dch.com.hk/hrms/Login/LoginWithSAML?redirect_uri=https://hrms.dch.com.hk/hrms/",
-            "description_en": "",
-            "type": "Application",
-            "iconx64": "",
-            "application": "HRMS",
-            "description_sc": "",
-            "description_tc": "",
-            "mobileurl": "",
-            "id": "8",
-            "tag": "HK",
-            "name_en": "HRMS"
+          "id": "9",
+          "tag": "HK",
+          "type": "Portal",
+          "iconx64": "",
+          "name_en": "GLC Portal",
+          "name_sc": "法律与合规门户",
+          "name_tc": "法律與合規門戶",
+          "business": "Group Legal & Compliance",
+          "category": "",
+          "mobileurl": "https://oa.dchbipoc.cc/wui/index.html?#/main/portal/portal-42-305?menuIds=-70,-248&menuPathIds=-70,-248&_key=d3l93k",
+          "allowroles": "安全级别为0-100的所有人",
+          "application": "GLC Portal",
+          "homepage_url": "https://oa.dchbipoc.cc/wui/index.html?#/main/portal/portal-42-305?menuIds=-70,-248&menuPathIds=-70,-248&_key=d3l93k",
+          "order_number": "3200",
+          "description_en": "",
+          "description_sc": "",
+          "description_tc": ""
         }
-    },
-    {
+      },
+      {
         "mainTable": {
-            "name_tc": "OA 中國大陸門戶",
-            "allowroles": "安全级别为0-100的所有人",
-            "business": "China Business",
-            "name_sc": "OA 中國大陸門戶",
-            "order_number": "2",
-            "homepage_url": "",
-            "description_en": "",
-            "type": "Application",
-            "iconx64": "",
-            "application": "OA China",
-            "description_sc": "",
-            "description_tc": "",
-            "mobileurl": "",
-            "id": "13",
-            "tag": "CN",
-            "name_en": "OA China"
+          "id": "10",
+          "tag": "HK",
+          "type": "Portal",
+          "iconx64": "",
+          "name_en": "GHR Portal",
+          "name_sc": "集团人力资源门户",
+          "name_tc": "集團人力資源門戶",
+          "business": "Group Human Resources",
+          "category": "",
+          "mobileurl": "https://intranet.dch.com.hk/en/ghr",
+          "allowroles": "安全级别为0-100的所有人",
+          "application": "GHR Portal",
+          "homepage_url": "https://intranet.dch.com.hk/en/ghr",
+          "order_number": "2200",
+          "description_en": "",
+          "description_sc": "",
+          "description_tc": ""
         }
-    },
-    {
+      },
+      {
         "mainTable": {
-            "name_tc": "DEV1 should not see this",
-            "allowroles": "人员( Chan Chun Hong Felix)",
-            "business": "TEST",
-            "name_sc": "DEV1 should not see this",
-            "order_number": "99999",
-            "homepage_url": "",
-            "description_en": "",
-            "type": "Application",
-            "iconx64": "",
-            "application": "TEST",
-            "description_sc": "",
-            "description_tc": "",
-            "mobileurl": "",
-            "id": "14",
-            "tag": "HK",
-            "name_en": "DEV1 should not see this"
+          "id": "11",
+          "tag": "HK",
+          "type": "Portal",
+          "iconx64": "",
+          "name_en": "Intranet",
+          "name_sc": "企业内网",
+          "name_tc": "企業內聯網",
+          "business": "Group Service",
+          "category": "",
+          "mobileurl": "http://intranet.dch.com.hk/",
+          "allowroles": "安全级别为0-100的所有人",
+          "application": "Intranet",
+          "homepage_url": "http://intranet.dch.com.hk/",
+          "order_number": "0",
+          "description_en": "",
+          "description_sc": "",
+          "description_tc": ""
         }
-    }
-]
-  const cnData = [
-    {
-      "mainTable": {
-        "name_tc": "辦公自動化系統",
-        "allowroles": "安全级别为0-100的所有人",
-        "business": "Group Service",
-        "name_sc": "办公自动化系统",
-        "order_number": "1",
-        "homepage_url": "https://oa.dchbipoc.cc/",
-        "description_en": "",
-        "type": "Application",
-        "iconx64": "",
-        "application": "OA",
-        "description_sc": "",
-        "description_tc": "",
-        "mobileurl": "",
-        "id": "3",
-        "tag": "HK,CN,SEA",
-        "name_en": "OA"
+      },
+      {
+        "mainTable": {
+          "id": "12",
+          "tag": "HK",
+          "type": "Portal",
+          "iconx64": "",
+          "name_en": "ESG Portal",
+          "name_sc": "ESG 门户",
+          "name_tc": "ESG 門戶",
+          "business": "GSD-ESG",
+          "category": "",
+          "mobileurl": "",
+          "allowroles": "安全级别为0-100的所有人",
+          "application": "ESG Portal",
+          "homepage_url": "http://subintranet.dch.com.hk/env-protect/main.php",
+          "order_number": "10200",
+          "description_en": "",
+          "description_sc": "",
+          "description_tc": ""
+        }
+      },
+      {
+        "mainTable": {
+          "id": "13",
+          "tag": "CN",
+          "type": "Application",
+          "iconx64": "",
+          "name_en": "OA China",
+          "name_sc": "OA 中國大陸門戶",
+          "name_tc": "OA 中國大陸門戶",
+          "business": "China Business",
+          "category": "",
+          "mobileurl": "",
+          "allowroles": "安全级别为0-100的所有人",
+          "application": "OA China",
+          "homepage_url": "",
+          "order_number": "2",
+          "description_en": "",
+          "description_sc": "",
+          "description_tc": ""
+        }
+      },
+      {
+        "mainTable": {
+          "id": "14",
+          "tag": "HK",
+          "type": "Application",
+          "iconx64": "",
+          "name_en": "DEV1 should not see this",
+          "name_sc": "DEV1 should not see this",
+          "name_tc": "DEV1 should not see this",
+          "business": "TEST",
+          "category": "",
+          "mobileurl": "",
+          "allowroles": "人员( Chan Chun Hong Felix)",
+          "application": "TEST",
+          "homepage_url": "",
+          "order_number": "99999",
+          "description_en": "",
+          "description_sc": "",
+          "description_tc": ""
+        }
+      },
+      {
+        "mainTable": {
+          "id": "15",
+          "tag": "HK",
+          "type": "Form",
+          "iconx64": "",
+          "name_en": "Report an Issue",
+          "name_sc": "Report an Issue",
+          "name_tc": "Report an Issue",
+          "business": "Group Digital & Technology",
+          "category": "",
+          "mobileurl": "https://dch.service-now.com/sp?id=sc_cat_item&sys_id=3f1dd0320a0a0b99000a53f7604a2ef9&sysparm_category=af9c65c9db7951908e9ddf0bd3961975",
+          "allowroles": "安全级别为0-100的所有人",
+          "application": "IT Service Portal",
+          "homepage_url": "https://dch.service-now.com/sp?id=sc_cat_item&sys_id=3f1dd0320a0a0b99000a53f7604a2ef9&sysparm_category=af9c65c9db7951908e9ddf0bd3961975",
+          "order_number": "1220",
+          "description_en": "",
+          "description_sc": "",
+          "description_tc": ""
+        }
+      },
+      {
+        "mainTable": {
+          "id": "16",
+          "tag": "HK",
+          "type": "Data",
+          "iconx64": "",
+          "name_en": "My IT Requests",
+          "name_sc": "My IT Requests",
+          "name_tc": "My IT Requests",
+          "business": "Group Digital & Technology",
+          "category": "",
+          "mobileurl": "https://dch.service-now.com/sp?id=my_requests",
+          "allowroles": "安全级别为0-100的所有人",
+          "application": "IT Service Portal",
+          "homepage_url": "https://dch.service-now.com/sp?id=my_requests",
+          "order_number": "1230",
+          "description_en": "",
+          "description_sc": "",
+          "description_tc": ""
+        }
+      },
+      {
+        "mainTable": {
+          "id": "17",
+          "tag": "HK",
+          "type": "Form",
+          "iconx64": "",
+          "name_en": "Group Contract Clearance Approval",
+          "name_sc": "集团合同结清审批",
+          "name_tc": "集團合約結清審批",
+          "business": "Group Legal & Compliance",
+          "category": "",
+          "mobileurl": "https://oa.dchbipoc.cc/spa/workflow/static4form/index.html#/main/workflow/req?iscreate=1&workflowid=130",
+          "allowroles": "安全级别为0-100的所有人",
+          "application": "OA",
+          "homepage_url": "https://oa.dchbipoc.cc/spa/workflow/static4form/index.html#/main/workflow/req?iscreate=1&workflowid=130",
+          "order_number": "3210",
+          "description_en": "",
+          "description_sc": "",
+          "description_tc": ""
+        }
+      },
+      {
+        "mainTable": {
+          "id": "18",
+          "tag": "HK",
+          "type": "Data",
+          "iconx64": "",
+          "name_en": "Contract List",
+          "name_sc": "合同清单",
+          "name_tc": "合約清單",
+          "business": "Group Legal & Compliance",
+          "category": "",
+          "mobileurl": "https://oa.dchbipoc.cc/mobilemode/mobile/view.html?appid=2&appHomepageId=5",
+          "allowroles": "安全级别为0-100的所有人",
+          "application": "OA",
+          "homepage_url": "https://oa.dchbipoc.cc/spa/cube/index.html#/main/cube/search?customid=542",
+          "order_number": "3230",
+          "description_en": "",
+          "description_sc": "",
+          "description_tc": ""
+        }
+      },
+      {
+        "mainTable": {
+          "id": "19",
+          "tag": "HK",
+          "type": "Business",
+          "iconx64": "",
+          "name_en": "Group Human Resources",
+          "name_sc": "集团人力资源",
+          "name_tc": "集團人力資源",
+          "business": "Group Human Resource",
+          "category": "",
+          "mobileurl": "",
+          "allowroles": "安全级别为0-100的所有人",
+          "application": "",
+          "homepage_url": "",
+          "order_number": "4000",
+          "description_en": "",
+          "description_sc": "",
+          "description_tc": ""
+        }
+      },
+      {
+        "mainTable": {
+          "id": "20",
+          "tag": "HK",
+          "type": "Business",
+          "iconx64": "finance_24dp_E3E3E3_FILL1_wght400_GRAD0_opsz24 1.png",
+          "name_en": "Group Finance",
+          "name_sc": "Group Finance",
+          "name_tc": "Group Finance",
+          "business": "Group Finance",
+          "category": "",
+          "mobileurl": "",
+          "allowroles": "安全级别为0-100的所有人",
+          "application": "",
+          "homepage_url": "",
+          "order_number": "10000",
+          "description_en": "",
+          "description_sc": "",
+          "description_tc": ""
+        }
+      },
+      {
+        "mainTable": {
+          "id": "21",
+          "tag": "HK,CN,SEA",
+          "type": "Data",
+          "iconx64": "",
+          "name_en": "Policy Documents",
+          "name_sc": "政策文件",
+          "name_tc": "政策文件",
+          "business": "Group Service",
+          "category": "",
+          "mobileurl": "https://oa.dchbipoc.cc/mobilemode/admin/preview.jsp?appHomepageId=116&dataid=1233",
+          "allowroles": "安全级别为0-100的所有人",
+          "application": "OA",
+          "homepage_url": "https://oa.dchbipoc.cc/mobilemode/admin/preview.jsp?appHomepageId=116&dataid=1233",
+          "order_number": "",
+          "description_en": "Previously called ePolicy",
+          "description_sc": "Previously called ePolicy",
+          "description_tc": "Previously called ePolicy"
+        }
+      },
+      {
+        "mainTable": {
+          "id": "22",
+          "tag": "HK,SEA",
+          "type": "Data",
+          "iconx64": "",
+          "name_en": "D2 Incorporation, M&A and Legal Documents",
+          "name_sc": "D2 公司成立、并购及法律文件",
+          "name_tc": "D2 公司成立、併購及法律文件",
+          "business": "Group Finance - Filing Process",
+          "category": "eFiling",
+          "mobileurl": "https://oa.dchbipoc.cc/wui/cas-entrance.jsp?path=https://oa.dchbipoc.cc/mobilemode/mobile/view.html?appHomepageId=147",
+          "allowroles": "安全级别为0-100的所有人",
+          "application": "OA",
+          "homepage_url": "https://oa.dchbipoc.cc/wui/index.html#/main/cube/search?customid=901&menuIds=-70,-301&menuPathIds=-70,-272,-295,-296,-301&_key=bh34pm",
+          "order_number": "4005",
+          "description_en": "No longer used",
+          "description_sc": "No longer used",
+          "description_tc": "No longer used"
+        }
+      },
+      {
+        "mainTable": {
+          "id": "23",
+          "tag": "HK,SEA",
+          "type": "Form",
+          "iconx64": "",
+          "name_en": "New Treasury Record (Yonyou)",
+          "name_sc": "新增资金记录（用友）",
+          "name_tc": "新增資金記錄（用友）",
+          "business": "Group Finance - Treasury Process",
+          "category": "",
+          "mobileurl": "",
+          "allowroles": "安全级别为0-100的所有人",
+          "application": "Yonyou",
+          "homepage_url": "",
+          "order_number": "",
+          "description_en": "",
+          "description_sc": "",
+          "description_tc": ""
+        }
+      },
+      {
+        "mainTable": {
+          "id": "24",
+          "tag": "HK,SEA",
+          "type": "Data",
+          "iconx64": "",
+          "name_en": "Treasury Data (Yonyou)",
+          "name_sc": "资金数据（用友）",
+          "name_tc": "資金資料（用友）",
+          "business": "Group Finance - Treasury Process",
+          "category": "",
+          "mobileurl": "",
+          "allowroles": "安全级别为0-100的所有人",
+          "application": "Yonyou",
+          "homepage_url": "",
+          "order_number": "",
+          "description_en": "",
+          "description_sc": "",
+          "description_tc": ""
+        }
+      },
+      {
+        "mainTable": {
+          "id": "25",
+          "tag": "HK,SEA",
+          "type": "Form",
+          "iconx64": "",
+          "name_en": "My Filing Submissions",
+          "name_sc": "我的申报记录",
+          "name_tc": "我的申報記錄",
+          "business": "Group Finance - Filing Process",
+          "category": "eFiling",
+          "mobileurl": "https://oa.dchbipoc.cc/wui/cas-entrance.jsp?path=https://oa.dchbipoc.cc/mobilemode/mobile/view.html?appHomepageId=83",
+          "allowroles": "安全级别为0-100的所有人",
+          "application": "OA",
+          "homepage_url": "https://oa.dchbipoc.cc/wui/index.html#/main/cube/search?customid=897&menuIds=-70,-298&menuPathIds=-70,-272,-295,-296,-298&_key=aenmf1",
+          "order_number": "4001",
+          "description_en": "",
+          "description_sc": "",
+          "description_tc": ""
+        }
+      },
+      {
+        "mainTable": {
+          "id": "26",
+          "tag": "HK,SEA",
+          "type": "Form",
+          "iconx64": "",
+          "name_en": "All Filing Submissions",
+          "name_sc": "全部申报记录",
+          "name_tc": "全部申報記錄",
+          "business": "Group Finance - Filing Process",
+          "category": "eFiling",
+          "mobileurl": "https://oa.dchbipoc.cc/wui/cas-entrance.jsp?path=https://oa.dchbipoc.cc/mobilemode/mobile/view.html?appHomepageId=84",
+          "allowroles": "安全级别为0-100的所有人",
+          "application": "OA",
+          "homepage_url": "https://oa.dchbipoc.cc/wui/index.html#/main/cube/search?customid=896&menuIds=-70,-297&menuPathIds=-70,-272,-295,-296,-297&_key=mfgohx",
+          "order_number": "4002",
+          "description_en": "",
+          "description_sc": "",
+          "description_tc": ""
+        }
+      },
+      {
+        "mainTable": {
+          "id": "27",
+          "tag": "HK,SEA",
+          "type": "Data",
+          "iconx64": "",
+          "name_en": "D1 Audit Accounts",
+          "name_sc": "D1 审计账户",
+          "name_tc": "D1 審計帳戶",
+          "business": "Group Finance - Filing Process",
+          "category": "eFiling",
+          "mobileurl": "https://oa.dchbipoc.cc/wui/cas-entrance.jsp?path=https://oa.dchbipoc.cc/mobilemode/mobile/view.html?appHomepageId=91",
+          "allowroles": "安全级别为0-100的所有人",
+          "application": "OA",
+          "homepage_url": "https://oa.dchbipoc.cc/wui/index.html#/main/cube/search?customid=900&menuIds=-70,-300&menuPathIds=-70,-272,-295,-296,-300&_key=kusyqt",
+          "order_number": "4004",
+          "description_en": "",
+          "description_sc": "",
+          "description_tc": ""
+        }
+      },
+      {
+        "mainTable": {
+          "id": "28",
+          "tag": "HK,SEA",
+          "type": "Portal",
+          "iconx64": "",
+          "name_en": "Personnel Management",
+          "name_sc": "人事管理",
+          "name_tc": "人事管理",
+          "business": "Group Human Resources",
+          "category": "",
+          "mobileurl": "",
+          "allowroles": "安全级别为0-100的所有人",
+          "application": "OA",
+          "homepage_url": "https://hrms.dch.com.hk/hrms/Login/LoginWithSAML?redirect_uri=https://hrms.dch.com.hk/hrms/",
+          "order_number": "2310",
+          "description_en": "HR Only",
+          "description_sc": "HR Only",
+          "description_tc": "HR Only"
+        }
+      },
+      {
+        "mainTable": {
+          "id": "29",
+          "tag": "HK,SEA",
+          "type": "Portal",
+          "iconx64": "",
+          "name_en": "Leave Management",
+          "name_sc": "请假管理",
+          "name_tc": "請假管理",
+          "business": "Group Human Resources",
+          "category": "",
+          "mobileurl": "",
+          "allowroles": "安全级别为0-100的所有人",
+          "application": "OA",
+          "homepage_url": "https://hrms.dch.com.hk/hrms/Login/LoginWithSAML?redirect_uri=https://hrms.dch.com.hk/hrms/",
+          "order_number": "2320",
+          "description_en": "",
+          "description_sc": "",
+          "description_tc": ""
+        }
+      },
+      {
+        "mainTable": {
+          "id": "30",
+          "tag": "HK,SEA",
+          "type": "Portal",
+          "iconx64": "",
+          "name_en": "Payroll Management",
+          "name_sc": "薪酬管理",
+          "name_tc": "薪酬管理",
+          "business": "Group Human Resources",
+          "category": "",
+          "mobileurl": "",
+          "allowroles": "安全级别为0-100的所有人",
+          "application": "OA",
+          "homepage_url": "https://hrms.dch.com.hk/hrms/Login/LoginWithSAML?redirect_uri=https://hrms.dch.com.hk/hrms/",
+          "order_number": "2330",
+          "description_en": "",
+          "description_sc": "",
+          "description_tc": ""
+        }
+      },
+      {
+        "mainTable": {
+          "id": "31",
+          "tag": "HK,SEA",
+          "type": "Portal",
+          "iconx64": "",
+          "name_en": "Appraisal Management",
+          "name_sc": "绩效考核管理",
+          "name_tc": "績效評核管理",
+          "business": "Group Human Resources",
+          "category": "",
+          "mobileurl": "",
+          "allowroles": "安全级别为0-100的所有人",
+          "application": "OA",
+          "homepage_url": "https://hrms.dch.com.hk/hrms/Login/LoginWithSAML?redirect_uri=https://hrms.dch.com.hk/hrms/",
+          "order_number": "2340",
+          "description_en": "",
+          "description_sc": "",
+          "description_tc": ""
+        }
+      },
+      {
+        "mainTable": {
+          "id": "32",
+          "tag": "HK,CN,SEA",
+          "type": "Form",
+          "iconx64": "",
+          "name_en": "Submit an IT Demand",
+          "name_sc": "Submit an IT Demand",
+          "name_tc": "Submit an IT Demand",
+          "business": "Group Digital & Technology",
+          "category": "",
+          "mobileurl": "https://eportal.dch-holdings.com/DCH_ePortal/Login.aspx?OriginalURL=https://eportal.dch-holdings.com/DemandandProjectManagement/DemandSubmissionForm.aspx?DemandID=0&Page=1",
+          "allowroles": "安全级别为0-100的所有人",
+          "application": "ePortal",
+          "homepage_url": "https://eportal.dch-holdings.com/DCH_ePortal/Login.aspx?OriginalURL=https://eportal.dch-holdings.com/DemandandProjectManagement/DemandSubmissionForm.aspx?DemandID=0&Page=1",
+          "order_number": "1310",
+          "description_en": "",
+          "description_sc": "",
+          "description_tc": ""
+        }
+      },
+      {
+        "mainTable": {
+          "id": "33",
+          "tag": "HK,CN,SEA",
+          "type": "Data",
+          "iconx64": "",
+          "name_en": "All IT Demands",
+          "name_sc": "All IT Demands",
+          "name_tc": "All IT Demands",
+          "business": "Group Digital & Technology",
+          "category": "",
+          "mobileurl": "https://eportal.dch-holdings.com/DCH_ePortal/Login.aspx?OriginalURL=https://eportal.dch-holdings.com/DemandandProjectManagement/DemandMain.aspx",
+          "allowroles": "安全级别为0-100的所有人",
+          "application": "ePortal",
+          "homepage_url": "https://eportal.dch-holdings.com/DCH_ePortal/Login.aspx?OriginalURL=https://eportal.dch-holdings.com/DemandandProjectManagement/DemandMain.aspx",
+          "order_number": "1320",
+          "description_en": "",
+          "description_sc": "",
+          "description_tc": ""
+        }
+      },
+      {
+        "mainTable": {
+          "id": "34",
+          "tag": "HK,CN,SEA",
+          "type": "Data",
+          "iconx64": "",
+          "name_en": "All IT Projects",
+          "name_sc": "All IT Projects",
+          "name_tc": "All IT Projects",
+          "business": "Group Digital & Technology",
+          "category": "",
+          "mobileurl": "https://eportal.dch-holdings.com/DCH_ePortal/Login.aspx?OriginalURL=https://eportal.dch-holdings.com/DemandandProjectManagement/ProjectMain.aspx?IsDashboard=False",
+          "allowroles": "安全级别为0-100的所有人",
+          "application": "ePortal",
+          "homepage_url": "https://eportal.dch-holdings.com/DCH_ePortal/Login.aspx?OriginalURL=https://eportal.dch-holdings.com/DemandandProjectManagement/ProjectMain.aspx?IsDashboard=False",
+          "order_number": "1330",
+          "description_en": "",
+          "description_sc": "",
+          "description_tc": ""
+        }
+      },
+      {
+        "mainTable": {
+          "id": "35",
+          "tag": "HK,SEA",
+          "type": "Data",
+          "iconx64": "",
+          "name_en": "D3 Tax Clearances",
+          "name_sc": "D3 税务结清手续",
+          "name_tc": "D3 稅務結清手續",
+          "business": "Group Finance - Filing Process",
+          "category": "eFiling",
+          "mobileurl": "https://oa.dchbipoc.cc/wui/cas-entrance.jsp?path=https://oa.dchbipoc.cc/mobilemode/mobile/view.html?appHomepageId=93",
+          "allowroles": "安全级别为0-100的所有人",
+          "application": "OA",
+          "homepage_url": "https://oa.dchbipoc.cc/wui/index.html#/main/cube/search?customid=902&menuIds=-70,-302&menuPathIds=-70,-272,-295,-296,-302&_key=c4vvic",
+          "order_number": "4005",
+          "description_en": "",
+          "description_sc": "",
+          "description_tc": ""
+        }
+      },
+      {
+        "mainTable": {
+          "id": "36",
+          "tag": "HK,SEA",
+          "type": "Data",
+          "iconx64": "",
+          "name_en": "D4 BU Representation Letter",
+          "name_sc": "D4 BU 代表信函",
+          "name_tc": "D4 BU 代表信函",
+          "business": "Group Finance - Filing Process",
+          "category": "eFiling",
+          "mobileurl": "https://oa.dchbipoc.cc/wui/cas-entrance.jsp?path=https://oa.dchbipoc.cc/mobilemode/mobile/view.html?appHomepageId=94",
+          "allowroles": "安全级别为0-100的所有人",
+          "application": "OA",
+          "homepage_url": "https://oa.dchbipoc.cc/wui/index.html#/main/cube/search?customid=903&menuIds=-70,-303&menuPathIds=-70,-272,-295,-296,-303&_key=e6m4qz",
+          "order_number": "4006",
+          "description_en": "",
+          "description_sc": "",
+          "description_tc": ""
+        }
+      },
+      {
+        "mainTable": {
+          "id": "37",
+          "tag": "HK,SEA",
+          "type": "Data",
+          "iconx64": "",
+          "name_en": "D5 BU Litigation and fraud Confirmation",
+          "name_sc": "D5 BU 诉讼与欺诈确认",
+          "name_tc": "D5 BU 訴訟與欺詐確認",
+          "business": "Group Finance - Filing Process",
+          "category": "eFiling",
+          "mobileurl": "https://oa.dchbipoc.cc/wui/cas-entrance.jsp?path=https://oa.dchbipoc.cc/mobilemode/mobile/view.html?appHomepageId=95",
+          "allowroles": "安全级别为0-100的所有人",
+          "application": "OA",
+          "homepage_url": "https://oa.dchbipoc.cc/wui/index.html#/main/cube/search?customid=904&menuIds=-70,-304&menuPathIds=-70,-272,-295,-296,-304&_key=zgkkgb",
+          "order_number": "4007",
+          "description_en": "No longer used",
+          "description_sc": "No longer used",
+          "description_tc": "No longer used"
+        }
+      },
+      {
+        "mainTable": {
+          "id": "38",
+          "tag": "HK,SEA",
+          "type": "Data",
+          "iconx64": "",
+          "name_en": "D6 BU Audit Clearance Package",
+          "name_sc": "D6 BU 审计清关包",
+          "name_tc": "D6 BU 審計清關包",
+          "business": "Group Finance - Filing Process",
+          "category": "eFiling",
+          "mobileurl": "https://oa.dchbipoc.cc/wui/cas-entrance.jsp?path=https://oa.dchbipoc.cc/mobilemode/mobile/view.html?appHomepageId=96",
+          "allowroles": "安全级别为0-100的所有人",
+          "application": "OA",
+          "homepage_url": "https://oa.dchbipoc.cc/wui/index.html#/main/cube/search?customid=905&menuIds=-70,-305&menuPathIds=-70,-272,-295,-296,-305&_key=xs8fmw",
+          "order_number": "4008",
+          "description_en": "",
+          "description_sc": "",
+          "description_tc": ""
+        }
+      },
+      {
+        "mainTable": {
+          "id": "39",
+          "tag": "HK,SEA",
+          "type": "Form",
+          "iconx64": "",
+          "name_en": "My Filing Approval",
+          "name_sc": "我的档案审批",
+          "name_tc": "我的檔案審批",
+          "business": "Group Finance - Filing Process",
+          "category": "eFiling",
+          "mobileurl": "https://oa.dchbipoc.cc/wui/cas-entrance.jsp?path=https://oa.dchbipoc.cc/mobilemode/mobile/view.html?appHomepageId=116",
+          "allowroles": "安全级别为0-100的所有人",
+          "application": "OA",
+          "homepage_url": "https://oa.dchbipoc.cc/wui/index.html#/main/cube/search?customid=898&menuIds=-70,-299&menuPathIds=-70,-272,-295,-296,-299&_key=yfkfia",
+          "order_number": "4003",
+          "description_en": "",
+          "description_sc": "",
+          "description_tc": ""
+        }
+      },
+      {
+        "mainTable": {
+          "id": "40",
+          "tag": "HK,SEA,CN",
+          "type": "Data",
+          "iconx64": "",
+          "name_en": "Key Risk Indicator (IT)",
+          "name_sc": "Key Risk Indicator (IT)",
+          "name_tc": "Key Risk Indicator (IT)",
+          "business": "Group Digital & Technology",
+          "category": "",
+          "mobileurl": "https://oa.dchbipoc.cc/spa/edc/static4mobile/index.html#/edcreportengine/sheetView/862b1abefbbb4f24840c8bff343cfd46?id=862b1abefbbb4f24840c8bff343cfd46&",
+          "allowroles": "安全级别为0-100的所有人",
+          "application": "OA",
+          "homepage_url": "https://oa.dchbipoc.cc/spa/edc/static4mobile/index.html#/edcreportengine/sheetView/862b1abefbbb4f24840c8bff343cfd46?id=862b1abefbbb4f24840c8bff343cfd46&",
+          "order_number": "1400",
+          "description_en": "IT only",
+          "description_sc": "IT only",
+          "description_tc": "IT only"
+        }
+      },
+      {
+        "mainTable": {
+          "id": "41",
+          "tag": "HK,SEA",
+          "type": "Data",
+          "iconx64": "",
+          "name_en": "Bounced Cheque Records",
+          "name_sc": "Bounced Cheque Records",
+          "name_tc": "Bounced Cheque Records",
+          "business": "Group Finance",
+          "category": "",
+          "mobileurl": "",
+          "allowroles": "安全级别为0-100的所有人",
+          "application": "OA",
+          "homepage_url": "",
+          "order_number": "",
+          "description_en": "",
+          "description_sc": "",
+          "description_tc": ""
+        }
+      },
+      {
+        "mainTable": {
+          "id": "42",
+          "tag": "HK,SEA,CN",
+          "type": "click",
+          "iconx64": "",
+          "name_en": "Learning Management System",
+          "name_sc": "Learning Management System",
+          "name_tc": "Learning Management System",
+          "business": "Group Digital & Technology",
+          "category": "",
+          "mobileurl": "https://lms.dchbi.com/",
+          "allowroles": "安全级别为0-100的所有人",
+          "application": "",
+          "homepage_url": "https://lms.dchbi.com/",
+          "order_number": "",
+          "description_en": "",
+          "description_sc": "",
+          "description_tc": ""
+        }
+      },
+      {
+        "mainTable": {
+          "id": "43",
+          "tag": "HK,SEA,CN",
+          "type": "Data",
+          "iconx64": "",
+          "name_en": "Lists of Companies",
+          "name_sc": "公司列表报表",
+          "name_tc": "公司列表报表",
+          "business": "Group Finance",
+          "category": "",
+          "mobileurl": "",
+          "allowroles": "安全级别为0-100的所有人",
+          "application": "OA",
+          "homepage_url": "https://43.132.182.225/wui/index.html#/main/cube/search?customid=25&menuIds=-55,-41&menuPathIds=-55,-99,-22,-41&_key=x7aayv",
+          "order_number": "",
+          "description_en": "",
+          "description_sc": "",
+          "description_tc": ""
+        }
+      },
+      {
+        "mainTable": {
+          "id": "44",
+          "tag": "HK,SEA,HK",
+          "type": "Data",
+          "iconx64": "",
+          "name_en": "Company Project Control Report",
+          "name_sc": "Company Project Control Report",
+          "name_tc": "Company Project Control Report",
+          "business": "Group Finance",
+          "category": "",
+          "mobileurl": "",
+          "allowroles": "安全级别为0-100的所有人",
+          "application": "OA",
+          "homepage_url": "https://43.132.182.225/wui/index.html#/main/cube/search?customid=168&menuIds=-55,-35&menuPathIds=-55,-99,-29,-35&_key=gqbi9l",
+          "order_number": "",
+          "description_en": "",
+          "description_sc": "",
+          "description_tc": ""
+        }
+      },
+      {
+        "mainTable": {
+          "id": "45",
+          "tag": "HK,SEA,HK",
+          "type": "Data",
+          "iconx64": "",
+          "name_en": "Company Summary",
+          "name_sc": "Company Summary",
+          "name_tc": "Company Summary",
+          "business": "Group Finance",
+          "category": "",
+          "mobileurl": "",
+          "allowroles": "安全级别为0-100的所有人",
+          "application": "OA",
+          "homepage_url": "https://43.132.182.225/spa/workflow/static4form/index.html?_rdm=1739778034873#/main/workflow/req?iscreate=1&workflowid=108&_key=g0rbti",
+          "order_number": "",
+          "description_en": "",
+          "description_sc": "",
+          "description_tc": ""
+        }
+      },
+      {
+        "mainTable": {
+          "id": "46",
+          "tag": "HK,SEA,HK",
+          "type": "Data",
+          "iconx64": "",
+          "name_en": "Company Reports",
+          "name_sc": "Company Reports",
+          "name_tc": "Company Reports",
+          "business": "Group Finance",
+          "category": "",
+          "mobileurl": "",
+          "allowroles": "安全级别为0-100的所有人",
+          "application": "OA",
+          "homepage_url": "https://43.132.182.225/wui/index.html#/main/cube/search?customid=167&menuIds=-55,-114&menuPathIds=-55,-99,-20,-40,-114&_key=3ru1aj",
+          "order_number": "",
+          "description_en": "",
+          "description_sc": "",
+          "description_tc": ""
+        }
+      },
+      {
+        "mainTable": {
+          "id": "47",
+          "tag": "Reimbursements,HK,SEA",
+          "type": "Form",
+          "iconx64": "",
+          "name_en": "Travel Request",
+          "name_sc": "Travel Request",
+          "name_tc": "Travel Request",
+          "business": "Group Finance - Travel & Entertainment",
+          "category": "",
+          "mobileurl": "",
+          "allowroles": "安全级别为0-100的所有人",
+          "application": "Yonyou",
+          "homepage_url": "",
+          "order_number": "12020",
+          "description_en": "",
+          "description_sc": "",
+          "description_tc": ""
+        }
+      },
+      {
+        "mainTable": {
+          "id": "48",
+          "tag": "Reimbursements,HK,SEA",
+          "type": "Form",
+          "iconx64": "",
+          "name_en": "Claim Request",
+          "name_sc": "Claim Request",
+          "name_tc": "Claim Request",
+          "business": "Group Finance - Travel & Entertainment",
+          "category": "",
+          "mobileurl": "",
+          "allowroles": "安全级别为0-100的所有人",
+          "application": "Yonyou",
+          "homepage_url": "",
+          "order_number": "12030",
+          "description_en": "",
+          "description_sc": "",
+          "description_tc": ""
+        }
+      },
+      {
+        "mainTable": {
+          "id": "49",
+          "tag": "Reimbursements,HK,SEA",
+          "type": "Data",
+          "iconx64": "",
+          "name_en": "My Claims",
+          "name_sc": "My Claims",
+          "name_tc": "My Claims",
+          "business": "Group Finance - Travel & Entertainment",
+          "category": "",
+          "mobileurl": "",
+          "allowroles": "安全级别为0-100的所有人",
+          "application": "Yonyou",
+          "homepage_url": "",
+          "order_number": "12050",
+          "description_en": "",
+          "description_sc": "",
+          "description_tc": ""
+        }
+      },
+      {
+        "mainTable": {
+          "id": "50",
+          "tag": "Reimbursements,HK,SEA",
+          "type": "Form",
+          "iconx64": "",
+          "name_en": "Entertainment Request",
+          "name_sc": "Entertainment Request",
+          "name_tc": "Entertainment Request",
+          "business": "Group Finance - Travel & Entertainment",
+          "category": "",
+          "mobileurl": "",
+          "allowroles": "安全级别为0-100的所有人",
+          "application": "Yonyou",
+          "homepage_url": "",
+          "order_number": "12000",
+          "description_en": "",
+          "description_sc": "",
+          "description_tc": ""
+        }
+      },
+      {
+        "mainTable": {
+          "id": "51",
+          "tag": "Reimbursements,HK,SEA",
+          "type": "Data",
+          "iconx64": "",
+          "name_en": "My Requests",
+          "name_sc": "My Requests",
+          "name_tc": "My Requests",
+          "business": "Group Finance - Travel & Entertainment",
+          "category": "",
+          "mobileurl": "",
+          "allowroles": "安全级别为0-100的所有人",
+          "application": "Yonyou",
+          "homepage_url": "",
+          "order_number": "12040",
+          "description_en": "",
+          "description_sc": "",
+          "description_tc": ""
+        }
+      },
+      {
+        "mainTable": {
+          "id": "52",
+          "tag": "HK,SEA",
+          "type": "Data",
+          "iconx64": "",
+          "name_en": "Properties Report",
+          "name_sc": "Properties Report",
+          "name_tc": "Properties Report",
+          "business": "Group Services Division",
+          "category": "Property Leasing",
+          "mobileurl": "",
+          "allowroles": "",
+          "application": "ePortal",
+          "homepage_url": "https://eportal.dch-holdings.com/DCHeFormPropertyLeasing/SearchApplications.aspx?Mode=5&ResetSession=True",
+          "order_number": "31020",
+          "description_en": "",
+          "description_sc": "",
+          "description_tc": ""
+        }
+      },
+      {
+        "mainTable": {
+          "id": "53",
+          "tag": "HK,SEA",
+          "type": "Data",
+          "iconx64": "",
+          "name_en": "Construction Projects",
+          "name_sc": "Construction Projects",
+          "name_tc": "Construction Projects",
+          "business": "Group Services Division",
+          "category": "eGSD",
+          "mobileurl": "",
+          "allowroles": "",
+          "application": "ePortal",
+          "homepage_url": "https://eportal.dch-holdings.com/DCHeFormeGSD2/AllRecords.aspx",
+          "order_number": "30000",
+          "description_en": "GSD",
+          "description_sc": "GSD",
+          "description_tc": "GSD"
+        }
+      },
+      {
+        "mainTable": {
+          "id": "54",
+          "tag": "HK,SEA",
+          "type": "Data",
+          "iconx64": "",
+          "name_en": "Expiry Report",
+          "name_sc": "Expiry Report",
+          "name_tc": "Expiry Report",
+          "business": "Group Services Division",
+          "category": "Property Leasing",
+          "mobileurl": "",
+          "allowroles": "",
+          "application": "ePortal",
+          "homepage_url": "https://eportal.dch-holdings.com/DCHeFormPropertyLeasing/SearchApplications.aspx?Mode=4&ResetSession=True",
+          "order_number": "31040",
+          "description_en": "",
+          "description_sc": "",
+          "description_tc": ""
+        }
+      },
+      {
+        "mainTable": {
+          "id": "55",
+          "tag": "HK,SEA",
+          "type": "Data",
+          "iconx64": "",
+          "name_en": "DCH Owned Properties Report",
+          "name_sc": "DCH Owned Properties Report",
+          "name_tc": "DCH Owned Properties Report",
+          "business": "Group Services Division",
+          "category": "Property Leasing",
+          "mobileurl": "",
+          "allowroles": "",
+          "application": "ePortal",
+          "homepage_url": "https://eportal.dch-holdings.com/DCHeFormPropertyLeasing/SearchApplications.aspx?ResetSession=True&Mode=6",
+          "order_number": "31030",
+          "description_en": "",
+          "description_sc": "",
+          "description_tc": ""
+        }
+      },
+      {
+        "mainTable": {
+          "id": "56",
+          "tag": "HK,SEA",
+          "type": "Data",
+          "iconx64": "",
+          "name_en": "eQualification All Request",
+          "name_sc": "资格认证所有记录",
+          "name_tc": "資格認證所有記錄",
+          "business": "Group Finance - Filing Process",
+          "category": "eQualification",
+          "mobileurl": "https://oa.dchbipoc.cc/wui/cas-entrance.jsp?path=https://oa.dchbipoc.cc/mobilemode/mobile/view.html?appHomepageId=99",
+          "allowroles": "安全级别为0-100的所有人",
+          "application": "OA",
+          "homepage_url": "https://oa.dchbipoc.cc/wui/index.html#/main/cube/search?customid=891&menuIds=-70,-316&menuPathIds=-70,-272,-315,-316&_key=0d9usz",
+          "order_number": "4009",
+          "description_en": "",
+          "description_sc": "",
+          "description_tc": ""
+        }
+      },
+      {
+        "mainTable": {
+          "id": "57",
+          "tag": "HK,SEA",
+          "type": "Data",
+          "iconx64": "",
+          "name_en": "eTreasury search and view all records",
+          "name_sc": "财政搜索和检视所有记录",
+          "name_tc": "財政搜索和檢視所有記錄",
+          "business": "Group Finance - Filing Process",
+          "category": "eTreasury",
+          "mobileurl": "https://oa.dchbipoc.cc/wui/cas-entrance.jsp?path=https://oa.dchbipoc.cc/mobilemode/mobile/view.html?appHomepageId=128",
+          "allowroles": "安全级别为0-100的所有人",
+          "application": "OA",
+          "homepage_url": "https://oa.dchbipoc.cc/wui/index.html#/main/cube/search?customid=879&menuIds=-70,-293&menuPathIds=-70,-272,-287,-293&_key=4chqzy",
+          "order_number": "4010",
+          "description_en": "",
+          "description_sc": "",
+          "description_tc": ""
+        }
       }
-    },
-    {
-      "mainTable": {
-        "name_tc": "OA 中國大陸門戶",
-        "allowroles": "安全级别为0-100的所有人",
-        "business": "China Business",
-        "name_sc": "OA 中國大陸門戶",
-        "order_number": "2",
-        "homepage_url": "",
-        "description_en": "",
-        "type": "Application",
-        "iconx64": "",
-        "application": "OA China",
-        "description_sc": "",
-        "description_tc": "",
-        "mobileurl": "",
-        "id": "13",
-        "tag": "CN",
-        "name_en": "OA China"
-      }
-    },
-    {
-      "mainTable": {
-        "name_tc": "政策文件",
-        "allowroles": "安全级别为0-100的所有人",
-        "business": "Group Service",
-        "name_sc": "政策文件",
-        "order_number": "",
-        "homepage_url": "https://oa.dchbipoc.cc/mobilemode/admin/preview.jsp?appHomepageId=116&dataid=1233",
-        "description_en": "Previously called ePolicy",
-        "type": "Data",
-        "iconx64": "",
-        "application": "OA",
-        "description_sc": "Previously called ePolicy",
-        "description_tc": "Previously called ePolicy",
-        "mobileurl": "https://oa.dchbipoc.cc/mobilemode/admin/preview.jsp?appHomepageId=116&dataid=1233",
-        "id": "21",
-        "tag": "HK,CN,SEA",
-        "name_en": "Policy Documents"
-      }
-    },
-    {
-      "mainTable": {
-        "name_tc": "Submit an IT Demand",
-        "allowroles": "安全级别为0-100的所有人",
-        "business": "Group Digital & Technology",
-        "name_sc": "Submit an IT Demand",
-        "order_number": "1310",
-        "homepage_url": "https://eportal.dch-holdings.com/DCH_ePortal/Login.aspx?OriginalURL=https://eportal.dch-holdings.com/DemandandProjectManagement/DemandSubmissionForm.aspx?DemandID=0&Page=1",
-        "description_en": "",
-        "type": "Form",
-        "iconx64": "",
-        "application": "ePortal",
-        "description_sc": "",
-        "description_tc": "",
-        "mobileurl": "https://eportal.dch-holdings.com/DCH_ePortal/Login.aspx?OriginalURL=https://eportal.dch-holdings.com/DemandandProjectManagement/DemandSubmissionForm.aspx?DemandID=0&Page=1",
-        "id": "32",
-        "tag": "HK,CN,SEA",
-        "name_en": "Submit an IT Demand"
-      }
-    },
-    {
-      "mainTable": {
-        "name_tc": "All IT Demands",
-        "allowroles": "安全级别为0-100的所有人",
-        "business": "Group Digital & Technology",
-        "name_sc": "All IT Demands",
-        "order_number": "1320",
-        "homepage_url": "https://eportal.dch-holdings.com/DCH_ePortal/Login.aspx?OriginalURL=https://eportal.dch-holdings.com/DemandandProjectManagement/DemandMain.aspx",
-        "description_en": "",
-        "type": "Data",
-        "iconx64": "",
-        "application": "ePortal",
-        "description_sc": "",
-        "description_tc": "",
-        "mobileurl": "https://eportal.dch-holdings.com/DCH_ePortal/Login.aspx?OriginalURL=https://eportal.dch-holdings.com/DemandandProjectManagement/DemandMain.aspx",
-        "id": "33",
-        "tag": "HK,CN,SEA",
-        "name_en": "All IT Demands"
-      }
-    },
-    {
-      "mainTable": {
-        "name_tc": "All IT Projects",
-        "allowroles": "安全级别为0-100的所有人",
-        "business": "Group Digital & Technology",
-        "name_sc": "All IT Projects",
-        "order_number": "1330",
-        "homepage_url": "https://eportal.dch-holdings.com/DCH_ePortal/Login.aspx?OriginalURL=https://eportal.dch-holdings.com/DemandandProjectManagement/ProjectMain.aspx?IsDashboard=False",
-        "description_en": "",
-        "type": "Data",
-        "iconx64": "",
-        "application": "ePortal",
-        "description_sc": "",
-        "description_tc": "",
-        "mobileurl": "https://eportal.dch-holdings.com/DCH_ePortal/Login.aspx?OriginalURL=https://eportal.dch-holdings.com/DemandandProjectManagement/ProjectMain.aspx?IsDashboard=False",
-        "id": "34",
-        "tag": "HK,CN,SEA",
-        "name_en": "All IT Projects"
-      }
-    },
-    {
-      "mainTable": {
-        "name_tc": "Key Risk Indicator (IT)",
-        "allowroles": "安全级别为0-100的所有人",
-        "business": "Group Digital & Technology",
-        "name_sc": "Key Risk Indicator (IT)",
-        "order_number": "1400",
-        "homepage_url": "https://oa.dchbipoc.cc/spa/edc/static4mobile/index.html#/edcreportengine/sheetView/862b1abefbbb4f24840c8bff343cfd46?id=862b1abefbbb4f24840c8bff343cfd46&",
-        "description_en": "IT only",
-        "type": "Data",
-        "iconx64": "",
-        "application": "OA",
-        "description_sc": "IT only",
-        "description_tc": "IT only",
-        "mobileurl": "https://oa.dchbipoc.cc/spa/edc/static4mobile/index.html#/edcreportengine/sheetView/862b1abefbbb4f24840c8bff343cfd46?id=862b1abefbbb4f24840c8bff343cfd46&",
-        "id": "40",
-        "tag": "HK,SEA,CN",
-        "name_en": "Key Risk Indicator (IT)"
-      }
-    },
-    {
-      "mainTable": {
-        "name_tc": "Learning Management System",
-        "allowroles": "安全级别为0-100的所有人",
-        "business": "Group Digital & Technology",
-        "name_sc": "Learning Management System",
-        "order_number": "",
-        "homepage_url": "https://lms.dchbi.com/",
-        "description_en": "",
-        "type": "click",
-        "iconx64": "",
-        "application": "",
-        "description_sc": "",
-        "description_tc": "",
-        "mobileurl": "https://lms.dchbi.com/",
-        "id": "42",
-        "tag": "HK,SEA,CN",
-        "name_en": "Learning Management System"
-      }
-    },
-    {
-      "mainTable": {
-        "name_tc": "公司列表报表",
-        "allowroles": "安全级别为0-100的所有人",
-        "business": "Group Finance",
-        "name_sc": "公司列表报表",
-        "order_number": "",
-        "homepage_url": "https://43.132.182.225/wui/index.html#/main/cube/search?customid=25&menuIds=-55,-41&menuPathIds=-55,-99,-22,-41&_key=x7aayv",
-        "description_en": "",
-        "type": "Data",
-        "iconx64": "",
-        "application": "OA",
-        "description_sc": "",
-        "description_tc": "",
-        "mobileurl": "",
-        "id": "43",
-        "tag": "HK,SEA,CN",
-        "name_en": "Lists of Companies"
-      }
-    }
-  ]
-  const hkData = [
-    {
-      "mainTable": {
-        "name_tc": "IT 服務門戶",
-        "allowroles": "角色( 系统管理员角色)共享级别=部门  安全级别为0-100的角色成员，角色( CRM管理员)共享级别=部门  安全级别为0-100的角色成员",
-        "business": "Group Digital & Technology",
-        "name_sc": "IT 服务门户",
-        "order_number": "1200",
-        "homepage_url": "https://dch.service-now.com/sp",
-        "description_en": "Group IT support platform",
-        "type": "Application",
-        "iconx64": "",
-        "application": "IT Service Portal",
-        "description_sc": "集團 IT 支持平台",
-        "description_tc": "集團 IT 支援平台",
-        "mobileurl": "https://dch.service-now.com/sp",
-        "id": "1",
-        "tag": "HK",
-        "name_en": "IT Service Portal"
-      }
-    },
-    {
-      "mainTable": {
-        "name_tc": "一般 IT 服務和應用程式請求",
-        "allowroles": "安全级别为0-100的所有人",
-        "business": "Group Digital & Technology",
-        "name_sc": "一般 IT 服務和應用程式請求",
-        "order_number": "1210",
-        "homepage_url": "https://dch.service-now.com/sp?id=sc_cat_item&sys_id=ea6aef15db3d91908e9ddf0bd3961922&sysparm_category=22c62651db7991908e9ddf0bd39619d2",
-        "description_en": "EN: Request IT services or support简: 申请信息技术服务繁: 申請資訊技術服務",
-        "type": "Form",
-        "iconx64": "",
-        "application": "IT Service Portal",
-        "description_sc": "",
-        "description_tc": "",
-        "mobileurl": "https://dch.service-now.com/sp?id=sc_cat_item&sys_id=ea6aef15db3d91908e9ddf0bd3961922&sysparm_category=22c62651db7991908e9ddf0bd39619d2",
-        "id": "2",
-        "tag": "HK",
-        "name_en": "Open a Service Request"
-      }
-    },
-    {
-      "mainTable": {
-        "name_tc": "辦公自動化系統",
-        "allowroles": "安全级别为0-100的所有人",
-        "business": "Group Service",
-        "name_sc": "办公自动化系统",
-        "order_number": "1",
-        "homepage_url": "https://oa.dchbipoc.cc/",
-        "description_en": "",
-        "type": "Application",
-        "iconx64": "",
-        "application": "OA",
-        "description_sc": "",
-        "description_tc": "",
-        "mobileurl": "",
-        "id": "3",
-        "tag": "HK,CN,SEA",
-        "name_en": "OA"
-      }
-    },
-    {
-      "mainTable": {
-        "name_tc": "集團法律與合規",
-        "allowroles": "安全级别为0-100的所有人",
-        "business": "Group Legal & Compliance",
-        "name_sc": "集团法律与合规",
-        "order_number": "3000",
-        "homepage_url": "",
-        "description_en": "",
-        "type": "Business",
-        "iconx64": "",
-        "application": "",
-        "description_sc": "",
-        "description_tc": "",
-        "mobileurl": "",
-        "id": "4",
-        "tag": "HK",
-        "name_en": "Group Legal & Compliance"
-      }
-    },
-    {
-      "mainTable": {
-        "name_tc": "Group Digital & Technology",
-        "allowroles": "安全级别为0-100的所有人",
-        "business": "Group Digital & Technology",
-        "name_sc": "Group Digital & Technology",
-        "order_number": "1000",
-        "homepage_url": "",
-        "description_en": "",
-        "type": "Business",
-        "iconx64": "",
-        "application": "",
-        "description_sc": "",
-        "description_tc": "",
-        "mobileurl": "",
-        "id": "5",
-        "tag": "HK",
-        "name_en": "Group Digital & Technology"
-      }
-    },
-    {
-      "mainTable": {
-        "name_tc": "用友",
-        "allowroles": "安全级别为0-100的所有人",
-        "business": "Group Finance",
-        "name_sc": "用友",
-        "order_number": "3",
-        "homepage_url": "",
-        "description_en": "EN: Financial management system简: 财务管理系统繁: 財務管理系統",
-        "type": "Application",
-        "iconx64": "",
-        "application": "Yonyou",
-        "description_sc": "",
-        "description_tc": "",
-        "mobileurl": "",
-        "id": "6",
-        "tag": "HK",
-        "name_en": "Yonyou"
-      }
-    },
-    {
-      "mainTable": {
-        "name_tc": "學習管理系統",
-        "allowroles": "安全级别为0-100的所有人",
-        "business": "Group Service",
-        "name_sc": "学习管理系统",
-        "order_number": "5",
-        "homepage_url": "",
-        "description_en": "",
-        "type": "Application",
-        "iconx64": "",
-        "application": "Learning Management System",
-        "description_sc": "",
-        "description_tc": "",
-        "mobileurl": "",
-        "id": "7",
-        "tag": "HK",
-        "name_en": "Learning Management System"
-      }
-    },
-    {
-      "mainTable": {
-        "name_tc": "人力資源管理系統",
-        "allowroles": "安全级别为0-100的所有人",
-        "business": "Group Human Resources",
-        "name_sc": "人力资源管理系统",
-        "order_number": "4",
-        "homepage_url": "https://hrms.dch.com.hk/hrms/Login/LoginWithSAML?redirect_uri=https://hrms.dch.com.hk/hrms/",
-        "description_en": "",
-        "type": "Application",
-        "iconx64": "",
-        "application": "HRMS",
-        "description_sc": "",
-        "description_tc": "",
-        "mobileurl": "",
-        "id": "8",
-        "tag": "HK",
-        "name_en": "HRMS"
-      }
-    },
-    {
-      "mainTable": {
-        "name_tc": "法律與合規門戶",
-        "allowroles": "安全级别为0-100的所有人",
-        "business": "Group Legal & Compliance",
-        "name_sc": "法律与合规门户",
-        "order_number": "3200",
-        "homepage_url": "https://oa.dchbipoc.cc/wui/index.html?#/main/portal/portal-42-305?menuIds=-70,-248&menuPathIds=-70,-248&_key=d3l93k",
-        "description_en": "",
-        "type": "Portal",
-        "iconx64": "",
-        "application": "GLC Portal",
-        "description_sc": "",
-        "description_tc": "",
-        "mobileurl": "https://oa.dchbipoc.cc/wui/index.html?#/main/portal/portal-42-305?menuIds=-70,-248&menuPathIds=-70,-248&_key=d3l93k",
-        "id": "9",
-        "tag": "HK",
-        "name_en": "GLC Portal"
-      }
-    },
-    {
-      "mainTable": {
-        "name_tc": "集團人力資源門戶",
-        "allowroles": "安全级别为0-100的所有人",
-        "business": "Group Human Resources",
-        "name_sc": "集团人力资源门户",
-        "order_number": "2200",
-        "homepage_url": "https://intranet.dch.com.hk/en/ghr",
-        "description_en": "",
-        "type": "Portal",
-        "iconx64": "",
-        "application": "GHR Portal",
-        "description_sc": "",
-        "description_tc": "",
-        "mobileurl": "https://intranet.dch.com.hk/en/ghr",
-        "id": "10",
-        "tag": "HK",
-        "name_en": "GHR Portal"
-      }
-    },
-    {
-      "mainTable": {
-        "name_tc": "企業內聯網",
-        "allowroles": "安全级别为0-100的所有人",
-        "business": "Group Service",
-        "name_sc": "企业内网",
-        "order_number": "0",
-        "homepage_url": "http://intranet.dch.com.hk/",
-        "description_en": "",
-        "type": "Portal",
-        "iconx64": "",
-        "application": "Intranet",
-        "description_sc": "",
-        "description_tc": "",
-        "mobileurl": "http://intranet.dch.com.hk/",
-        "id": "11",
-        "tag": "HK",
-        "name_en": "Intranet"
-      }
-    }
-  ]
-  const seaData = [
-    {
-      "mainTable": {
-        "name_tc": "辦公自動化系統",
-        "allowroles": "安全级别为0-100的所有人",
-        "business": "Group Service",
-        "name_sc": "办公自动化系统",
-        "order_number": "1",
-        "homepage_url": "https://oa.dchbipoc.cc/",
-        "description_en": "",
-        "type": "Application",
-        "iconx64": "",
-        "application": "OA",
-        "description_sc": "",
-        "description_tc": "",
-        "mobileurl": "",
-        "id": "3",
-        "tag": "HK,CN,SEA",
-        "name_en": "OA"
-      }
-    },
-    {
-      "mainTable": {
-        "name_tc": "政策文件",
-        "allowroles": "安全级别为0-100的所有人",
-        "business": "Group Service",
-        "name_sc": "政策文件",
-        "order_number": "",
-        "homepage_url": "https://oa.dchbipoc.cc/mobilemode/admin/preview.jsp?appHomepageId=116&dataid=1233",
-        "description_en": "Previously called ePolicy",
-        "type": "Data",
-        "iconx64": "",
-        "application": "OA",
-        "description_sc": "Previously called ePolicy",
-        "description_tc": "Previously called ePolicy",
-        "mobileurl": "https://oa.dchbipoc.cc/mobilemode/admin/preview.jsp?appHomepageId=116&dataid=1233",
-        "id": "21",
-        "tag": "HK,CN,SEA",
-        "name_en": "Policy Documents"
-      }
-    },
-    {
-      "mainTable": {
-        "name_tc": "D2 公司成立、併購及法律文件",
-        "allowroles": "安全级别为0-100的所有人",
-        "business": "Group Finance - Filing Process",
-        "name_sc": "D2 公司成立、并购及法律文件",
-        "order_number": "4005",
-        "homepage_url": "https://dchappsdev.dchbi.com/wui/index.html#/main/cube/search?customid=901&menuIds=-70,-301&menuPathIds=-70,-272,-295,-296,-301&_key=bh34pm",
-        "description_en": "No longer used",
-        "type": "Data",
-        "iconx64": "",
-        "application": "OA",
-        "description_sc": "No longer used",
-        "description_tc": "No longer used",
-        "mobileurl": "https://dchappsdev.dchbi.com/mobilemode/mobile/view.html?appHomepageId=147#&page_147",
-        "id": "22",
-        "tag": "HK,SEA",
-        "name_en": "D2 Incorporation, M&A and Legal Documents"
-      }
-    },
-    {
-      "mainTable": {
-        "name_tc": "新增資金記錄（用友）",
-        "allowroles": "安全级别为0-100的所有人",
-        "business": "Group Finance - Treasury Process",
-        "name_sc": "新增资金记录（用友）",
-        "order_number": "",
-        "homepage_url": "",
-        "description_en": "",
-        "type": "Form",
-        "iconx64": "",
-        "application": "Yonyou",
-        "description_sc": "",
-        "description_tc": "",
-        "mobileurl": "",
-        "id": "23",
-        "tag": "HK,SEA",
-        "name_en": "New Treasury Record (Yonyou)"
-      }
-    },
-    {
-      "mainTable": {
-        "name_tc": "資金資料（用友）",
-        "allowroles": "安全级别为0-100的所有人",
-        "business": "Group Finance - Treasury Process",
-        "name_sc": "资金数据（用友）",
-        "order_number": "",
-        "homepage_url": "",
-        "description_en": "",
-        "type": "Data",
-        "iconx64": "",
-        "application": "Yonyou",
-        "description_sc": "",
-        "description_tc": "",
-        "mobileurl": "",
-        "id": "24",
-        "tag": "HK,SEA",
-        "name_en": "Treasury Data (Yonyou)"
-      }
-    },
-    {
-      "mainTable": {
-        "name_tc": "我的申報記錄",
-        "allowroles": "安全级别为0-100的所有人",
-        "business": "Group Finance - Filing Process",
-        "name_sc": "我的申报记录",
-        "order_number": "4001",
-        "homepage_url": "https://dchappsdev.dchbi.com/wui/index.html#/main/cube/search?customid=897&menuIds=-70,-298&menuPathIds=-70,-272,-295,-296,-298&_key=aenmf1",
-        "description_en": "",
-        "type": "Form",
-        "iconx64": "",
-        "application": "OA",
-        "description_sc": "",
-        "description_tc": "",
-        "mobileurl": "https://dchappsdev.dchbi.com/mobilemode/mobile/view.html?appHomepageId=83#&page_83",
-        "id": "25",
-        "tag": "HK,SEA",
-        "name_en": "My Filing Submissions"
-      }
-    },
-    {
-      "mainTable": {
-        "name_tc": "全部申報記錄",
-        "allowroles": "安全级别为0-100的所有人",
-        "business": "Group Finance - Filing Process",
-        "name_sc": "全部申报记录",
-        "order_number": "4002",
-        "homepage_url": "https://dchappsdev.dchbi.com/wui/index.html#/main/cube/search?customid=896&menuIds=-70,-297&menuPathIds=-70,-272,-295,-296,-297&_key=mfgohx",
-        "description_en": "",
-        "type": "Form",
-        "iconx64": "",
-        "application": "OA",
-        "description_sc": "",
-        "description_tc": "",
-        "mobileurl": "https://dchappsdev.dchbi.com/mobilemode/mobile/view.html?appHomepageId=84#&page_84",
-        "id": "26",
-        "tag": "HK,SEA",
-        "name_en": "All Filing Submissions"
-      }
-    },
-    {
-      "mainTable": {
-        "name_tc": "D1 審計帳戶",
-        "allowroles": "安全级别为0-100的所有人",
-        "business": "Group Finance - Filing Process",
-        "name_sc": "D1 审计账户",
-        "order_number": "4004",
-        "homepage_url": "https://dchappsdev.dchbi.com/wui/index.html#/main/cube/search?customid=900&menuIds=-70,-300&menuPathIds=-70,-272,-295,-296,-300&_key=kusyqt",
-        "description_en": "",
-        "type": "Data",
-        "iconx64": "",
-        "application": "OA",
-        "description_sc": "",
-        "description_tc": "",
-        "mobileurl": "https://dchappsdev.dchbi.com/mobilemode/mobile/view.html?appHomepageId=91#&page_91",
-        "id": "27",
-        "tag": "HK,SEA",
-        "name_en": "D1 Audit Accounts"
-      }
-    },
-    {
-      "mainTable": {
-        "name_tc": "人事管理",
-        "allowroles": "安全级别为0-100的所有人",
-        "business": "Group Human Resources",
-        "name_sc": "人事管理",
-        "order_number": "2310",
-        "homepage_url": "https://hrms.dch.com.hk/hrms/Login/LoginWithSAML?redirect_uri=https://hrms.dch.com.hk/hrms/",
-        "description_en": "HR Only",
-        "type": "Portal",
-        "iconx64": "",
-        "application": "OA",
-        "description_sc": "HR Only",
-        "description_tc": "HR Only",
-        "mobileurl": "",
-        "id": "28",
-        "tag": "HK,SEA",
-        "name_en": "Personnel Management"
-      }
-    },
-    {
-      "mainTable": {
-        "name_tc": "請假管理",
-        "allowroles": "安全级别为0-100的所有人",
-        "business": "Group Human Resources",
-        "name_sc": "请假管理",
-        "order_number": "2320",
-        "homepage_url": "https://hrms.dch.com.hk/hrms/Login/LoginWithSAML?redirect_uri=https://hrms.dch.com.hk/hrms/",
-        "description_en": "",
-        "type": "Portal",
-        "iconx64": "",
-        "application": "OA",
-        "description_sc": "",
-        "description_tc": "",
-        "mobileurl": "",
-        "id": "29",
-        "tag": "HK,SEA",
-        "name_en": "Leave Management"
-      }
-    },
-    {
-      "mainTable": {
-        "name_tc": "薪酬管理",
-        "allowroles": "安全级别为0-100的所有人",
-        "business": "Group Human Resources",
-        "name_sc": "薪酬管理",
-        "order_number": "2330",
-        "homepage_url": "https://hrms.dch.com.hk/hrms/Login/LoginWithSAML?redirect_uri=https://hrms.dch.com.hk/hrms/",
-        "description_en": "",
-        "type": "Portal",
-        "iconx64": "",
-        "application": "OA",
-        "description_sc": "",
-        "description_tc": "",
-        "mobileurl": "",
-        "id": "30",
-        "tag": "HK,SEA",
-        "name_en": "Payroll Management"
-      }
-    },
-    {
-      "mainTable": {
-        "name_tc": "績效評核管理",
-        "allowroles": "安全级别为0-100的所有人",
-        "business": "Group Human Resources",
-        "name_sc": "绩效考核管理",
-        "order_number": "2340",
-        "homepage_url": "https://hrms.dch.com.hk/hrms/Login/LoginWithSAML?redirect_uri=https://hrms.dch.com.hk/hrms/",
-        "description_en": "",
-        "type": "Portal",
-        "iconx64": "",
-        "application": "OA",
-        "description_sc": "",
-        "description_tc": "",
-        "mobileurl": "",
-        "id": "31",
-        "tag": "HK,SEA",
-        "name_en": "Appraisal Management"
-      }
-    },
-    {
-      "mainTable": {
-        "name_tc": "Submit an IT Demand",
-        "allowroles": "安全级别为0-100的所有人",
-        "business": "Group Digital & Technology",
-        "name_sc": "Submit an IT Demand",
-        "order_number": "1310",
-        "homepage_url": "https://eportal.dch-holdings.com/DCH_ePortal/Login.aspx?OriginalURL=https://eportal.dch-holdings.com/DemandandProjectManagement/DemandSubmissionForm.aspx?DemandID=0&Page=1",
-        "description_en": "",
-        "type": "Form",
-        "iconx64": "",
-        "application": "ePortal",
-        "description_sc": "",
-        "description_tc": "",
-        "mobileurl": "https://eportal.dch-holdings.com/DCH_ePortal/Login.aspx?OriginalURL=https://eportal.dch-holdings.com/DemandandProjectManagement/DemandSubmissionForm.aspx?DemandID=0&Page=1",
-        "id": "32",
-        "tag": "HK,CN,SEA",
-        "name_en": "Submit an IT Demand"
-      }
-    },
-    {
-      "mainTable": {
-        "name_tc": "All IT Demands",
-        "allowroles": "安全级别为0-100的所有人",
-        "business": "Group Digital & Technology",
-        "name_sc": "All IT Demands",
-        "order_number": "1320",
-        "homepage_url": "https://eportal.dch-holdings.com/DCH_ePortal/Login.aspx?OriginalURL=https://eportal.dch-holdings.com/DemandandProjectManagement/DemandMain.aspx",
-        "description_en": "",
-        "type": "Data",
-        "iconx64": "",
-        "application": "ePortal",
-        "description_sc": "",
-        "description_tc": "",
-        "mobileurl": "https://eportal.dch-holdings.com/DCH_ePortal/Login.aspx?OriginalURL=https://eportal.dch-holdings.com/DemandandProjectManagement/DemandMain.aspx",
-        "id": "33",
-        "tag": "HK,CN,SEA",
-        "name_en": "All IT Demands"
-      }
-    },
-    {
-      "mainTable": {
-        "name_tc": "All IT Projects",
-        "allowroles": "安全级别为0-100的所有人",
-        "business": "Group Digital & Technology",
-        "name_sc": "All IT Projects",
-        "order_number": "1330",
-        "homepage_url": "https://eportal.dch-holdings.com/DCH_ePortal/Login.aspx?OriginalURL=https://eportal.dch-holdings.com/DemandandProjectManagement/ProjectMain.aspx?IsDashboard=False",
-        "description_en": "",
-        "type": "Data",
-        "iconx64": "",
-        "application": "ePortal",
-        "description_sc": "",
-        "description_tc": "",
-        "mobileurl": "https://eportal.dch-holdings.com/DCH_ePortal/Login.aspx?OriginalURL=https://eportal.dch-holdings.com/DemandandProjectManagement/ProjectMain.aspx?IsDashboard=False",
-        "id": "34",
-        "tag": "HK,CN,SEA",
-        "name_en": "All IT Projects"
-      }
-    },
-    {
-      "mainTable": {
-        "name_tc": "D3 稅務結清手續",
-        "allowroles": "安全级别为0-100的所有人",
-        "business": "Group Finance - Filing Process",
-        "name_sc": "D3 税务结清手续",
-        "order_number": "4005",
-        "homepage_url": "https://dchappsdev.dchbi.com/wui/index.html#/main/cube/search?customid=902&menuIds=-70,-302&menuPathIds=-70,-272,-295,-296,-302&_key=c4vvic",
-        "description_en": "",
-        "type": "Data",
-        "iconx64": "",
-        "application": "OA",
-        "description_sc": "",
-        "description_tc": "",
-        "mobileurl": "https://dchappsdev.dchbi.com/mobilemode/mobile/view.html?appHomepageId=93#&page_93",
-        "id": "35",
-        "tag": "HK,SEA",
-        "name_en": "D3 Tax Clearances"
-      }
-    },
-    {
-      "mainTable": {
-        "name_tc": "D4 BU 代表信函",
-        "allowroles": "安全级别为0-100的所有人",
-        "business": "Group Finance - Filing Process",
-        "name_sc": "D4 BU 代表信函",
-        "order_number": "4006",
-        "homepage_url": "https://dchappsdev.dchbi.com/wui/index.html#/main/cube/search?customid=903&menuIds=-70,-303&menuPathIds=-70,-272,-295,-296,-303&_key=e6m4qz",
-        "description_en": "",
-        "type": "Data",
-        "iconx64": "",
-        "application": "OA",
-        "description_sc": "",
-        "description_tc": "",
-        "mobileurl": "https://dchappsdev.dchbi.com/mobilemode/mobile/view.html?appHomepageId=94#&page_94",
-        "id": "36",
-        "tag": "HK,SEA",
-        "name_en": "D4 BU Representation Letter"
-      }
-    },
-    {
-      "mainTable": {
-        "name_tc": "D5 BU 訴訟與欺詐確認",
-        "allowroles": "安全级别为0-100的所有人",
-        "business": "Group Finance - Filing Process",
-        "name_sc": "D5 BU 诉讼与欺诈确认",
-        "order_number": "4007",
-        "homepage_url": "https://dchappsdev.dchbi.com/wui/index.html#/main/cube/search?customid=904&menuIds=-70,-304&menuPathIds=-70,-272,-295,-296,-304&_key=zgkkgb",
-        "description_en": "No longer used",
-        "type": "Data",
-        "iconx64": "",
-        "application": "OA",
-        "description_sc": "No longer used",
-        "description_tc": "No longer used",
-        "mobileurl": "https://dchappsdev.dchbi.com/mobilemode/mobile/view.html?appHomepageId=95#&page_95",
-        "id": "37",
-        "tag": "HK,SEA",
-        "name_en": "D5 BU Litigation and fraud Confirmation"
-      }
-    },
-    {
-      "mainTable": {
-        "name_tc": "D6 BU 審計清關包",
-        "allowroles": "安全级别为0-100的所有人",
-        "business": "Group Finance - Filing Process",
-        "name_sc": "D6 BU 审计清关包",
-        "order_number": "4008",
-        "homepage_url": "https://dchappsdev.dchbi.com/wui/index.html#/main/cube/search?customid=905&menuIds=-70,-305&menuPathIds=-70,-272,-295,-296,-305&_key=xs8fmw",
-        "description_en": "",
-        "type": "Data",
-        "iconx64": "",
-        "application": "OA",
-        "description_sc": "",
-        "description_tc": "",
-        "mobileurl": "https://dchappsdev.dchbi.com/mobilemode/mobile/view.html?appHomepageId=96#&page_96",
-        "id": "38",
-        "tag": "HK,SEA",
-        "name_en": "D6 BU Audit Clearance Package"
-      }
-    },
-    {
-      "mainTable": {
-        "name_tc": "我的檔案審批",
-        "allowroles": "安全级别为0-100的所有人",
-        "business": "Group Finance - Filing Process",
-        "name_sc": "我的档案审批",
-        "order_number": "4003",
-        "homepage_url": "https://dchappsdev.dchbi.com/wui/index.html#/main/cube/search?customid=898&menuIds=-70,-299&menuPathIds=-70,-272,-295,-296,-299&_key=yfkfia",
-        "description_en": "",
-        "type": "Form",
-        "iconx64": "",
-        "application": "OA",
-        "description_sc": "",
-        "description_tc": "",
-        "mobileurl": "https://dchappsdev.dchbi.com/mobilemode/mobile/view.html?appHomepageId=116#&page_116",
-        "id": "39",
-        "tag": "HK,SEA",
-        "name_en": "My Filing Approval"
-      }
-    },
-    {
-      "mainTable": {
-        "name_tc": "Key Risk Indicator (IT)",
-        "allowroles": "安全级别为0-100的所有人",
-        "business": "Group Digital & Technology",
-        "name_sc": "Key Risk Indicator (IT)",
-        "order_number": "1400",
-        "homepage_url": "https://oa.dchbipoc.cc/spa/edc/static4mobile/index.html#/edcreportengine/sheetView/862b1abefbbb4f24840c8bff343cfd46?id=862b1abefbbb4f24840c8bff343cfd46&",
-        "description_en": "IT only",
-        "type": "Data",
-        "iconx64": "",
-        "application": "OA",
-        "description_sc": "IT only",
-        "description_tc": "IT only",
-        "mobileurl": "https://oa.dchbipoc.cc/spa/edc/static4mobile/index.html#/edcreportengine/sheetView/862b1abefbbb4f24840c8bff343cfd46?id=862b1abefbbb4f24840c8bff343cfd46&",
-        "id": "40",
-        "tag": "HK,SEA,CN",
-        "name_en": "Key Risk Indicator (IT)"
-      }
-    },
-    {
-      "mainTable": {
-        "name_tc": "Bounced Cheque Records",
-        "allowroles": "安全级别为0-100的所有人",
-        "business": "Group Finance",
-        "name_sc": "Bounced Cheque Records",
-        "order_number": "",
-        "homepage_url": "",
-        "description_en": "",
-        "type": "Data",
-        "iconx64": "",
-        "application": "OA",
-        "description_sc": "",
-        "description_tc": "",
-        "mobileurl": "",
-        "id": "41",
-        "tag": "HK,SEA",
-        "name_en": "Bounced Cheque Records"
-      }
-    },
-    {
-      "mainTable": {
-        "name_tc": "Learning Management System",
-        "allowroles": "安全级别为0-100的所有人",
-        "business": "Group Digital & Technology",
-        "name_sc": "Learning Management System",
-        "order_number": "",
-        "homepage_url": "https://lms.dchbi.com/",
-        "description_en": "",
-        "type": "click",
-        "iconx64": "",
-        "application": "",
-        "description_sc": "",
-        "description_tc": "",
-        "mobileurl": "https://lms.dchbi.com/",
-        "id": "42",
-        "tag": "HK,SEA,CN",
-        "name_en": "Learning Management System"
-      }
-    },
-    {
-      "mainTable": {
-        "name_tc": "公司列表报表",
-        "allowroles": "安全级别为0-100的所有人",
-        "business": "Group Finance",
-        "name_sc": "公司列表报表",
-        "order_number": "",
-        "homepage_url": "https://43.132.182.225/wui/index.html#/main/cube/search?customid=25&menuIds=-55,-41&menuPathIds=-55,-99,-22,-41&_key=x7aayv",
-        "description_en": "",
-        "type": "Data",
-        "iconx64": "",
-        "application": "OA",
-        "description_sc": "",
-        "description_tc": "",
-        "mobileurl": "",
-        "id": "43",
-        "tag": "HK,SEA,CN",
-        "name_en": "Lists of Companies"
-      }
-    },
-    {
-      "mainTable": {
-        "name_tc": "Company Project Control Report",
-        "allowroles": "安全级别为0-100的所有人",
-        "business": "Group Finance",
-        "name_sc": "Company Project Control Report",
-        "order_number": "",
-        "homepage_url": "https://43.132.182.225/wui/index.html#/main/cube/search?customid=168&menuIds=-55,-35&menuPathIds=-55,-99,-29,-35&_key=gqbi9l",
-        "description_en": "",
-        "type": "Data",
-        "iconx64": "",
-        "application": "OA",
-        "description_sc": "",
-        "description_tc": "",
-        "mobileurl": "",
-        "id": "44",
-        "tag": "HK,SEA,HK",
-        "name_en": "Company Project Control Report"
-      }
-    },
-    {
-      "mainTable": {
-        "name_tc": "Company Summary",
-        "allowroles": "安全级别为0-100的所有人",
-        "business": "Group Finance",
-        "name_sc": "Company Summary",
-        "order_number": "",
-        "homepage_url": "https://43.132.182.225/spa/workflow/static4form/index.html?_rdm=1739778034873#/main/workflow/req?iscreate=1&workflowid=108&_key=g0rbti",
-        "description_en": "",
-        "type": "Data",
-        "iconx64": "",
-        "application": "OA",
-        "description_sc": "",
-        "description_tc": "",
-        "mobileurl": "",
-        "id": "45",
-        "tag": "HK,SEA,HK",
-        "name_en": "Company Summary"
-      }
-    },
-    {
-      "mainTable": {
-        "name_tc": "Company Reports",
-        "allowroles": "安全级别为0-100的所有人",
-        "business": "Group Finance",
-        "name_sc": "Company Reports",
-        "order_number": "",
-        "homepage_url": "https://43.132.182.225/wui/index.html#/main/cube/search?customid=167&menuIds=-55,-114&menuPathIds=-55,-99,-20,-40,-114&_key=3ru1aj",
-        "description_en": "",
-        "type": "Data",
-        "iconx64": "",
-        "application": "OA",
-        "description_sc": "",
-        "description_tc": "",
-        "mobileurl": "",
-        "id": "46",
-        "tag": "HK,SEA,HK",
-        "name_en": "Company Reports"
-      }
-    },
-    {
-      "mainTable": {
-        "name_tc": "Travel Request",
-        "allowroles": "安全级别为0-100的所有人",
-        "business": "Group Finance - Travel & Entertainment",
-        "name_sc": "Travel Request",
-        "order_number": "12020",
-        "homepage_url": "",
-        "description_en": "",
-        "type": "Form",
-        "iconx64": "",
-        "application": "Yonyou",
-        "description_sc": "",
-        "description_tc": "",
-        "mobileurl": "",
-        "id": "47",
-        "tag": "Reimbursements,HK,SEA",
-        "name_en": "Travel Request"
-      }
-    },
-    {
-      "mainTable": {
-        "name_tc": "Claim Request",
-        "allowroles": "安全级别为0-100的所有人",
-        "business": "Group Finance - Travel & Entertainment",
-        "name_sc": "Claim Request",
-        "order_number": "12030",
-        "homepage_url": "",
-        "description_en": "",
-        "type": "Form",
-        "iconx64": "",
-        "application": "Yonyou",
-        "description_sc": "",
-        "description_tc": "",
-        "mobileurl": "",
-        "id": "48",
-        "tag": "Reimbursements,HK,SEA",
-        "name_en": "Claim Request"
-      }
-    },
-    {
-      "mainTable": {
-        "name_tc": "My Claims",
-        "allowroles": "安全级别为0-100的所有人",
-        "business": "Group Finance - Travel & Entertainment",
-        "name_sc": "My Claims",
-        "order_number": "12050",
-        "homepage_url": "",
-        "description_en": "",
-        "type": "Data",
-        "iconx64": "",
-        "application": "Yonyou",
-        "description_sc": "",
-        "description_tc": "",
-        "mobileurl": "",
-        "id": "49",
-        "tag": "Reimbursements,HK,SEA",
-        "name_en": "My Claims"
-      }
-    },
-    {
-      "mainTable": {
-        "name_tc": "Entertainment Request",
-        "allowroles": "安全级别为0-100的所有人",
-        "business": "Group Finance - Travel & Entertainment",
-        "name_sc": "Entertainment Request",
-        "order_number": "12000",
-        "homepage_url": "",
-        "description_en": "",
-        "type": "Form",
-        "iconx64": "",
-        "application": "Yonyou",
-        "description_sc": "",
-        "description_tc": "",
-        "mobileurl": "",
-        "id": "50",
-        "tag": "Reimbursements,HK,SEA",
-        "name_en": "Entertainment Request"
-      }
-    },
-    {
-      "mainTable": {
-        "name_tc": "My Requests",
-        "allowroles": "安全级别为0-100的所有人",
-        "business": "Group Finance - Travel & Entertainment",
-        "name_sc": "My Requests",
-        "order_number": "12040",
-        "homepage_url": "",
-        "description_en": "",
-        "type": "Data",
-        "iconx64": "",
-        "application": "Yonyou",
-        "description_sc": "",
-        "description_tc": "",
-        "mobileurl": "",
-        "id": "51",
-        "tag": "Reimbursements,HK,SEA",
-        "name_en": "My Requests"
-      }
-    },
-    {
-      "mainTable": {
-        "name_tc": "Properties Report",
-        "allowroles": "",
-        "business": "Group Services Division",
-        "name_sc": "Properties Report",
-        "order_number": "31020",
-        "homepage_url": "https://eportal.dch-holdings.com/DCHeFormPropertyLeasing/SearchApplications.aspx?Mode=5&ResetSession=True",
-        "description_en": "",
-        "type": "Data",
-        "iconx64": "",
-        "application": "ePortal",
-        "description_sc": "",
-        "description_tc": "",
-        "mobileurl": "",
-        "id": "52",
-        "tag": "HK,SEA",
-        "name_en": "Properties Report"
-      }
-    },
-    {
-      "mainTable": {
-        "name_tc": "Construction Projects",
-        "allowroles": "",
-        "business": "Group Services Division",
-        "name_sc": "Construction Projects",
-        "order_number": "30000",
-        "homepage_url": "https://eportal.dch-holdings.com/DCHeFormeGSD2/AllRecords.aspx",
-        "description_en": "GSD",
-        "type": "Data",
-        "iconx64": "",
-        "application": "ePortal",
-        "description_sc": "GSD",
-        "description_tc": "GSD",
-        "mobileurl": "",
-        "id": "53",
-        "tag": "HK,SEA",
-        "name_en": "Construction Projects"
-      }
-    },
-    {
-      "mainTable": {
-        "name_tc": "Expiry Report",
-        "allowroles": "",
-        "business": "Group Services Division",
-        "name_sc": "Expiry Report",
-        "order_number": "31040",
-        "homepage_url": "https://eportal.dch-holdings.com/DCHeFormPropertyLeasing/SearchApplications.aspx?Mode=4&ResetSession=True",
-        "description_en": "",
-        "type": "Data",
-        "iconx64": "",
-        "application": "ePortal",
-        "description_sc": "",
-        "description_tc": "",
-        "mobileurl": "",
-        "id": "54",
-        "tag": "HK,SEA",
-        "name_en": "Expiry Report"
-      }
-    },
-    {
-      "mainTable": {
-        "name_tc": "DCH Owned Properties Report",
-        "allowroles": "",
-        "business": "Group Services Division",
-        "name_sc": "DCH Owned Properties Report",
-        "order_number": "31030",
-        "homepage_url": "https://eportal.dch-holdings.com/DCHeFormPropertyLeasing/SearchApplications.aspx?ResetSession=True&Mode=6",
-        "description_en": "",
-        "type": "Data",
-        "iconx64": "",
-        "application": "ePortal",
-        "description_sc": "",
-        "description_tc": "",
-        "mobileurl": "",
-        "id": "55",
-        "tag": "HK,SEA",
-        "name_en": "DCH Owned Properties Report"
-      }
-    }
-  ]
+    ]
+
+    return filterApplicationCatalog(mockData, body)
+  }
   try {
-    const query = await readBody(event)
-    let response = hkData
-
-    if (query.type === 'Application') {
-      response = applicationData
-    } else if (query.type === 'Business') {
-      response = businessData
-    } else if (query.tag === 'CN') {
-      response = cnData
-    } else if (query.tag === 'HK') {
-      response = hkData
-    } else if (query.tag === 'SEA') {
-      response = seaData
+    const requestBody = {
+      ...(body.business ? { business: body.business } : {}),
+      ...(body.type ? { type: body.type } : {}),
+      ...(body.tag ? { tag: body.tag } : {}),
     }
+    const notificationApiPrefix = '/api/r/internal'
+    const response = await $fetch.raw<Record<string, unknown>>(`${config.public.apiBase}${notificationApiPrefix}/ecology_oa/app_catalog`, {
+      method: 'POST',
+      headers: getForwardHeaders(event),
+      body: requestBody,
+    })
 
-    return response
+    forwardSetCookieHeaders(event, response)
+
+    return {
+      success: true,
+      data: response._data,
+    }
   } catch (error) {
     console.log(error)
     return []

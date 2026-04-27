@@ -8,8 +8,8 @@
     popper-class="notification-bell-popover notification-bell-popover--desktop"
   >
     <template #reference>
-      <el-badge :value="badgeValue" :hidden="unreadCount === 0" class="notification-bell__badge">
-        <el-button circle :class="['action-btn', { 'action-btn--active': isActive }]" type="button">
+      <el-badge :key="badgeRenderKey" :value="badgeValue" class="notification-bell__badge">
+        <el-button circle :class="['action-btn', { 'action-btn--active': isActive }]" native-type="button">
           <IconCustom name="bell" :size="props.iconSize" :color="isActive ? '#ffffff' : '#c2185b'" />
         </el-button>
       </el-badge>
@@ -18,8 +18,8 @@
     <NotificationPanel variant="desktop-popover" @close="isDesktopPopoverOpen = false" />
   </el-popover>
 
-  <el-badge v-else :value="badgeValue" :hidden="unreadCount === 0" class="notification-bell__badge">
-    <el-button circle :class="['action-btn', { 'action-btn--active': isActive }]" @click="handleClick">
+  <el-badge v-else :key="badgeRenderKey" :value="badgeValue" class="notification-bell__badge">
+    <el-button circle :class="['action-btn', { 'action-btn--active': isActive }]" native-type="button" @click="handleClick">
       <IconCustom name="bell" :size="props.iconSize" :color="isActive ? '#ffffff' : '#c2185b'" />
     </el-button>
   </el-badge>
@@ -54,9 +54,11 @@ const badgeValue = computed(() => {
   if (unreadCount.value > 99) {
     return '99+'
   }
-
   return unreadCount.value
 })
+
+
+const badgeRenderKey = computed(() => `${isMobileContext.value ? 'mobile' : 'desktop'}-${badgeValue.value}`)
 
 const handleClick = async () => {
   if (isActive.value) {

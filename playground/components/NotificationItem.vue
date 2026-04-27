@@ -1,6 +1,6 @@
 <template>
   <button
-    :class="['notification-item', `notification-item--${props.variant}`, { unread: !item.readAt }]"
+    :class="['notification-item', `notification-item--${props.variant}`, { unread: isUnread }]"
     @click="handleClick"
   >
     <div class="notification-item__main">
@@ -21,7 +21,7 @@
     </div>
 
     <span
-      v-if="!item.readAt"
+      v-if="isUnread"
       class="notification-item__dot"
     />
   </button>
@@ -29,6 +29,7 @@
 
 <script setup lang="ts">
 import type { NotificationItem as NotificationItemModel } from '~/types/notification'
+import { isNotificationUnread } from '~/utils/notification'
 
 const props = withDefaults(defineProps<{
   item: NotificationItemModel
@@ -41,13 +42,16 @@ const emit = defineEmits<{
   select: [item: NotificationItemModel]
 }>()
 
+const isUnread = computed(() => isNotificationUnread(props.item))
+
 const subtitle = computed(() => {
   return props.item.source || props.item.summary || props.item.content || ''
 })
 
 const referenceText = computed(() => {
-  if (props.item.summary?.trim()) {
-    return props.item.summary
+  const referenceId = props.item.referenceId?.trim()
+  if (referenceId) {
+    return referenceId
   }
 
   const category = props.item.category?.trim()
@@ -55,7 +59,7 @@ const referenceText = computed(() => {
 })
 
 const timeText = computed(() => {
-  const createdAt = new Date(props.item.createdAt).getTime()
+  const createdAt = new Date(props.item.updated_at).getTime()
   const diff = Math.max(0, Date.now() - createdAt)
   const minute = 60 * 1000
   const hour = 60 * minute
@@ -84,19 +88,19 @@ const handleClick = () => {
   align-items: center;
   gap: 10px;
   border: 0;
-  border-bottom: 1px solid #e8e1e4;
+  border-bottom: 1px solid #ece7ea;
   background: #ffffff;
-  padding: 14px 14px 13px;
+  padding: 10px 14px 11px;
   text-align: left;
   transition: background-color 0.2s ease;
 }
 
 .notification-item:hover {
-  background: #faf5f7;
+  background: #faf7f8;
 }
 
 .notification-item.unread {
-  background: #f8eff2;
+  background: #fbf4f7;
 }
 
 .notification-item__main {
@@ -108,14 +112,14 @@ const handleClick = () => {
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
-  gap: 10px;
+  gap: 12px;
 }
 
 .notification-item__title {
   flex: 1;
   min-width: 0;
   font-size: 15px;
-  line-height: 1.3;
+  line-height: 1.35;
   font-weight: 600;
   color: #171717;
   display: -webkit-box;
@@ -133,10 +137,11 @@ const handleClick = () => {
 }
 
 .notification-item__subtitle {
-  margin: 3px 0 0;
-  font-size: 14px;
-  line-height: 1.3;
-  color: #242424;
+  margin: 2px 0 0;
+  font-size: 13px;
+  line-height: 1.28;
+  color: #1c1c1c;
+  font-weight: 500;
   display: -webkit-box;
   -webkit-box-orient: vertical;
   -webkit-line-clamp: 1;
@@ -145,9 +150,9 @@ const handleClick = () => {
 
 .notification-item__reference {
   margin: 2px 0 0;
-  font-size: 11px;
-  line-height: 1.3;
-  color: #6f6a71;
+  font-size: 10px;
+  line-height: 1.25;
+  color: #161616;
 }
 
 .notification-item__dot {
@@ -159,11 +164,11 @@ const handleClick = () => {
 }
 
 .notification-item--desktop-popover {
-  padding: 14px 14px 13px;
+  padding: 16px 16px;
 }
 
 .notification-item--desktop-popover .notification-item__title {
-  font-size: 14px;
+  font-size: 16px;
   line-height: 1.32;
 }
 

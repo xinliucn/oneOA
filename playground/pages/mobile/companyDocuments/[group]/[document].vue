@@ -1,6 +1,6 @@
 <template>
   <div
-    v-if="group && documentDetail"
+    v-if="documentDetail"
     class="mobile-company-document-detail"
   >
     <div class="mobile-company-document-detail__toolbar">
@@ -15,7 +15,7 @@
           :rotate="180"
           color="#B10F49"
         />
-        <span>{{ group.title }}</span>
+        <span>{{ groupTitle }}</span>
       </button>
     </div>
 
@@ -52,38 +52,45 @@
         </div>
       </div>
 
-      <div class="mobile-company-document-detail__paragraphs">
-        <p>请你在同意之前，仔细阅读本政策。点击“同意”按钮，代表你愿意遵守本政策内容。</p>
-        <p>请你在同意之前，仔细阅读本政策。点击“同意”按钮，代表你愿意遵守本政策内容。</p>
-        <p>Please read this policy carefully before clicking the "Accept" button. Your acceptance to this policy means you agree to comply with the policy content.</p>
+      <div
+        class="mobile-company-document-detail__paragraphs"
+        v-html="documentDetail.contentHtml"
+      />
+
+      <div
+        v-if="documentDetail.footerHtml"
+        class="mobile-company-document-detail__footer"
+        v-html="documentDetail.footerHtml"
+      />
+
+      <div class="mobile-company-document-detail__checkboxes">
+        <label class="mobile-company-document-detail__checkbox-row">
+          <input
+            v-model="accepted"
+            type="checkbox"
+            class="mobile-company-document-detail__checkbox"
+          >
+          <span>我已閱讀並願意遵守本政策內容。</span>
+        </label>
+
+        <label class="mobile-company-document-detail__checkbox-row">
+          <input
+            v-model="accepted"
+            type="checkbox"
+            class="mobile-company-document-detail__checkbox"
+          >
+          <span>我已阅读并愿意遵守本政策内容。</span>
+        </label>
+
+        <label class="mobile-company-document-detail__checkbox-row">
+          <input
+            v-model="accepted"
+            type="checkbox"
+            class="mobile-company-document-detail__checkbox"
+          >
+          <span>I have read and agreed with the policy content.</span>
+        </label>
       </div>
-
-      <label class="mobile-company-document-detail__checkbox-row">
-        <input
-          v-model="accepted"
-          type="checkbox"
-          class="mobile-company-document-detail__checkbox"
-        >
-        <span>我已閱讀並願意遵守本政策內容。</span>
-      </label>
-
-      <label class="mobile-company-document-detail__checkbox-row">
-        <input
-          v-model="accepted"
-          type="checkbox"
-          class="mobile-company-document-detail__checkbox"
-        >
-        <span>我已阅读并愿意遵守本政策内容。</span>
-      </label>
-
-      <label class="mobile-company-document-detail__checkbox-row">
-        <input
-          v-model="accepted"
-          type="checkbox"
-          class="mobile-company-document-detail__checkbox"
-        >
-        <span>I have read and agreed with the policy content.</span>
-      </label>
 
       <button
         type="button"
@@ -104,7 +111,33 @@
 </template>
 
 <script setup lang="ts">
-import { findCompanyDocumentDetail, findCompanyDocumentGroup } from '../data'
+interface CompanyDocumentDetailResponseItem {
+  mainTable?: {
+    id?: string | number
+    createdby?: string
+    RequestName?: string
+    createddate?: string
+    Number_Version?: string
+    content_display?: string
+    footer_display?: string
+    RequestPublishDate?: string
+    fileName?: string
+    filename?: string
+    file_name?: string
+  }
+}
+
+interface CompanyDocumentDetail {
+  title: string
+  code: string
+  version: string
+  fileName: string
+  createdBy: string
+  createdDate: string
+  publishedDate: string
+  contentHtml: string
+  footerHtml: string
+}
 
 definePageMeta({
   layout: 'mobile',
@@ -114,12 +147,99 @@ definePageMeta({
 const route = useRoute()
 const groupSlug = computed(() => String(route.params.group || ''))
 const documentSlug = computed(() => String(route.params.document || ''))
-const group = computed(() => findCompanyDocumentGroup(groupSlug.value))
-const documentDetail = computed(() => findCompanyDocumentDetail(groupSlug.value, documentSlug.value))
+const groupTitle = computed(() => String(route.query.groupTitle || 'Company Documents'))
+const selectedDocumentDetail = useState<CompanyDocumentDetailResponseItem | null>('company-document:selected-detail', () => null)
 const accepted = ref(false)
 
+const normalizeCompanyDocumentDetailResponse = (response: any): CompanyDocumentDetailResponseItem[] => {
+  if (Array.isArray(response)) {
+    return response
+  }
+
+  if (Array.isArray(response?.data)) {
+    return response.data
+  }
+
+  if (Array.isArray(response?.data?.data)) {
+    return response.data.data
+  }
+
+  return []
+}
+
+const getDocumentCodeAndVersion = (numberVersion?: string) => {
+  const value = numberVersion || String(route.query.code || '')
+  const match = value.match(/^(.*?)(\[[^\]]+\])$/)
+
+  return {
+    code: String(route.query.code || match?.[1] || value),
+    version: String(route.query.version || match?.[2] || ''),
+  }
+}
+
+const getFallbackContentHtml = () => {
+  return [
+    '<p>请你在同意之前，仔细阅读本政策。点击“同意”按钮，代表你愿意遵守本政策内容。</p>',
+    '<p>请你在同意之前，仔细阅读本政策。点击“同意”按钮，代表你愿意遵守本政策内容。</p>',
+    '<p>Please read this policy carefully before clicking the "Accept" button. Your acceptance to this policy means you agree to comply with the policy content.</p>',
+  ].join('')
+}
+
+const fetchCompanyDocumentDetail = $fetch as typeof $fetch<unknown>
+
+const { data: companyDocumentDetailResponse } = await useAsyncData(
+  'company-document-sign-detail',
+  () => fetchCompanyDocumentDetail('/api/ecologyOa/companyDocumentDetail', {
+    method: 'POST',
+    body: {
+      id: groupSlug.value,
+      folderId: groupSlug.value,
+      groupId: groupSlug.value,
+      documentId: documentSlug.value,
+      requestId: documentSlug.value,
+    },
+  }),
+  {
+    watch: [groupSlug, documentSlug],
+  },
+)
+
+const documentDetail = computed<CompanyDocumentDetail | null>(() => {
+  const selectedItem = String(selectedDocumentDetail.value?.mainTable?.id || '') === documentSlug.value
+    ? selectedDocumentDetail.value
+    : null
+  const item = selectedItem || normalizeCompanyDocumentDetailResponse(companyDocumentDetailResponse.value)
+    .find(detail => String(detail.mainTable?.id || '') === documentSlug.value)
+  const mainTable = item?.mainTable
+
+  if (!mainTable) {
+    return null
+  }
+
+  const { code, version } = getDocumentCodeAndVersion(mainTable.Number_Version)
+  const title = mainTable.RequestName || String(route.query.title || code)
+  const fileName = mainTable.fileName || mainTable.filename || mainTable.file_name || `${title}.pdf`
+
+  return {
+    title,
+    code,
+    version,
+    fileName,
+    createdBy: mainTable.createdby || '-',
+    createdDate: mainTable.createddate || '-',
+    publishedDate: mainTable.RequestPublishDate || '-',
+    contentHtml: mainTable.content_display || getFallbackContentHtml(),
+    footerHtml: mainTable.footer_display || '',
+  }
+})
+
 const handleBack = () => {
-  return navigateTo(`/mobile/companyDocuments/${encodeURIComponent(groupSlug.value)}`)
+  return navigateTo({
+    path: `/mobile/companyDocuments/${encodeURIComponent(groupSlug.value)}`,
+    query: {
+      title: groupTitle.value,
+    },
+  })
 }
 
 const handleAccept = () => {
@@ -216,11 +336,20 @@ const handleAccept = () => {
   color: #252525;
 }
 
-.mobile-company-document-detail__paragraphs p {
+.mobile-company-document-detail__footer {
+  margin-bottom: 16px;
+  font-size: 13px;
+  line-height: 1.45;
+  color: #252525;
+}
+
+.mobile-company-document-detail__paragraphs :deep(p),
+.mobile-company-document-detail__footer :deep(p) {
   margin: 0;
 }
 
-.mobile-company-document-detail__paragraphs p + p {
+.mobile-company-document-detail__paragraphs :deep(p + p),
+.mobile-company-document-detail__footer :deep(p + p) {
   margin-top: 14px;
 }
 

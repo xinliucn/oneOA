@@ -1,14 +1,18 @@
 export type TodoView = 'approvals' | 'requests' | 'tasks'
 
 interface TodoQuery {
+    pageNo?: number
     pageNum?: number
     pageSize?: number
+    conditions?: Record<string, unknown>
+    otherParams?: Record<string, unknown>
 }
 
 interface TodoResponse<T = any> {
-    data?: T[]
+    data?: T[] | TodoResponse<T>
 }
 
+type TodoListResponse<T = any> = T[] | TodoResponse<T>
 
 const requestMap: Record<TodoView, string> = {
     approvals: '/api/todo/approvals',
@@ -16,16 +20,55 @@ const requestMap: Record<TodoView, string> = {
     tasks: '/api/todo/todos',
 }
 
-const fetchTodoList = async (view: TodoView, query: TodoQuery = {}) => {
-    try {
-        const response = await $fetch<TodoResponse>(requestMap[view], {
-            method: 'POST',
-            body: {
-                ...query,
-            },
-        })
+const normalizeTodoListResponse = <T = any>(response?: TodoListResponse<T> | null): T[] => {
+    if (Array.isArray(response)) {
+        return response
+    }
 
-        return response?.data || []
+    if (Array.isArray(response?.data)) {
+        return response.data
+    }
+
+    return normalizeTodoListResponse(response?.data)
+}
+
+const getPageNo = (query: TodoQuery) => query.pageNo ?? query.pageNum ?? 1
+
+const buildTodoListPayload = (view: TodoView, query: TodoQuery) => {
+    if (view === 'approvals') {
+        return {
+            pageNo: getPageNo(query),
+            pageSize: 10,
+            otherParams: { is_handled: false },
+        }
+    }
+
+    if (view === 'requests') {
+        return {
+            pageNo: getPageNo(query),
+            pageSize: 10,
+            otherParams: { countOnly: false },
+        }
+    }
+
+    if (view === 'tasks') {
+        return {
+            pageNo: getPageNo(query),
+            pageSize: 100,
+            conditions: {},
+            otherParams: { ismonitor: '1' },
+        }
+    }
+}
+
+const fetchTodoList = async <T = any>(view: TodoView, query: TodoQuery = {}): Promise<T[]> => {
+    try {
+        const response = await $fetch<TodoListResponse<T>>(requestMap[view], {
+            method: 'POST',
+            body: buildTodoListPayload(view, query),
+        })
+        const data = normalizeTodoListResponse(response)
+        return data
     } catch (error) {
         console.error(`Failed to fetch ${view}:`, error)
         throw error

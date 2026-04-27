@@ -39,6 +39,7 @@ export const appMessages = {
     },
     mobile: {
       tabs: {
+        home: '首页',
         todo: '待办',
         favourites: '收藏',
         applications: '应用',
@@ -72,7 +73,11 @@ export const appMessages = {
       }
     },
     home: {
-      greeting: '早上好，{name}',
+      greetings: {
+        morning: '早上好，',
+        afternoon: '下午好，',
+        evening: '晚上好，'
+      },
       searchPlaceholder: '搜索',
       footerCopyright: 'Copyright © {year} Dah Chong Hong Holdings Limited. 版权所有。'
     },
@@ -190,6 +195,7 @@ export const appMessages = {
     },
     mobile: {
       tabs: {
+        home: '主頁',
         todo: '待辦',
         favourites: '收藏',
         applications: '應用',
@@ -223,7 +229,11 @@ export const appMessages = {
       }
     },
     home: {
-      greeting: '早安，{name}',
+      greetings: {
+        morning: '早安，',
+        afternoon: '午安，',
+        evening: '晚上好，'
+      },
       searchPlaceholder: '搜尋',
       footerCopyright: 'Copyright © {year} Dah Chong Hong Holdings Limited. 版權所有。'
     },
@@ -341,6 +351,7 @@ export const appMessages = {
     },
     mobile: {
       tabs: {
+        home: 'Home',
         todo: 'To-Do',
         favourites: 'Favourites',
         applications: 'Applications',
@@ -374,7 +385,11 @@ export const appMessages = {
       }
     },
     home: {
-      greeting: 'Good morning, {name}',
+      greetings: {
+        morning: 'Good morning,',
+        afternoon: 'Good afternoon,',
+        evening: 'Good evening,'
+      },
       searchPlaceholder: 'Search',
       footerCopyright: 'Copyright © {year} Dah Chong Hong Holdings Limited. All rights reserved.'
     },

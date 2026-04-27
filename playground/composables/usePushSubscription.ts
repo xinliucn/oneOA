@@ -42,6 +42,8 @@ const normalizeIncomingNotification = (payload: any): NotificationItem => {
   const data = payload?.data || {}
   const notification = payload?.notification || {}
   const now = new Date().toISOString()
+  const createdAt = String(data.created_at || data.createdAt || now)
+  const updatedAt = String(data.updated_at || data.updatedAt || createdAt)
 
   return {
     id: String(data.id || data.notification_id || Date.now()),
@@ -50,8 +52,11 @@ const normalizeIncomingNotification = (payload: any): NotificationItem => {
     summary: String(data.summary || ''),
     link: String(data.link || data.url || '/desktop'),
     category: String(data.category || data.type || ''),
-    createdAt: String(data.created_at || data.createdAt || now),
+    createdAt,
     readAt: null,
+    created_at: createdAt,
+    updated_at: updatedAt,
+    is_read: '0',
     payload: data,
   }
 }

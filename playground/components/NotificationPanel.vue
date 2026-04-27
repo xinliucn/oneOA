@@ -15,42 +15,16 @@
         >
           <span class="notification-panel__toggle-knob" />
         </button>
-        <el-dropdown
+        <button
           v-else
-          trigger="click"
-          placement="bottom-end"
-          popper-class="notification-panel__dropdown-popper"
-          @command="handlePageSubscriptionCommand"
+          type="button"
+          class="notification-panel__toggle"
+          :class="{ 'is-on': desktopToggleOn, 'is-loading': isPushToggleLoading }"
+          :disabled="isPushToggleLoading"
+          @click="togglePageSubscription"
         >
-          <button
-            type="button"
-            class="notification-panel__accent-button"
-            :disabled="isPushToggleLoading"
-          >
-            •••
-          </button>
-
-          <template #dropdown>
-            <el-dropdown-menu class="notification-panel__dropdown-menu">
-              <el-dropdown-item command="enable">
-                <span class="notification-panel__dropdown-item">
-                  <span class="notification-panel__dropdown-check">
-                    {{ desktopToggleOn ? '✓' : '' }}
-                  </span>
-                  <span>Enabled</span>
-                </span>
-              </el-dropdown-item>
-              <el-dropdown-item command="disable">
-                <span class="notification-panel__dropdown-item">
-                  <span class="notification-panel__dropdown-check">
-                    {{ !desktopToggleOn ? '✓' : '' }}
-                  </span>
-                  <span>Disabled</span>
-                </span>
-              </el-dropdown-item>
-            </el-dropdown-menu>
-          </template>
-        </el-dropdown>
+          <span class="notification-panel__toggle-knob" />
+        </button>
       </div>
 
       <div class="notification-panel__filters">
@@ -99,25 +73,13 @@
           @select="handleSelect"
         />
       </div>
-
-      <div
-        v-if="hasMore"
-        class="notification-panel__load-more"
-      >
-        <el-button
-          class="notification-panel__load-more-btn"
-          :loading="syncing"
-          @click="loadMore"
-        >
-          Load more
-        </el-button>
-      </div>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
 import type { NotificationItem } from '~/types/notification'
+import { isNotificationUnread, sortNotificationsForDisplay } from '~/utils/notification'
 
 const props = withDefaults(defineProps<{
   variant?: 'page' | 'desktop-popover'
@@ -132,11 +94,9 @@ const emit = defineEmits<{
 const {
   notifications,
   unreadCount,
-  hasMore,
   loading,
-  syncing,
   bootstrap,
-  loadMore,
+  markAsRead,
 } = useNotification()
 const {
   status: pushStatus,
@@ -198,36 +158,33 @@ const filters = computed(() => {
 })
 
 const filteredNotifications = computed(() => {
+  const sortedNotifications = sortNotificationsForDisplay(notifications.value)
+
   if (activeFilter.value === 'all') {
-    return notifications.value
+    return sortedNotifications
   }
 
   if (activeFilter.value === 'pending') {
-    return notifications.value.filter(item => !item.readAt)
+    return sortedNotifications.filter(item => isNotificationUnread(item))
   }
 
   if (activeFilter.value.startsWith('category:')) {
     const targetCategory = activeFilter.value.replace('category:', '')
-    return notifications.value.filter(item => formatCategoryLabel(item.category) === targetCategory)
+    return sortedNotifications.filter(item => formatCategoryLabel(item.category) === targetCategory)
   }
 
-  return notifications.value
+  return sortedNotifications
 })
 
 const handleSelect = async (item: NotificationItem) => {
-  // const targetLink = await openNotification(item)
+  void markAsRead(item.id)
+
   const isMobileRoute = route.path.startsWith('/mobile')
   const fallback = isMobileRoute
     ? `/mobile/notifications/${encodeURIComponent(item.id)}`
     : `/desktop/notification/${encodeURIComponent(item.id)}`
 
   emit('close')
-
-  // if (targetLink) {
-  //   const isExternalLink = /^https?:\/\//i.test(targetLink)
-  //   await navigateTo(targetLink, isExternalLink ? { external: true } : undefined)
-  //   return
-  // }
 
   await navigateTo(fallback)
 }
@@ -252,28 +209,20 @@ const toggleDesktopSubscription = async () => {
   }
 }
 
-const handlePageSubscriptionCommand = async (command: string | number | object) => {
+const togglePageSubscription = async () => {
   if (isPushToggleLoading.value) {
-    return
-  }
-
-  if (command !== 'enable' && command !== 'disable') {
     return
   }
 
   isPushToggleLoading.value = true
 
   try {
-    if (command === 'enable') {
-      if (!desktopToggleOn.value) {
-        await subscribe()
-      }
+    if (desktopToggleOn.value) {
+      await unsubscribe()
       return
     }
 
-    if (desktopToggleOn.value) {
-      await unsubscribe()
-    }
+    await subscribe()
   }
   finally {
     isPushToggleLoading.value = false
@@ -313,13 +262,13 @@ onMounted(async () => {
   display: flex;
   align-items: center;
   gap: 8px;
-  margin-bottom: 12px;
+  margin-bottom: 10px;
 }
 
 .notification-panel__title {
   margin: 0;
-  font-size: 24px;
-  line-height: 1.15;
+  font-size: 18px;
+  line-height: 1.2;
   font-weight: 600;
   color: #000000;
 }
@@ -335,29 +284,9 @@ onMounted(async () => {
   letter-spacing: 1px;
 }
 
-.notification-panel__accent-button {
-  width: 28px;
-  height: 28px;
-  border: 0;
-  padding: 0;
-  background: transparent;
-  color: #b10f49;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 20px;
-  line-height: 1;
-  letter-spacing: -1px;
-  cursor: pointer;
-}
-
-.notification-panel__accent-button:disabled {
-  opacity: 0.6;
-}
-
 .notification-panel__toggle {
   position: relative;
-  width: 34px;
+  width: 38px;
   height: 22px;
   border: 0;
   border-radius: 999px;
@@ -377,7 +306,7 @@ onMounted(async () => {
   height: 18px;
   border-radius: 999px;
   background: #ffffff;
-  transform: translateX(12px);
+  transform: translateX(16px);
   transition: transform 0.2s ease;
 }
 
@@ -395,7 +324,7 @@ onMounted(async () => {
 
 .notification-panel__filters {
   display: flex;
-  gap: 7px;
+  gap: 8px;
   overflow-x: auto;
   -webkit-overflow-scrolling: touch;
   scrollbar-width: none;
@@ -415,9 +344,9 @@ onMounted(async () => {
   border-radius: 999px;
   background: #ffffff;
   color: #6d6d6d;
-  font-size: 16px;
+  font-size: 13px;
   line-height: 1;
-  padding: 8px 12px;
+  padding: 7px 12px;
   transition: all 0.2s ease;
 }
 
@@ -450,7 +379,6 @@ onMounted(async () => {
 }
 
 .notification-panel__state {
-  padding: 32px 16px;
   text-align: center;
   font-size: 13px;
   color: #8b8b8b;
@@ -462,15 +390,11 @@ onMounted(async () => {
   background: #ffffff;
 }
 
-.notification-panel__load-more {
-  display: flex;
-  justify-content: center;
-  padding: 18px 16px 24px;
-}
-
-.notification-panel__load-more-btn {
-  width: 100%;
-  max-width: 220px;
+:global(.notification-panel__dropdown-popper.el-popper),
+:global(.notification-panel__dropdown-menu.el-dropdown-menu),
+:global(.notification-panel__dropdown-popper .el-popper__arrow),
+:global(.notification-panel__dropdown-menu .el-dropdown-menu__item) {
+  display: none !important;
 }
 
 .notification-panel--desktop-popover .notification-panel__header {
@@ -515,61 +439,5 @@ onMounted(async () => {
 
 .notification-panel--desktop-popover .notification-panel__list {
   background: #ffffff;
-}
-
-:global(.notification-panel__dropdown-popper.el-popper) {
-  border: 0 !important;
-  border-radius: 14px !important;
-  background: transparent !important;
-  box-shadow: none !important;
-  padding: 6px 0 0 !important;
-}
-
-:global(.notification-panel__dropdown-popper .el-popper__arrow) {
-  display: none;
-}
-
-:global(.notification-panel__dropdown-menu.el-dropdown-menu) {
-  width: 86px;
-  min-width: 86px;
-  padding: 10px 0;
-  border: 0;
-  border-radius: 14px;
-  background: #ffffff;
-  box-shadow: 0 10px 28px rgba(17, 24, 39, 0.18);
-}
-
-:global(.notification-panel__dropdown-menu .el-dropdown-menu__item) {
-  min-height: 36px;
-  padding: 0 12px;
-  color: #161616;
-  font-size: 16px;
-  font-weight: 600;
-  line-height: 1;
-}
-
-:global(.notification-panel__dropdown-menu .el-dropdown-menu__item:focus) {
-  background: #fff7fa;
-  color: #161616;
-}
-
-:global(.notification-panel__dropdown-menu .el-dropdown-menu__item:not(.is-disabled):hover) {
-  background: #fff7fa;
-  color: #161616;
-}
-
-.notification-panel__dropdown-item {
-  width: 100%;
-  display: grid;
-  grid-template-columns: 12px 1fr;
-  align-items: center;
-  gap: 8px;
-}
-
-.notification-panel__dropdown-check {
-  width: 12px;
-  color: #b10f49;
-  font-size: 13px;
-  font-weight: 700;
 }
 </style>

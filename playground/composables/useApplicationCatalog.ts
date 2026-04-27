@@ -31,9 +31,20 @@ export interface ApplicationBusiness {
 }
 
 export interface ApplicationCatalogFilters {
+  business?: string
   type?: string | string[]
   tag?: string
 }
+
+export const APPLICATION_BUSINESS_FILTER: ApplicationCatalogFilters = {
+  type: 'Business',
+}
+
+const buildApplicationCatalogPayload = (filters: ApplicationCatalogFilters = {}) => ({
+  ...(filters.business ? { business: filters.business } : {}),
+  ...(filters.type ? { type: filters.type } : {}),
+  ...(filters.tag ? { tag: filters.tag } : {}),
+})
 
 const normalizeString = (value?: string | null) => {
   return typeof value === 'string' ? value.trim() : ''
@@ -186,36 +197,47 @@ export const useApplicationCatalog = () => {
   const syncing = useState<boolean>('applications:catalog:syncing', () => false)
   const bootstrapped = useState<boolean>('applications:catalog:bootstrapped', () => false)
   const form = useState<any>('applications:catalog:form', () => null)
+  const requestVersion = useState<number>('applications:catalog:requestVersion', () => 0)
   const businesses = computed(() => groupCatalogByBusiness(catalog.value))
 
-  const refreshFromServer = async (filters: ApplicationCatalogFilters = {}) => {
-    if (syncing.value) {
-      return catalog.value
-    }
+  const requestApplicationCatalogData = async (filters: ApplicationCatalogFilters = {}) => {
+    const response = await $fetch<any[] | { data?: any[] }>('/api/applications/catlog', {
+      method: 'POST',
+      body: buildApplicationCatalogPayload(filters),
+    })
+    const responseData = Array.isArray(response) ? response : response?.data
 
+    return (responseData || []).map((item) => ({
+      ...item,
+      mainTable: {
+        ...item?.mainTable,
+        iconx64: normalizeApplicationIconPath(item?.mainTable?.iconx64),
+      },
+    }))
+  }
+
+  const refreshFromServer = async (filters: ApplicationCatalogFilters = {}) => {
+    const currentRequestVersion = requestVersion.value + 1
+    requestVersion.value = currentRequestVersion
     syncing.value = true
     loading.value = true
 
     try {
-      const response = await $fetch<any[]>('/api/applications/catlog', {
-        method: 'POST',
-        body: filters,
-      })
+      const nextCatalog = await requestApplicationCatalogData(filters)
 
-      catalog.value = (response || []).map((item) => ({
-        ...item,
-        mainTable: {
-          ...item?.mainTable,
-          iconx64: normalizeApplicationIconPath(item?.mainTable?.iconx64),
-        },
-      }))
-
+      if (currentRequestVersion === requestVersion.value) {
+        catalog.value = nextCatalog
+      }
     } catch (error) {
       console.error('Fetch application catalog failed:', error)
-      catalog.value = []
+      if (currentRequestVersion === requestVersion.value) {
+        catalog.value = []
+      }
     } finally {
-      loading.value = false
-      syncing.value = false
+      if (currentRequestVersion === requestVersion.value) {
+        loading.value = false
+        syncing.value = false
+      }
     }
 
     return catalog.value
@@ -232,6 +254,7 @@ export const useApplicationCatalog = () => {
   }
   const getApplicationCatalogData = async (filters: ApplicationCatalogFilters = {}) => {
     return refreshFromServer({
+      'business': filters.business,
       'type': filters.type,
       'tag': filters.tag,
     })
@@ -259,24 +282,16 @@ export const useApplicationCatalog = () => {
       const response = await $fetch<any>('/api/todo/form', {
         method: 'POST',
         body: {
-          "workflowid": 111,
-          "languageid": 6,
-          "isFree": 0,
-          "isAllowNodeFreeFlow": 0,
-          "isReadOnlyModel": true,
-          "isFlowModel": 0,
-          "showForecastNode": 1,
-          "requestid": "798953",
-          "nodeid": "700"
+          requestid: id,
         },
       })
 
-      form.value = response
+      form.value = response?.data ?? response
 
     } catch (error) {
       console.error('Fetch application catalog failed:', error)
       form.value = null
-    } 
+    }
   }
 
   return {
@@ -287,6 +302,7 @@ export const useApplicationCatalog = () => {
     bootstrapped,
     form,
     bootstrap,
+    requestApplicationCatalogData,
     refreshFromServer,
     getApplicationCatalogData,
     getApplicationById,
