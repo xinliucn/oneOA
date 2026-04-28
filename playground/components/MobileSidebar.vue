@@ -37,17 +37,19 @@ const emit = defineEmits(['update:modelValue'])
 const { t } = useAppI18n()
 const activeTab = useState('mobile:activeTab', () => 1)
 
-const menuItems = computed(() => [
-  { icon: 'document', label: t('nav.news'), path: '/mobile/news' },
-  { icon: 'info', label: t('nav.companyInformation'), path: '/mobile/companyInformation' },
-  { icon: 'download', label: t('nav.companyDocuments'), path: '/mobile/companyDocuments' },
-  { icon: 'apps', label: t('nav.applications'), path: '/mobile', tabIndex: 3 },
-  { icon: 'building', label: t('nav.departmentIntranets'), path: '/mobile/departmentIntranets'  },
-  { icon: 'dashboard', label: t('nav.dashboards') },
-  { icon: 'todo', label: t('nav.todo'),path: '/mobile', tabIndex: 2 },
-  { icon: 'education', label: t('nav.eLearning') },
-  { icon: 'shop', label: t('nav.eShop') },
-])
+const menuItems = computed(() => {
+  return [
+    { icon: 'document', label: t('nav.news'), path: '/mobile/news' },
+    { icon: 'info', label: t('nav.companyInformation'), path: '/mobile/companyInformation' },
+    { icon: 'download', label: t('nav.companyDocuments'), path: '/mobile/companyDocuments' },
+    { icon: 'apps', label: t('nav.applications'), path: '/mobile', tabIndex: 3 },
+    { icon: 'building', label: t('nav.departmentIntranets'), path: '/mobile/departmentIntranets' },
+    { icon: 'dashboard', label: t('nav.dashboards') },
+    { icon: 'todo', label: t('nav.todo'), path: '/mobile', tabIndex: 2 },
+    { icon: 'education', label: t('nav.eLearning') },
+    { icon: 'shop', label: t('nav.eShop') },
+  ];
+})
 
 const onNavigateTo = (path?: string, tabIndex?: number) => {
   emit('update:modelValue', false)

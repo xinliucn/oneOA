@@ -97,6 +97,7 @@ definePageMeta({
 
 const route = useRoute()
 const groupSlug = computed(() => String(route.params.group || ''))
+const folderbaseid = computed(() => String(route.query.folderbaseid || groupSlug.value))
 const groupTitle = computed(() => String(route.query.title || 'Company Documents'))
 const selectedDocumentDetail = useState<CompanyDocumentDetailResponseItem | null>('company-document:selected-detail', () => null)
 
@@ -147,9 +148,9 @@ const { data: companyDocumentDetailResponse, pending } = await useAsyncData(
   () => fetchCompanyDocumentDetail('/api/ecologyOa/companyDocumentDetail', {
     method: 'POST',
     body: {
-      id: groupSlug.value,
-      folderId: groupSlug.value,
-      groupId: groupSlug.value,
+      folderbaseid: folderbaseid.value,
+      pageNo: 1,
+      pageSize: 10,
     },
   }),
   {
@@ -184,6 +185,7 @@ const handleDocumentClick = (document: CompanyDocumentItem) => {
     path: `/mobile/companyDocuments/${encodeURIComponent(groupSlug.value)}/${encodeURIComponent(document.slug)}`,
     query: {
       groupTitle: groupTitle.value,
+      folderbaseid: folderbaseid.value,
       title: document.title,
       code: document.code,
       version: document.version,

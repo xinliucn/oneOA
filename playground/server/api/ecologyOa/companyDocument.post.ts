@@ -513,9 +513,8 @@ export default defineEventHandler(async (event) => {
   }
   try {
     const requestBody = {
-      ...(body.business ? { business: body.business } : {}),
-      ...(body.type ? { type: body.type } : {}),
-      ...(body.tag ? { tag: body.tag } : {}),
+      ...(body.page ? { page: body.page } : {}),
+      ...(body.pageSize ? { pageSize: body.pageSize } : {})
     }
     const notificationApiPrefix = '/api/r/internal'
     const response = await $fetch.raw<Record<string, unknown>>(`${config.public.apiBase}${notificationApiPrefix}/ecology_oa/company_document`, {

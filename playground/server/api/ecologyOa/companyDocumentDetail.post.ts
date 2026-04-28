@@ -99,14 +99,9 @@ export default defineEventHandler(async (event) => {
   }
   try {
     const requestBody = {
-      ...(body.id ? { id: body.id } : {}),
-      ...(body.folderId ? { folderId: body.folderId } : {}),
-      ...(body.groupId ? { groupId: body.groupId } : {}),
-      ...(body.documentId ? { documentId: body.documentId } : {}),
-      ...(body.requestId ? { requestId: body.requestId } : {}),
-      ...(body.business ? { business: body.business } : {}),
-      ...(body.type ? { type: body.type } : {}),
-      ...(body.tag ? { tag: body.tag } : {}),
+      ...(body.folderbaseid ? { folderbaseid: body.folderbaseid } : {}),
+      ...(body.pageNo ? { pageNo: body.pageNo } : {}),
+      ...(body.pageSize ? { pageSize: body.pageSize } : {}),
     }
     const notificationApiPrefix = '/api/r/internal'
     const response = await $fetch.raw<Record<string, unknown>>(`${config.public.apiBase}${notificationApiPrefix}/ecology_oa/company_document/detail`, {

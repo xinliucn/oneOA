@@ -1,9 +1,14 @@
 <template>
     <div class="desktop-layout">
         <header class="desktop__header">
-            <div class="desktop__logo">
+            <button
+                type="button"
+                class="desktop__logo"
+                aria-label="Back to desktop home"
+                @click="handleLogoClick"
+            >
                 <img src="~/assets/images/dchLogo.png" alt="SuperApp Logo">
-            </div>
+            </button>
             <div class="desktop_header_actions">
                 <LocaleDropdown />
                 <el-button circle class="action-btn">
@@ -84,6 +89,8 @@ const handleMenuSelect = (index: string) => {
     if (path) navigateTo(path)
 }
 
+const handleLogoClick = () => navigateTo('/desktop/news')
+
 const handleCommand = async (command: string) => {
     if (command === 'profile') {
         console.log('打开个人信息页面')
@@ -135,6 +142,10 @@ onBeforeUnmount(() => {
     .desktop__logo {
         width: 200px;
         height: 40px;
+        border: 0;
+        padding: 0;
+        background: transparent;
+        cursor: pointer;
 
         img {
             width: 100%;

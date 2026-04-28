@@ -71,6 +71,7 @@ interface CompanyDocumentGroupResponseItem {
 
 interface CompanyDocumentGroup {
   slug: string
+  folderbaseid: string
   title: string
   category: string
   count: number
@@ -130,6 +131,10 @@ const getStatus = (item: CompanyDocumentGroupResponseItem): CompanyDocumentStatu
 const { data: companyDocumentResponse } = await useAsyncData('company-document-groups', () => {
   return $fetch('/api/ecologyOa/companyDocument', {
     method: 'POST',
+    body: {
+      page: 1,
+      pageSize: 100,
+    },
   })
 })
 
@@ -143,6 +148,7 @@ const companyDocumentGroups = computed<CompanyDocumentGroup[]>(() => {
 
     return {
       slug,
+      folderbaseid: String(item.osid || item.id || title),
       title,
       category: item.FolderDescription || title,
       count,
@@ -173,6 +179,7 @@ const handleGroupClick = (group: CompanyDocumentGroup) => {
     query: {
       title: group.title,
       count: group.count,
+      folderbaseid: group.folderbaseid,
     },
   })
 }

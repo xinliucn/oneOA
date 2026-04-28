@@ -3,20 +3,25 @@
         <header class="mobile__header">
             <div class="mobile__header-left">
                 <IconCustom name="menu" :size="24" class="menu-icon" @click="openMenu"/>
-                <div class="mobile__logo">
+                <button
+                    type="button"
+                    class="mobile__logo"
+                    aria-label="Back to mobile home"
+                    @click="handleLogoClick"
+                >
                     <img src="~/assets/images/dchLogo.png" alt="SuperApp Logo">
-                </div>
+                </button>
             </div>
             <div class="mobile__header-right">
                 <!-- <el-button circle class="action-btn active-btn">
                     <IconCustom name="share" :size="20" />
                 </el-button> -->
                 <LocaleDropdown variant="mobile" placement="bottom-end" />
-                <!-- <NotificationBell
+                <NotificationBell
                     :button-size="36"
                     :icon-size="20"
                 />
-                <el-avatar :size="40" src="/favicon.png" /> -->
+                <!-- <el-avatar :size="40" src="/favicon.png" /> -->
             </div>
         </header>
         <main class="mobile__main">
@@ -42,6 +47,8 @@
                 </div>
             </div>
         </footer>
+        <MobileToast />
+        <MobileIOSNotificationPermissionPrompt />
         <MobileSidebar v-model="isSidebarOpen" />
     </div>
 </template>
@@ -51,6 +58,9 @@
 import { provide, watch } from 'vue'
 import { createUserWatermark, removeWatermark } from '~/utils/watermark'
 import MobileSidebar from '~/components/MobileSidebar.vue'
+import MobileToast from '~/components/MobileToast.vue'
+import MobileIOSNotificationPermissionPrompt from '~/components/MobileIOSNotificationPermissionPrompt.vue'
+import NotificationBell from '~/components/NotificationBell.vue'
 
 const { user } = useAuth()
 const { t } = useAppI18n()
@@ -105,6 +115,11 @@ const handleTabClick = (tabIndex: number) => {
     if (route.path !== '/mobile') {
         return navigateTo('/mobile')
     }
+}
+
+const handleLogoClick = () => {
+    activeTab.value = 1
+    return navigateTo('/mobile')
 }
 
 const openMenu = () => {
@@ -179,6 +194,10 @@ onBeforeUnmount(() => {
 
     .mobile__logo {
         height: 32px;
+        border: 0;
+        padding: 0;
+        background: transparent;
+        cursor: pointer;
 
         img {
             height: 100%;
@@ -226,6 +245,42 @@ onBeforeUnmount(() => {
 
 :deep(.notification-bell-popover--mobile .el-popper__arrow) {
     display: none;
+}
+
+:global(.mobile-global-toast) {
+    position: fixed;
+    z-index: 2147483647;
+    top: calc(env(safe-area-inset-top, 0px) + 18px);
+    left: 50%;
+    max-width: calc(100vw - 96px);
+    transform: translate(-50%, -8px);
+    padding: 8px 16px;
+    border-radius: 999px;
+    font-size: 15px;
+    line-height: 1.2;
+    text-align: center;
+    white-space: nowrap;
+    box-shadow: 0 2px 8px rgb(0 0 0 / 8%);
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.2s ease, transform 0.2s ease;
+}
+
+:global(.mobile-global-toast.is-visible) {
+    opacity: 1;
+    transform: translateX(-50%);
+}
+
+:global(.mobile-global-toast--success) {
+    border: 1px solid #43b563;
+    background: #d9f3df;
+    color: #007a1d;
+}
+
+:global(.mobile-global-toast--error) {
+    border: 1px solid #d4586f;
+    background: #fde7ec;
+    color: #a60a3a;
 }
 
 .mobile__footer {

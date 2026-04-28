@@ -74,6 +74,31 @@
         />
       </div>
     </div>
+
+    <div
+      v-if="subscriptionPrompt.visible"
+      class="notification-panel__ios-overlay"
+    >
+      <section class="notification-panel__ios-dialog">
+        <h2 class="notification-panel__ios-title">
+          Notifications {{ subscriptionPrompt.type === 'enabled' ? 'Enabled' : 'Disabled' }}
+        </h2>
+        <p class="notification-panel__ios-message">
+          {{ subscriptionPrompt.type === 'enabled'
+            ? 'Notifications are on. You’ll receive alerts for new to-do list items.'
+            : 'You won’t receive to-do list alerts unless notifications are enabled. Enable in Settings > Notifications.' }}
+        </p>
+        <div class="notification-panel__ios-actions">
+          <button
+            type="button"
+            class="notification-panel__ios-action"
+            @click="dismissSubscriptionPrompt"
+          >
+            Dismiss
+          </button>
+        </div>
+      </section>
+    </div>
   </div>
 </template>
 
@@ -108,7 +133,25 @@ const route = useRoute()
 
 const activeFilter = ref('all')
 const isPushToggleLoading = ref(false)
+const subscriptionPrompt = reactive({
+  visible: false,
+  type: 'enabled' as 'enabled' | 'disabled',
+})
 const desktopToggleOn = computed(() => pushStatus.value === 'subscribed')
+
+const dismissSubscriptionPrompt = () => {
+  subscriptionPrompt.visible = false
+}
+
+const showSubscriptionResultPrompt = (enabled: boolean) => {
+  console.info('[NotificationPanel subscription result]', {
+    enabled,
+    pushStatus: pushStatus.value,
+  })
+
+  subscriptionPrompt.type = enabled ? 'enabled' : 'disabled'
+  subscriptionPrompt.visible = true
+}
 
 const formatCategoryLabel = (value?: string) => {
   const raw = value?.trim()
@@ -202,7 +245,8 @@ const toggleDesktopSubscription = async () => {
       return
     }
 
-    await subscribe()
+    const nextSubscription = await subscribe()
+    showSubscriptionResultPrompt(Boolean(nextSubscription))
   }
   finally {
     isPushToggleLoading.value = false
@@ -219,10 +263,12 @@ const togglePageSubscription = async () => {
   try {
     if (desktopToggleOn.value) {
       await unsubscribe()
+      showSubscriptionResultPrompt(false)
       return
     }
 
-    await subscribe()
+    const nextSubscription = await subscribe()
+    showSubscriptionResultPrompt(Boolean(nextSubscription))
   }
   finally {
     isPushToggleLoading.value = false
@@ -388,6 +434,63 @@ onMounted(async () => {
   display: flex;
   flex-direction: column;
   background: #ffffff;
+}
+
+.notification-panel__ios-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 10000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  background: rgb(0 0 0 / 28%);
+}
+
+.notification-panel__ios-dialog {
+  width: min(290px, calc(100vw - 64px));
+  overflow: hidden;
+  border-radius: 18px;
+  background: #f7f7f7;
+  color: #111111;
+  text-align: center;
+  box-shadow: 0 16px 40px rgb(0 0 0 / 22%);
+}
+
+.notification-panel__ios-title {
+  margin: 0;
+  padding: 18px 20px 6px;
+  font-size: 14px;
+  line-height: 1.25;
+  font-weight: 700;
+}
+
+.notification-panel__ios-message {
+  margin: 0;
+  padding: 0 20px 18px;
+  color: #111111;
+  font-size: 12px;
+  line-height: 1.28;
+}
+
+.notification-panel__ios-actions {
+  display: flex;
+  padding: 0 12px 12px;
+}
+
+.notification-panel__ios-actions--split {
+  gap: 8px;
+}
+
+.notification-panel__ios-action {
+  flex: 1;
+  min-height: 42px;
+  border: 0;
+  border-radius: 999px;
+  background: #d9d9d9;
+  color: #111111;
+  font-size: 12px;
+  font-weight: 700;
 }
 
 :global(.notification-panel__dropdown-popper.el-popper),

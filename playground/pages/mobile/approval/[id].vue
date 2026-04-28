@@ -1,5 +1,7 @@
 <template>
   <div class="mobile-approval">
+    <MobileToast />
+
     <header class="mobile-approval__header">
       <button class="mobile-approval__back" type="button" @click="handleBack">
         <IconCustom name="chevron-right" :size="18" :rotate="180" />
@@ -69,10 +71,6 @@
           </div>
         </div>
 
-        <!-- <div v-if="approval.latestComment" class="mobile-approval__field mobile-approval__field--comment">
-          <span class="mobile-approval__field-label">Latest Comment</span>
-          <span class="mobile-approval__field-value">{{ approval.latestComment }}</span>
-        </div> -->
 
         <button type="button" class="mobile-approval__link">
           {{ 'View details in WOA-DPM' }} &gt;
@@ -96,8 +94,13 @@
           ...
         </button>
       </div>
-      <button type="button" class="mobile-approval__confirm" :disabled="!selectedAction" @click="handleConfirm">
-        {{ submitButtonName }}
+      <button
+        type="button"
+        class="mobile-approval__confirm"
+        :disabled="!selectedAction || submittingAction"
+        @click="handleConfirm"
+      >
+        {{ submittingAction ? 'Submitting...' : submitButtonName }}
       </button>
     </footer>
   </div>
@@ -111,8 +114,11 @@
 
 <script setup lang="ts">
 import type { ApprovalAction } from '~/types/approval'
+import MobileToast from '~/components/MobileToast.vue'
+
 const { form, getFormData } = useApplicationCatalog()
 const toDoFrom: any = useState('mobile:todo-form', () => null)
+const { showToast } = useMobileToast()
 
 definePageMeta({
   layout: false,
@@ -125,6 +131,8 @@ const requestId = computed(() => String(route.query.requestId || toDoFrom.value?
 const showAllApprovers = ref(false)
 const selectedAction = ref<ApprovalAction | ''>('')
 const actionComment = ref('')
+const submittingAction = ref(false)
+const mobileActiveTab = useState('mobile:activeTab', () => 1)
 const timelinePreviewCount = 2
 
 type WorkflowField = {
@@ -330,19 +338,59 @@ const selectAction = (action: ApprovalAction) => {
   selectedAction.value = action
 }
 
-const handleConfirm = () => {
-  if (!selectedAction.value) {
-    return
+const getActionToastMessage = (action: ApprovalAction, referenceNumber: string) => {
+  if (action === 'Reject') {
+    return `${referenceNumber} Rejected!`
   }
-  selectedAction.value = ''
-  actionComment.value = ''
-  navigateTo('/mobile')
+
+  if (action === 'Return') {
+    return `${referenceNumber} Returned!`
+  }
+
+  return `${referenceNumber} Approved!`
 }
 
-// onMounted(async () => {
-//   await bootstrap()
-//   await ensureApproval(approvalId.value)
-// })
+const workflowFormActionEndpoint = '/api/todo/workflowFormAction' as string
+
+const handleConfirm = async () => {
+  if (!selectedAction.value || submittingAction.value) {
+    return
+  }
+
+  const action = selectedAction.value
+  const comment = actionComment.value
+  const submitParams = form.value?.submitParams ?? {}
+  const referenceNumber = approvalSummary.value.referenceNumber || requestId.value || approvalId.value
+
+  submittingAction.value = true
+
+  try {
+    await $fetch(workflowFormActionEndpoint, {
+      method: 'POST',
+      body: {
+        ...submitParams,
+        action,
+        remark: comment,
+        requestid: submitParams.requestid ?? requestId.value ?? approvalId.value,
+        requestId: submitParams.requestid ?? requestId.value ?? approvalId.value,
+      },
+    })
+
+    showToast(getActionToastMessage(action, referenceNumber), 'success', 5000)
+    selectedAction.value = ''
+    actionComment.value = ''
+    mobileActiveTab.value = 2
+    await navigateTo('/mobile')
+  } catch (error) {
+    const message = error instanceof Error ? error.message : 'Submit failed'
+    showToast(message, 'error')
+    console.error('Failed to submit approval action:', error)
+  } finally {
+    submittingAction.value = false
+  }
+}
+
+
 watch(
   [approvalId, requestId],
   async ([id, currentRequestId]) => {

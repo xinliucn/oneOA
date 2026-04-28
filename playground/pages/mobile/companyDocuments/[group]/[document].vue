@@ -124,6 +124,10 @@ interface CompanyDocumentDetailResponseItem {
     fileName?: string
     filename?: string
     file_name?: string
+    requestid?: string | number
+    requestId?: string | number
+    workflowid?: string | number
+    workflowId?: string | number
   }
 }
 
@@ -146,6 +150,7 @@ definePageMeta({
 
 const route = useRoute()
 const groupSlug = computed(() => String(route.params.group || ''))
+const folderbaseid = computed(() => String(route.query.folderbaseid || groupSlug.value))
 const documentSlug = computed(() => String(route.params.document || ''))
 const groupTitle = computed(() => String(route.query.groupTitle || 'Company Documents'))
 const selectedDocumentDetail = useState<CompanyDocumentDetailResponseItem | null>('company-document:selected-detail', () => null)
@@ -192,11 +197,9 @@ const { data: companyDocumentDetailResponse } = await useAsyncData(
   () => fetchCompanyDocumentDetail('/api/ecologyOa/companyDocumentDetail', {
     method: 'POST',
     body: {
-      id: groupSlug.value,
-      folderId: groupSlug.value,
-      groupId: groupSlug.value,
-      documentId: documentSlug.value,
-      requestId: documentSlug.value,
+      folderbaseid: folderbaseid.value,
+      pageNo: 1,
+      pageSize: 10,
     },
   }),
   {

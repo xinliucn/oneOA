@@ -6,6 +6,10 @@ import { useCurrentUserId } from '~/composables/useCurrentUserId'
 
 type PushStatus = 'idle' | 'unsupported' | 'subscribing' | 'subscribed' | 'denied' | 'error'
 
+type IOSNotificationPermissionPromptState = {
+  visible: boolean
+}
+
 type FCMSubscriptionState = {
   kind: 'fcm'
   platform: 'fcm'
@@ -24,6 +28,7 @@ type FirebaseMessagingClient = {
 
 let firebaseMessagingClientPromise: Promise<FirebaseMessagingClient> | null = null
 let firebaseForegroundListenerBound = false
+let iosPermissionPromptResolver: ((allowed: boolean) => void) | null = null
 
 const urlBase64ToUint8Array = (base64String: string) => {
   const padding = '='.repeat((4 - (base64String.length % 4)) % 4)
@@ -65,6 +70,9 @@ export const usePushSubscription = () => {
   const status = useState<PushStatus>('push:status', () => 'idle')
   const errorMessage = useState<string | null>('push:error', () => null)
   const subscription = useState<LocalSubscriptionState>('push:subscription', () => null)
+  const iosPermissionPrompt = useState<IOSNotificationPermissionPromptState>('push:ios-permission-prompt', () => ({
+    visible: false,
+  }))
 
   const runtimeConfig = useRuntimeConfig()
   const { getCurrentUserId } = useCurrentUserId()
@@ -103,6 +111,29 @@ export const usePushSubscription = () => {
 
   const shouldUseFCM = () => {
     return isChromium() && !isSafari()
+  }
+
+  const requestIOSPermissionPrompt = () => {
+    if (!import.meta.client || !isIOS()) {
+      return Promise.resolve(true)
+    }
+
+    return new Promise<boolean>((resolve) => {
+      iosPermissionPromptResolver = resolve
+      iosPermissionPrompt.value.visible = true
+    })
+  }
+
+  const allowIOSPermissionPrompt = () => {
+    iosPermissionPrompt.value.visible = false
+    iosPermissionPromptResolver?.(true)
+    iosPermissionPromptResolver = null
+  }
+
+  const denyIOSPermissionPrompt = () => {
+    iosPermissionPrompt.value.visible = false
+    iosPermissionPromptResolver?.(false)
+    iosPermissionPromptResolver = null
   }
 
   const isStandalone = () => {
@@ -180,6 +211,15 @@ export const usePushSubscription = () => {
 
     if (Notification.permission === 'granted') {
       return 'granted'
+    }
+
+    if (isIOS() && Notification.permission === 'default') {
+      const allowed = await requestIOSPermissionPrompt()
+
+      if (!allowed) {
+        status.value = 'denied'
+        return 'denied'
+      }
     }
 
     const result = await Notification.requestPermission()
@@ -394,14 +434,45 @@ export const usePushSubscription = () => {
   }
 
   const subscribe = async () => {
-    if (!import.meta.client || !isSupported.value) {
-      status.value = 'unsupported'
-      return null
+    const logSubscribeDebug = (stage: string, extra: Record<string, unknown> = {}) => {
+      if (!import.meta.client) {
+        return
+      }
+
+      console.info('[Push subscribe debug]', stage, {
+        permission: 'Notification' in window ? Notification.permission : 'Notification API missing',
+        isSupported: isSupported.value,
+        isIOS: isIOS(),
+        isSafari: isSafari(),
+        isStandalone: isStandalone(),
+        shouldUseFCM: shouldUseFCM(),
+        hasNotification: 'Notification' in window,
+        hasServiceWorker: 'serviceWorker' in navigator,
+        hasPushManager: 'PushManager' in window,
+        status: status.value,
+        errorMessage: errorMessage.value,
+        userAgent: navigator.userAgent,
+        ...extra,
+      })
     }
 
-    if (!shouldUseFCM() && isIOS() && !isStandalone()) {
-      status.value = 'error'
-      errorMessage.value = 'iOS 需要先将站点添加到主屏幕，才能开启推送通知。'
+    logSubscribeDebug('start')
+
+    if (import.meta.client && isIOS() && 'Notification' in window && Notification.permission === 'default') {
+      const allowed = await requestIOSPermissionPrompt()
+
+      logSubscribeDebug('ios-custom-permission-result', { allowed })
+
+      if (!allowed) {
+        status.value = 'denied'
+        logSubscribeDebug('stopped-by-custom-permission-denied')
+        return null
+      }
+    }
+
+    if (!import.meta.client || !isSupported.value) {
+      status.value = 'unsupported'
+      logSubscribeDebug('unsupported')
       return null
     }
 
@@ -410,12 +481,16 @@ export const usePushSubscription = () => {
       errorMessage.value = null
 
       const permission = await ensurePermission()
+      logSubscribeDebug('native-permission-result', { permission })
+
       if (permission !== 'granted') {
         status.value = permission === 'denied' ? 'denied' : 'idle'
+        logSubscribeDebug('permission-not-granted', { permission })
         return null
       }
 
       const registration = await ensureServiceWorkerRegistration()
+      logSubscribeDebug('service-worker-ready', { scope: registration.scope })
       let nextSubscription: SyncableSubscription
 
       if (shouldUseFCM()) {
@@ -437,11 +512,16 @@ export const usePushSubscription = () => {
       await syncSubscription(nextSubscription)
       subscription.value = nextSubscription
       status.value = 'subscribed'
+      logSubscribeDebug('subscribed', {
+        subscriptionKind: 'token' in nextSubscription ? 'fcm' : 'webpush',
+        subscriptionIdentity: getSubscriptionIdentity(nextSubscription),
+      })
 
       return nextSubscription
     } catch (error: any) {
       status.value = 'error'
       errorMessage.value = error?.message || '推送订阅失败'
+      logSubscribeDebug('error', { error })
       console.error('Subscribe push failed:', error)
       return null
     }
@@ -517,9 +597,12 @@ export const usePushSubscription = () => {
     status,
     errorMessage,
     subscription,
+    iosPermissionPrompt,
     isSupported,
     init,
     ensurePermission,
+    allowIOSPermissionPrompt,
+    denyIOSPermissionPrompt,
     subscribe,
     unsubscribe,
   }
