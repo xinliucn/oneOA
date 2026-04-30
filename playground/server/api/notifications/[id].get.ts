@@ -77,13 +77,8 @@ export default defineEventHandler(async (event) => {
       method: 'GET',
       headers: getForwardHeaders(event),
     })
-    const item = pickNotificationDetail(response._data)
 
-    forwardSetCookieHeaders(event, response)
-
-    return {
-      item: item ? normalizeNotification(item) : null,
-    }
+    return response
   }
   catch (error: unknown) {
     console.error('Get notification detail API error:', error)

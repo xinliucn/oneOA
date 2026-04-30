@@ -1,6 +1,8 @@
 <template>
+  <NuxtPage v-if="isPreviewRoute" />
+
   <div
-    v-if="documentDetail"
+    v-else-if="documentDetail"
     class="mobile-company-document-detail"
   >
     <div class="mobile-company-document-detail__toolbar">
@@ -28,14 +30,18 @@
         {{ documentDetail.title }}
       </h1>
 
-      <div class="mobile-company-document-detail__file">
+      <button
+        type="button"
+        class="mobile-company-document-detail__file"
+        @click="openPreview"
+      >
         <IconCustom
           name="document"
           :size="15"
           color="#B10F49"
         />
-        <span>{{ documentDetail.fileName }}</span>
-      </div>
+        <span>{{ previewFileName }}</span>
+      </button>
 
       <div class="mobile-company-document-detail__meta">
         <div class="mobile-company-document-detail__meta-item">
@@ -124,6 +130,11 @@ interface CompanyDocumentDetailResponseItem {
     fileName?: string
     filename?: string
     file_name?: string
+    serverRelativeUrl?: string
+    ServerRelativeUrl?: string
+    server_relative_url?: string
+    fileUrl?: string
+    file_url?: string
     requestid?: string | number
     requestId?: string | number
     workflowid?: string | number
@@ -131,11 +142,19 @@ interface CompanyDocumentDetailResponseItem {
   }
 }
 
+interface CompanyDocumentPreviewResponse {
+  data?: string
+  fileName?: string
+  contentType?: string
+  documentId?: string
+}
+
 interface CompanyDocumentDetail {
   title: string
   code: string
   version: string
   fileName: string
+  serverRelativeUrl: string
   createdBy: string
   createdDate: string
   publishedDate: string
@@ -152,9 +171,13 @@ const route = useRoute()
 const groupSlug = computed(() => String(route.params.group || ''))
 const folderbaseid = computed(() => String(route.query.folderbaseid || groupSlug.value))
 const documentSlug = computed(() => String(route.params.document || ''))
+const isPreviewRoute = computed(() => route.path.endsWith('/preview'))
 const groupTitle = computed(() => String(route.query.groupTitle || 'Company Documents'))
 const selectedDocumentDetail = useState<CompanyDocumentDetailResponseItem | null>('company-document:selected-detail', () => null)
+const selectedDocumentPreview = useState<CompanyDocumentPreviewResponse | null>('company-document:selected-preview', () => null)
 const accepted = ref(false)
+const fixedPreviewFileName = 'testpdf.pdf'
+const fixedPreviewServerRelativeUrl = '%2Fsites%2FDCHGroupLegalCompliancePublicSite%2FTemplates%2FShared%20Documents%2FKey%20Functions%20-%2002.%20Contract%20Templates%20%26%20Digital%20Playbooks%2F%E5%86%85%E5%9C%B0%E7%89%A9%E6%B5%81%2F01.%20Digital%20Playbooks%2F02.%20Non%E2%80%91Disclosure%20Agreement%20Playbook%2Ftestpdf.pdf'
 
 const normalizeCompanyDocumentDetailResponse = (response: any): CompanyDocumentDetailResponseItem[] => {
   if (Array.isArray(response)) {
@@ -190,6 +213,20 @@ const getFallbackContentHtml = () => {
   ].join('')
 }
 
+const getMainTableFileName = (mainTable: NonNullable<CompanyDocumentDetailResponseItem['mainTable']>, fallbackTitle: string) => {
+  return mainTable.fileName || mainTable.filename || mainTable.file_name || String(route.query.fileName || '') || fallbackTitle || fixedPreviewFileName
+}
+
+const getMainTableServerRelativeUrl = (mainTable?: CompanyDocumentDetailResponseItem['mainTable']) => {
+  return mainTable?.serverRelativeUrl
+    || mainTable?.ServerRelativeUrl
+    || mainTable?.server_relative_url
+    || mainTable?.fileUrl
+    || mainTable?.file_url
+    || String(route.query.serverRelativeUrl || '')
+    || fixedPreviewServerRelativeUrl
+}
+
 const fetchCompanyDocumentDetail = $fetch as typeof $fetch<unknown>
 
 const { data: companyDocumentDetailResponse } = await useAsyncData(
@@ -221,13 +258,15 @@ const documentDetail = computed<CompanyDocumentDetail | null>(() => {
 
   const { code, version } = getDocumentCodeAndVersion(mainTable.Number_Version)
   const title = mainTable.RequestName || String(route.query.title || code)
-  const fileName = mainTable.fileName || mainTable.filename || mainTable.file_name || `${title}.pdf`
+  const serverRelativeUrl = getMainTableServerRelativeUrl(mainTable)
+  const fileName = getMainTableFileName(mainTable, serverRelativeUrl.split('/').pop() || `${title}.pdf`)
 
   return {
     title,
     code,
     version,
     fileName,
+    serverRelativeUrl,
     createdBy: mainTable.createdby || '-',
     createdDate: mainTable.createddate || '-',
     publishedDate: mainTable.RequestPublishDate || '-',
@@ -236,11 +275,65 @@ const documentDetail = computed<CompanyDocumentDetail | null>(() => {
   }
 })
 
+const previewQuery = computed<{ serverRelativeUrl: string, fileName: string }>(() => {
+  return {
+    serverRelativeUrl: fixedPreviewServerRelativeUrl,
+    fileName: fixedPreviewFileName,
+  }
+})
+
+const scopedDocumentPreview = computed(() => {
+  return selectedDocumentPreview.value?.documentId === documentSlug.value
+    ? selectedDocumentPreview.value
+    : null
+})
+
+const { data: companyDocumentPreviewResponse } = await useAsyncData(
+  'company-document-preview',
+  () => $fetch<CompanyDocumentPreviewResponse>('/api/ecologyOa/companyDocumentPreview', {
+    method: 'GET',
+    query: previewQuery.value,
+  }),
+  {
+    watch: [documentSlug],
+  },
+)
+
+watch(
+  companyDocumentPreviewResponse,
+  (response) => {
+    if (response) {
+      selectedDocumentPreview.value = {
+        ...response,
+        documentId: documentSlug.value,
+      }
+    }
+  },
+  { immediate: true },
+)
+
+const previewFileName = computed(() => {
+  return scopedDocumentPreview.value?.fileName || companyDocumentPreviewResponse.value?.fileName || documentDetail.value?.fileName || 'Preview file'
+})
+
 const handleBack = () => {
   return navigateTo({
     path: `/mobile/companyDocuments/${encodeURIComponent(groupSlug.value)}`,
     query: {
       title: groupTitle.value,
+    },
+  })
+}
+
+const openPreview = () => {
+  return navigateTo({
+    path: `/mobile/companyDocuments/${encodeURIComponent(groupSlug.value)}/${encodeURIComponent(documentSlug.value)}/preview`,
+    query: {
+      groupTitle: groupTitle.value,
+      folderbaseid: folderbaseid.value,
+      serverRelativeUrl: previewQuery.value.serverRelativeUrl,
+      title: documentDetail.value?.title || '',
+      fileName: previewFileName.value,
     },
   })
 }
@@ -302,10 +395,19 @@ const handleAccept = () => {
   min-height: 34px;
   padding: 0 12px;
   margin-bottom: 18px;
+  background: #ffffff;
   border: 1px solid #d7d7d7;
   border-radius: 999px;
   color: #666666;
   font-size: 13px;
+  max-width: 100%;
+}
+
+.mobile-company-document-detail__file span {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .mobile-company-document-detail__meta {

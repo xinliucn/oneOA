@@ -36,7 +36,7 @@
             Recents
           </button>
         </div>
-        <!-- <button type="button">Edit</button> -->
+        <button type="button">Edit</button>
       </div>
       <div class="favourites-grid">
         <button v-for="item in visibleFavouriteItems" :key="item.label" type="button" class="favourite-item">

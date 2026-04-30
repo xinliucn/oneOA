@@ -1,4 +1,4 @@
-export type MobileToastType = 'success' | 'error'
+export type MobileToastType = 'success' | 'error' | 'reject'
 
 interface MobileToastState {
   visible: boolean
@@ -50,9 +50,23 @@ const renderNativeToast = (message: string, type: MobileToastType) => {
   element.style.pointerEvents = 'none'
   element.style.opacity = '1'
   element.style.transition = 'opacity 0.2s ease, transform 0.2s ease'
-  element.style.border = type === 'success' ? '1px solid #43b563' : '1px solid #d4586f'
-  element.style.background = type === 'success' ? '#d9f3df' : '#fde7ec'
-  element.style.color = type === 'success' ? '#007a1d' : '#a60a3a'
+  if (type === 'success') {
+    element.style.border = '1px solid #43b563'
+    element.style.background = '#d9f3df'
+    element.style.color = '#007a1d'
+    return
+  }
+
+  if (type === 'reject') {
+    element.style.border = '1px solid #ff6f86'
+    element.style.background = '#ffe5ec'
+    element.style.color = '#ff1f2d'
+    return
+  }
+
+  element.style.border = '1px solid #d4586f'
+  element.style.background = '#fde7ec'
+  element.style.color = '#a60a3a'
 }
 
 const hideNativeToast = () => {

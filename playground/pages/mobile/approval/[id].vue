@@ -1,5 +1,7 @@
 <template>
-  <div class="mobile-approval">
+  <NuxtPage v-if="isAttachmentRoute" />
+
+  <div v-else class="mobile-approval">
     <MobileToast />
 
     <header class="mobile-approval__header">
@@ -55,13 +57,22 @@
         </div>
 
         <div v-if="attachments.length > 0" class="mobile-approval__attachments">
-          <span class="mobile-approval__attachment">
-            <IconCustom name="document" :size="14" color="#5a78a5" />
-            {{ attachments[0]?.name }}
-          </span>
-          <span v-if="attachments.length > 1" class="mobile-approval__attachment mobile-approval__attachment--count">
+          <NuxtLink
+            :to="attachmentRoute"
+            class="mobile-approval__attachment"
+          >
+            <span class="mobile-approval__attachment-icon">
+              <IconCustom name="document" :size="13" color="#3b82f6" />
+            </span>
+            <span class="mobile-approval__attachment-name">{{ attachments[0]?.name }}</span>
+          </NuxtLink>
+          <NuxtLink
+            v-if="attachments.length > 1"
+            :to="attachmentRoute"
+            class="mobile-approval__attachment mobile-approval__attachment--count"
+          >
             +{{ attachments.length - 1 }}
-          </span>
+          </NuxtLink>
         </div>
 
         <div class="mobile-approval__fields">
@@ -72,7 +83,11 @@
         </div>
 
 
-        <button type="button" class="mobile-approval__link">
+        <button
+          type="button"
+          class="mobile-approval__link"
+          @click="openWorkflowDetail"
+        >
           {{ 'View details in WOA-DPM' }} &gt;
         </button>
       </section>
@@ -117,6 +132,7 @@ import type { ApprovalAction } from '~/types/approval'
 import MobileToast from '~/components/MobileToast.vue'
 
 const { form, getFormData } = useApplicationCatalog()
+const { formAttachments, getFormAttachments } = useToDoData()
 const toDoFrom: any = useState('mobile:todo-form', () => null)
 const { showToast } = useMobileToast()
 
@@ -128,6 +144,7 @@ definePageMeta({
 const route = useRoute()
 const approvalId = computed(() => String(route.params.id || ''))
 const requestId = computed(() => String(route.query.requestId || toDoFrom.value?.requestId || ''))
+const isAttachmentRoute = computed(() => route.path.includes('/attachments'))
 const showAllApprovers = ref(false)
 const selectedAction = ref<ApprovalAction | ''>('')
 const actionComment = ref('')
@@ -253,6 +270,10 @@ const formFields = computed(() => {
 })
 
 const attachments = computed(() => {
+  if (formAttachments.value.length > 0) {
+    return formAttachments.value
+  }
+
   const fileDatas = form.value?.formInfo?.maindata?.field14582?.specialobj?.filedatas
 
   if (!Array.isArray(fileDatas)) {
@@ -334,6 +355,48 @@ const submitButtonName = computed(() => {
 
 const handleBack = () => navigateTo('/mobile')
 
+const attachmentRoute = computed(() => {
+  const requestQuery = {
+    requestId: requestId.value || approvalId.value,
+  }
+  const attachment = attachments.value[0]
+
+  if (attachments.value.length === 1 && attachment) {
+    return {
+      path: `/mobile/approval/${approvalId.value}/attachments/${attachment.id}`,
+      query: requestQuery,
+    }
+  }
+
+  return {
+    path: `/mobile/approval/${approvalId.value}/attachments`,
+    query: requestQuery,
+  }
+})
+
+const getWorkflowDetailUrl = () => {
+  const params = form.value?.formInfo?.params ?? {}
+  const currentRequestId = String(params.requestid || requestId.value || approvalId.value)
+
+  if (!currentRequestId) {
+    return ''
+  }
+
+  return `https://platform-uat.dchbi.app/spa/workflow/static4mobileform/index.html#/req?requestid=${encodeURIComponent(currentRequestId)}`
+}
+
+const openWorkflowDetail = async () => {
+  const detailUrl = getWorkflowDetailUrl()
+
+  if (!detailUrl) {
+    return
+  }
+
+  await navigateTo(detailUrl, {
+    external: true,
+  })
+}
+
 const selectAction = (action: ApprovalAction) => {
   selectedAction.value = action
 }
@@ -351,6 +414,7 @@ const getActionToastMessage = (action: ApprovalAction, referenceNumber: string) 
 }
 
 const workflowFormActionEndpoint = '/api/todo/workflowFormAction' as string
+const rejectRequestEndpoint = '/api/todo/rejectRequest' as string
 
 const handleConfirm = async () => {
   if (!selectedAction.value || submittingAction.value) {
@@ -360,23 +424,33 @@ const handleConfirm = async () => {
   const action = selectedAction.value
   const comment = actionComment.value
   const submitParams = form.value?.submitParams ?? {}
+  const currentRequestId = String(submitParams.requestid ?? requestId.value ?? approvalId.value)
   const referenceNumber = approvalSummary.value.referenceNumber || requestId.value || approvalId.value
 
   submittingAction.value = true
 
   try {
-    await $fetch(workflowFormActionEndpoint, {
-      method: 'POST',
-      body: {
-        ...submitParams,
-        action,
-        remark: comment,
-        requestid: submitParams.requestid ?? requestId.value ?? approvalId.value,
-        requestId: submitParams.requestid ?? requestId.value ?? approvalId.value,
-      },
-    })
+    if (action === 'Reject') {
+      await $fetch(rejectRequestEndpoint, {
+        method: 'POST',
+        body: {
+          requestId: currentRequestId,
+        },
+      })
+    } else {
+      await $fetch(workflowFormActionEndpoint, {
+        method: 'POST',
+        body: {
+          ...submitParams,
+          action,
+          remark: comment,
+          requestid: currentRequestId,
+          requestId: currentRequestId,
+        },
+      })
+    }
 
-    showToast(getActionToastMessage(action, referenceNumber), 'success', 5000)
+    showToast(getActionToastMessage(action, referenceNumber), action === 'Reject' ? 'reject' : 'success', 5000)
     selectedAction.value = ''
     actionComment.value = ''
     mobileActiveTab.value = 2
@@ -398,7 +472,10 @@ watch(
       return
     }
 
-    await getFormData(currentRequestId || id)
+    await Promise.all([
+      getFormData(currentRequestId || id),
+      getFormAttachments(currentRequestId || id),
+    ])
   },
   { immediate: true },
 )
@@ -527,12 +604,15 @@ watch(
 }
 
 .mobile-approval__progress {
-  margin-bottom: 14px;
+  margin-bottom: 12px;
+  border-radius: 10px;
+  box-shadow: 0 8px 18px rgba(0, 0, 0, 0.08);
+  overflow: hidden;
 }
 
 .mobile-approval__progress-bar {
   padding: 6px 10px;
-  border-radius: 8px 8px 0 0;
+  border-radius: 0;
   color: #ffffff;
   font-size: 12px;
   font-weight: 700;
@@ -540,7 +620,7 @@ watch(
 
 .mobile-approval__timeline {
   background: #f3f3f3;
-  border-radius: 0 0 10px 10px;
+  border-radius: 0;
   padding: 10px 12px 12px;
 }
 
@@ -605,28 +685,48 @@ watch(
   display: flex;
   gap: 8px;
   flex-wrap: wrap;
-  margin-bottom: 16px;
+  align-items: center;
+  margin: 0 0 16px;
 }
 
 .mobile-approval__attachment {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
+  gap: 7px;
+  max-width: min(190px, 100%);
   min-height: 28px;
-  padding: 0 12px;
+  padding: 0 11px;
   border-radius: 999px;
-  border: 1px solid #d9d9d9;
+  border: 1px solid #d8dde6;
   background: #ffffff;
-  color: #646464;
+  color: #5f6673;
   font-size: 13px;
   line-height: 1;
+  text-decoration: none;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+}
+
+.mobile-approval__attachment-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 14px;
+  height: 14px;
+  flex: 0 0 14px;
+}
+
+.mobile-approval__attachment-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .mobile-approval__attachment--count {
   justify-content: center;
-  min-width: 40px;
+  min-width: 38px;
+  max-width: none;
   padding: 0 10px;
-  color: #8f8f8f;
+  color: #7f8794;
 }
 
 .mobile-approval__fields {

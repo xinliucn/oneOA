@@ -1,5 +1,12 @@
 export type TodoView = 'approvals' | 'requests' | 'tasks'
 
+export interface WorkflowFormAttachment {
+    id: string
+    name: string
+    url?: string
+    raw: Record<string, unknown>
+}
+
 interface TodoQuery {
     pageNo?: number
     pageNum?: number
@@ -13,6 +20,96 @@ interface TodoResponse<T = any> {
 }
 
 type TodoListResponse<T = any> = T[] | TodoResponse<T>
+
+const stripHtml = (value?: string | number | null) => {
+    if (value === null || value === undefined) {
+        return ''
+    }
+
+    return String(value)
+        .replace(/<br\s*\/?>/gi, ' ')
+        .replace(/<[^>]*>/g, '')
+        .replace(/&nbsp;/g, ' ')
+        .replace(/&gt;/g, '>')
+        .replace(/&lt;/g, '<')
+        .replace(/&amp;/g, '&')
+        .replace(/\s+/g, ' ')
+        .trim()
+}
+
+const isRecord = (value: unknown): value is Record<string, unknown> => {
+    return !!value && typeof value === 'object' && !Array.isArray(value)
+}
+
+const getStringValue = (record: Record<string, unknown>, key: string) => {
+    const value = record[key]
+
+    if (typeof value === 'string' || typeof value === 'number') {
+        return value
+    }
+
+    return ''
+}
+
+const unwrapWorkflowAttachmentPayload = (payload: unknown): unknown => {
+    if (!payload) {
+        return []
+    }
+
+    if (Array.isArray(payload)) {
+        return payload
+    }
+
+    if (!isRecord(payload)) {
+        return []
+    }
+
+    return payload.data
+        ?? payload.result
+        ?? payload.attachments
+        ?? payload.attachmentList
+        ?? payload.filedatas
+        ?? payload.files
+        ?? payload.list
+        ?? []
+}
+
+const normalizeWorkflowFormAttachments = (payload: unknown): WorkflowFormAttachment[] => {
+    const data = unwrapWorkflowAttachmentPayload(payload)
+
+    if (!Array.isArray(data)) {
+        return normalizeWorkflowFormAttachments(data)
+    }
+
+    return data.map((item, index) => {
+        const file = isRecord(item) ? item : {}
+        const url = getStringValue(file, 'downloadUrl')
+            || getStringValue(file, 'downloadurl')
+            || getStringValue(file, 'url')
+            || getStringValue(file, 'fileUrl')
+
+        return {
+            id: String(
+                getStringValue(file, 'id')
+                || getStringValue(file, 'fileid')
+                || getStringValue(file, 'fileId')
+                || getStringValue(file, 'docid')
+                || getStringValue(file, 'docId')
+                || index,
+            ),
+            name: stripHtml(
+                getStringValue(file, 'name')
+                || getStringValue(file, 'filename')
+                || getStringValue(file, 'fileName')
+                || getStringValue(file, 'docname')
+                || getStringValue(file, 'docName')
+                || `File ${index + 1}`,
+            ),
+            ...(url ? { url: String(url) } : {}),
+            raw: file,
+        }
+    })
+}
 
 const requestMap: Record<TodoView, string> = {
     approvals: '/api/todo/approvals',
@@ -80,6 +177,7 @@ export const useToDoData = () => {
     const approvals = useState<any[]>('todo:approvals', () => [])
     const requests = useState<any[]>('todo:requests', () => [])
     const tasks = useState<any[]>('todo:tasks', () => [])
+    const formAttachments = useState<WorkflowFormAttachment[]>('todo:form-attachments', () => [])
     const loading = useState<boolean>('todo:loading', () => false)
 
     const list = computed(() => {
@@ -112,6 +210,25 @@ export const useToDoData = () => {
         return data
     }
 
+    const getFormAttachments = async (requestid: string) => {
+        try {
+            const response = await $fetch<unknown>('/api/todo/formAttachments', {
+                method: 'POST',
+                body: {
+                    requestid,
+                },
+            })
+            const responseData = isRecord(response) ? response.data ?? response : response
+
+            formAttachments.value = normalizeWorkflowFormAttachments(responseData)
+            return formAttachments.value
+        } catch (error) {
+            console.error('Fetch workflow form attachments failed:', error)
+            formAttachments.value = []
+            return []
+        }
+    }
+
     const fetchByView = async (view: TodoView, query: TodoQuery = {}) => {
         activeView.value = view
         loading.value = true
@@ -136,11 +253,13 @@ export const useToDoData = () => {
         approvals,
         requests,
         tasks,
+        formAttachments,
         list,
         loading,
         getApprovals,
         getRequests,
         getTodos,
+        getFormAttachments,
         fetchByView,
     }
 }

@@ -47,6 +47,12 @@ const { toast } = useMobileToast()
   color: #a60a3a;
 }
 
+.mobile-toast--reject {
+  border: 1px solid #ff6f86;
+  background: #ffe5ec;
+  color: #ff1f2d;
+}
+
 .mobile-toast-enter-active,
 .mobile-toast-leave-active {
   transition: opacity 0.2s ease, transform 0.2s ease;
