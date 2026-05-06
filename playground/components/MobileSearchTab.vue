@@ -10,17 +10,23 @@
           placeholder="Search Intranet"
           @keyup.enter="handleSearch"
         />
-       
       </div>
-       <button class="search-bar__ai-btn">
-          AI <span class="ai-star">
-            <IconCustom name="starIcon" :size="20" />
-          </span>
-        </button>
+      <button
+        type="button"
+        class="search-bar__ai-btn"
+        :class="{ 'search-bar__ai-btn--active': isAiMode }"
+        :disabled="!normalizedSearchQuery || isAiBusy"
+        @click="runAiSearch"
+      >
+        <span>{{ aiButtonLabel }}</span>
+        <span class="ai-star">
+          <IconCustom name="starIcon" :size="20" />
+        </span>
+      </button>
     </div>
 
     <!-- 默认：最近搜索 -->
-    <div v-if="!searchQuery" class="mobile-search__recent">
+    <div v-if="!normalizedSearchQuery" class="mobile-search__recent">
       <div
         v-for="item in recentSearches"
         :key="item.id"
@@ -34,28 +40,70 @@
 
     <!-- 搜索结果 -->
     <div v-else class="mobile-search__results">
-      <div v-if="searchResults.length === 0" class="no-results">
+      <div v-if="aiStatusMessage" class="ai-status" :class="{ 'ai-status--error': aiError }">
+        {{ aiStatusMessage }}
+      </div>
+      <div v-if="displayedResults.length === 0 && !isAiBusy" class="no-results">
         <p>No results found for "{{ searchQuery }}"</p>
       </div>
       <div v-else>
         <div
-          v-for="result in searchResults"
+          v-for="result in displayedResults"
           :key="result.id"
           class="result-item"
           @click="handleResultClick(result)"
         >
-          <div class="result-item__title">{{ result.title }}</div>
-          <div class="result-item__desc">{{ result.description }}</div>
+          <div class="result-item__topline">
+            <div class="result-item__title">
+              {{ result.title }}
+            </div>
+            <div v-if="isAiMode && result.aiScore !== undefined" class="result-item__score">
+              {{ Math.round(result.aiScore * 100) }}%
+            </div>
+          </div>
+          <div class="result-item__desc">
+            {{ result.description }}
+          </div>
         </div>
       </div>
     </div>
   </div>
 </template>
 
-<script setup>
-import { ref, computed } from 'vue'
+<script setup lang="ts">
+import { computed, onBeforeUnmount, ref, watch } from 'vue'
+
+type SearchResult = {
+  id: number
+  title: string
+  description: string
+  keywords: string[]
+  aiScore?: number
+}
+
+type EmbeddingExtractor = (
+  input: string | string[],
+  options: { pooling: 'mean', normalize: boolean },
+) => Promise<{ data: ArrayLike<number>, dims?: number[] }>
+
+type TransformersModule = {
+  env?: {
+    allowLocalModels?: boolean
+    useBrowserCache?: boolean
+  }
+  pipeline: (task: string, model: string) => Promise<EmbeddingExtractor>
+}
+
+const AI_MODEL = 'Xenova/multilingual-e5-small'
 
 const searchQuery = ref('')
+const isAiMode = ref(false)
+const isAiBusy = ref(false)
+const aiError = ref('')
+const semanticResults = ref<SearchResult[]>([])
+let extractorPromise: Promise<EmbeddingExtractor> | null = null
+let aiSearchTimer: ReturnType<typeof setTimeout> | null = null
+let latestAiRequestId = 0
 
 const recentSearches = ref([
   { id: 1, query: 'ESG Report 2025' },
@@ -64,28 +112,241 @@ const recentSearches = ref([
   { id: 4, query: 'DCH AI Training Material' },
 ])
 
-const allResults = ref([
-  { id: 1, title: 'Search Result 1', description: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim v...' },
-  { id: 2, title: 'Search Result 2', description: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim v...' },
-  { id: 3, title: 'Search Result 3', description: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim v...' },
-  { id: 4, title: 'Search Result 4', description: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim v...' },
-  { id: 5, title: 'Search Result 5', description: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim v...' },
+const allResults = ref<SearchResult[]>([
+  {
+    id: 1,
+    title: 'ESG Report 2025',
+    description: 'Environmental, social and governance performance report, sustainability goals, and annual disclosure materials.',
+    keywords: ['esg', 'sustainability', 'report', 'environment', 'governance'],
+  },
+  {
+    id: 2,
+    title: 'OA Contract Approval Guide',
+    description: 'Workflow instructions for contract submission, legal review, approval routing, and archived OA records.',
+    keywords: ['oa', 'contract', 'approval', 'legal', 'workflow'],
+  },
+  {
+    id: 3,
+    title: 'Competency Framework',
+    description: 'Role expectations, skill levels, leadership behaviours, and performance development criteria for employees.',
+    keywords: ['competency', 'performance', 'skills', 'career', 'employee'],
+  },
+  {
+    id: 4,
+    title: 'DCH AI Training Material',
+    description: 'Internal AI learning resources covering prompt writing, productivity scenarios, governance, and responsible usage.',
+    keywords: ['ai', 'training', 'prompt', 'productivity', 'governance'],
+  },
+  {
+    id: 5,
+    title: 'Annual Leave Policy',
+    description: 'Human resources policy for leave balance, holiday application, manager approval, and payroll cut-off dates.',
+    keywords: ['hr', 'leave', 'holiday', 'payroll', 'manager'],
+  },
+  {
+    id: 6,
+    title: 'IT Service Desk',
+    description: 'Support channel for laptop setup, account access, password reset, system incidents, and software requests.',
+    keywords: ['it', 'support', 'service', 'password', 'software'],
+  },
+  {
+    id: 7,
+    title: 'Procurement Approval Matrix',
+    description: 'Purchasing thresholds, budget owner rules, vendor onboarding, quotation requirements, and finance approval levels.',
+    keywords: ['procurement', 'purchase', 'vendor', 'finance', 'budget'],
+  },
+  {
+    id: 8,
+    title: 'Staff Directory',
+    description: 'Employee contacts, department information, office location, reporting line, and business unit details.',
+    keywords: ['staff', 'employee', 'contact', 'department', 'directory'],
+  },
 ])
 
-const searchResults = computed(() => {
-  if (!searchQuery.value) return []
+const normalizedSearchQuery = computed(() => searchQuery.value.trim())
+
+const keywordResults = computed(() => {
+  const query = normalizedSearchQuery.value.toLowerCase()
+  if (!query) return []
+
+  const terms = query.split(/\s+/).filter(Boolean)
   return allResults.value
+    .map((result) => {
+      const title = result.title.toLowerCase()
+      const description = result.description.toLowerCase()
+      const keywords = result.keywords.join(' ').toLowerCase()
+      const score = terms.reduce((total, term) => {
+        if (title.includes(term)) return total + 4
+        if (keywords.includes(term)) return total + 3
+        if (description.includes(term)) return total + 1
+        return total
+      }, 0)
+
+      return { result, score }
+    })
+    .filter(({ score }) => score > 0)
+    .sort((a, b) => b.score - a.score)
+    .map(({ result }) => result)
 })
 
-const handleSearch = () => {}
+const displayedResults = computed(() => {
+  if (isAiMode.value && semanticResults.value.length > 0) {
+    return semanticResults.value
+  }
 
-const selectRecent = (query) => {
+  return keywordResults.value
+})
+
+const aiButtonLabel = computed(() => {
+  if (isAiBusy.value) return '...'
+  return isAiMode.value ? 'AI' : 'AI'
+})
+
+const aiStatusMessage = computed(() => {
+  if (aiError.value) return aiError.value
+  if (isAiBusy.value) return 'AI semantic search is loading locally...'
+  if (isAiMode.value && semanticResults.value.length > 0) return `AI semantic ranking by ${AI_MODEL}`
+  return ''
+})
+
+const handleSearch = () => {
+  if (isAiMode.value) {
+    scheduleAiSearch()
+  }
+}
+
+const selectRecent = (query: string) => {
   searchQuery.value = query
 }
 
-const handleResultClick = (result) => {
+const handleResultClick = (result: SearchResult) => {
   console.log('Result clicked:', result.title)
 }
+
+const getExtractor = async () => {
+  if (!import.meta.client) {
+    throw new Error('AI search only runs in the browser.')
+  }
+
+  if (!extractorPromise) {
+    extractorPromise = import('@huggingface/transformers').then(async (module) => {
+      const transformers = module as unknown as TransformersModule
+
+      if (transformers.env) {
+        transformers.env.allowLocalModels = false
+        transformers.env.useBrowserCache = true
+      }
+
+      return transformers.pipeline('feature-extraction', AI_MODEL)
+    })
+  }
+
+  return extractorPromise
+}
+
+const createQueryInput = (query: string) => `query: ${query}`
+
+const createPassageInput = (result: SearchResult) => (
+  `passage: ${result.title}. ${result.description}. ${result.keywords.join(', ')}`
+)
+
+const getVector = async (extractor: EmbeddingExtractor, input: string) => {
+  const output = await extractor(input, { pooling: 'mean', normalize: true })
+  return Array.from(output.data)
+}
+
+const getVectors = async (extractor: EmbeddingExtractor, input: string[]) => {
+  const output = await extractor(input, { pooling: 'mean', normalize: true })
+  const dims = output.dims || []
+  const itemCount = dims[0] || input.length
+  const vectorSize = dims[1] || Math.floor(output.data.length / itemCount)
+  const data = Array.from(output.data)
+  const vectors: number[][] = []
+
+  for (let index = 0; index < itemCount; index += 1) {
+    const start = index * vectorSize
+    vectors.push(data.slice(start, start + vectorSize))
+  }
+
+  return vectors
+}
+
+const dotProduct = (left: number[], right: number[]) => (
+  left.reduce((total, value, index) => total + value * (right[index] || 0), 0)
+)
+
+const performAiSearch = async () => {
+  const query = normalizedSearchQuery.value
+  if (!query) return
+
+  const requestId = latestAiRequestId + 1
+  latestAiRequestId = requestId
+  isAiMode.value = true
+  isAiBusy.value = true
+  aiError.value = ''
+
+  try {
+    const extractor = await getExtractor()
+    const queryVector = await getVector(extractor, createQueryInput(query))
+    const resultVectors = await getVectors(extractor, allResults.value.map(createPassageInput))
+
+    if (requestId !== latestAiRequestId || query !== normalizedSearchQuery.value) return
+
+    semanticResults.value = allResults.value
+      .map((result, index) => ({
+        ...result,
+        aiScore: dotProduct(queryVector, resultVectors[index] || []),
+      }))
+      .sort((a, b) => (b.aiScore || 0) - (a.aiScore || 0))
+  }
+  catch (error) {
+    if (requestId !== latestAiRequestId) return
+
+    console.error(error)
+    aiError.value = 'AI search failed to load. Showing keyword results instead.'
+    semanticResults.value = []
+    isAiMode.value = false
+  }
+  finally {
+    if (requestId === latestAiRequestId) {
+      isAiBusy.value = false
+    }
+  }
+}
+
+const scheduleAiSearch = () => {
+  if (aiSearchTimer) {
+    clearTimeout(aiSearchTimer)
+  }
+
+  aiSearchTimer = setTimeout(() => {
+    void performAiSearch()
+  }, 350)
+}
+
+const runAiSearch = () => {
+  void performAiSearch()
+}
+
+watch(normalizedSearchQuery, (query) => {
+  aiError.value = ''
+
+  if (!query) {
+    semanticResults.value = []
+    isAiMode.value = false
+    return
+  }
+
+  if (isAiMode.value) {
+    scheduleAiSearch()
+  }
+})
+
+onBeforeUnmount(() => {
+  if (aiSearchTimer) {
+    clearTimeout(aiSearchTimer)
+  }
+})
 </script>
 
 <style scoped>
@@ -150,6 +411,16 @@ const handleResultClick = (result) => {
   flex-shrink: 0;
 }
 
+.search-bar__ai-btn--active {
+  background: #A60A3A;
+  color: #FFFFFF;
+}
+
+.search-bar__ai-btn:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
 .ai-star {
   font-size: 11px;
 }
@@ -192,6 +463,21 @@ const handleResultClick = (result) => {
   margin-top: 8px;
 }
 
+.ai-status {
+  padding: 10px 16px;
+  background: #FFF7FA;
+  color: #A60A3A;
+  font-size: 12px;
+  line-height: 1.4;
+  border-bottom: 1px solid #F0D8E1;
+}
+
+.ai-status--error {
+  background: #FFF6F4;
+  color: #B42318;
+  border-bottom-color: #F6D4CF;
+}
+
 .no-results {
   padding: 48px 24px;
   text-align: center;
@@ -209,11 +495,30 @@ const handleResultClick = (result) => {
   background: #F5F5F5;
 }
 
+.result-item__topline {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+}
+
 .result-item__title {
+  flex: 1;
   font-size: 15px;
   font-weight: 600;
   color: #A60A3A;
   margin-bottom: 6px;
+}
+
+.result-item__score {
+  flex-shrink: 0;
+  min-width: 42px;
+  padding: 3px 6px;
+  border-radius: 8px;
+  background: #F7E7ED;
+  color: #A60A3A;
+  font-size: 11px;
+  font-weight: 600;
+  text-align: center;
 }
 
 .result-item__desc {

@@ -1,58 +1,71 @@
 <template>
-    <div class="mobile">
-        <header class="mobile__header">
-            <div class="mobile__header-left">
-                <IconCustom name="menu" :size="24" class="menu-icon" @click="openMenu"/>
-                <button
-                    type="button"
-                    class="mobile__logo"
-                    aria-label="Back to mobile home"
-                    @click="handleLogoClick"
-                >
-                    <img src="~/assets/images/dchLogo.png" alt="SuperApp Logo">
-                </button>
-            </div>
-            <div class="mobile__header-right">
-                <!-- <el-button circle class="action-btn active-btn">
+  <div class="mobile">
+    <header class="mobile__header">
+      <div class="mobile__header-left">
+        <IconCustom
+          name="menu"
+          :size="24"
+          class="menu-icon"
+          @click="openMenu"
+        />
+        <button
+          type="button"
+          class="mobile__logo"
+          aria-label="Back to mobile home"
+          @click="handleLogoClick"
+        >
+          <img
+            src="~/assets/images/dchLogo.png"
+            alt="SuperApp Logo"
+          >
+        </button>
+      </div>
+      <div class="mobile__header-right">
+        <!-- <el-button circle class="action-btn active-btn">
                     <IconCustom name="share" :size="20" />
                 </el-button> -->
-                <LocaleDropdown variant="mobile" placement="bottom-end" />
-                <NotificationBell
-                    :button-size="36"
-                    :icon-size="20"
-                />
-                <!-- <el-avatar :size="40" src="/favicon.png" /> -->
+        <LocaleDropdown
+          variant="mobile"
+          placement="bottom-end"
+        />
+        <NotificationBell
+          :button-size="36"
+          :icon-size="20"
+        />
+        <!-- <el-avatar :size="40" src="/favicon.png" /> -->
+      </div>
+    </header>
+    <main class="mobile__main">
+      <slot />
+    </main>
+    <footer class="mobile__footer">
+      <div class="tab-bar">
+        <div
+          v-for="tab in tabs"
+          :key="tab.index"
+          :class="['tab-item', { active: displayActiveTab === tab.index }]"
+          @click="handleTabClick(tab.index)"
+        >
+          <template v-if="tab.type === 'profile'">
+            <div class="tab-item__profile-avatar">
+              {{ profileInitials }}
             </div>
-        </header>
-        <main class="mobile__main">
-            <slot />
-        </main>
-        <footer class="mobile__footer">
-            <div class="tab-bar">
-                <div
-                    v-for="tab in tabs"
-                    :key="tab.index"
-                    :class="['tab-item', { active: displayActiveTab === tab.index }]"
-                    @click="handleTabClick(tab.index)"
-                >
-                    <template v-if="tab.type === 'profile'">
-                        <div class="tab-item__profile-avatar">
-                            {{ profileInitials }}
-                        </div>
-                    </template>
-                    <template v-else>
-                        <IconCustom :name="tab.icon" :size="24" />
-                    </template>
-                    <span class="tab-label">{{ tab.label }}</span>
-                </div>
-            </div>
-        </footer>
-        <MobileToast />
-        <MobileIOSNotificationPermissionPrompt />
-        <MobileSidebar v-model="isSidebarOpen" />
-    </div>
+          </template>
+          <template v-else>
+            <IconCustom
+              :name="tab.icon"
+              :size="24"
+            />
+          </template>
+          <span class="tab-label">{{ tab.label }}</span>
+        </div>
+      </div>
+    </footer>
+    <MobileToast />
+    <MobileIOSNotificationPermissionPrompt />
+    <MobileSidebar v-model="isSidebarOpen" />
+  </div>
 </template>
-
 
 <script setup lang="ts">
 import { provide, watch } from 'vue'
@@ -78,12 +91,11 @@ const profileInitials = computed(() => {
   return parts.slice(0, 2).map(part => part[0]?.toUpperCase() || '').join('') || 'P'
 })
 
-
 const tabs = computed(() => [
-    { index: 1, icon: 'home', label: t('mobile.tabs.home') },
-    { index: 2, icon: 'todo', label: t('mobile.tabs.todo') },
-    { index: 3, icon: 'apps', label: t('mobile.tabs.applications') },
-    { index: 4, icon: 'search', label: 'Profile', type: 'profile' }
+  { index: 1, icon: 'home', label: t('mobile.tabs.home') },
+  { index: 2, icon: 'todo', label: t('mobile.tabs.todo') },
+  { index: 3, icon: 'apps', label: t('mobile.tabs.applications') },
+  { index: 4, icon: 'search', label: 'Profile', type: 'profile' },
 ])
 
 const displayActiveTab = computed<number | null>(() => {
@@ -111,57 +123,57 @@ const displayActiveTab = computed<number | null>(() => {
 })
 
 const handleTabClick = (tabIndex: number) => {
-    activeTab.value = tabIndex
-    if (route.path !== '/mobile') {
-        return navigateTo('/mobile')
-    }
+  activeTab.value = tabIndex
+  if (route.path !== '/mobile') {
+    return navigateTo('/mobile')
+  }
 }
 
 const handleLogoClick = () => {
-    activeTab.value = 1
-    return navigateTo('/mobile')
+  activeTab.value = 1
+  return navigateTo('/mobile')
 }
 
 const openMenu = () => {
-    isSidebarOpen.value = !isSidebarOpen.value
+  isSidebarOpen.value = !isSidebarOpen.value
 }
 
 // Provide activeTab to child components
 provide('activeTab', activeTab)
 
 watch(
-    () => route.path,
-    (path) => {
-        if (path.startsWith('/mobile/search')) {
-            return
-        }
+  () => route.path,
+  (path) => {
+    if (path.startsWith('/mobile/search')) {
+      return
+    }
 
-        if (path.startsWith('/mobile/notifications')) {
-            return
-        }
+    if (path.startsWith('/mobile/notifications')) {
+      return
+    }
 
-        if (path.startsWith('/mobile/applications')) {
-            activeTab.value = 3
-            return
-        }
+    if (path.startsWith('/mobile/applications')) {
+      activeTab.value = 3
+      return
+    }
 
-        if (path.startsWith('/mobile/approval')) {
-            activeTab.value = 2
-        }
-    },
-    { immediate: true }
+    if (path.startsWith('/mobile/approval')) {
+      activeTab.value = 2
+    }
+  },
+  { immediate: true },
 )
 
 // 在组件挂载后创建水印
 onMounted(() => {
-    if (user.value) {
-        createUserWatermark(user.value)
-    }
+  if (user.value) {
+    createUserWatermark(user.value)
+  }
 })
 
 // 在组件卸载前移除水印
 onBeforeUnmount(() => {
-    removeWatermark()
+  removeWatermark()
 })
 </script>
 

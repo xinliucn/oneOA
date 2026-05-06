@@ -1,13 +1,28 @@
 <template>
   <Teleport to="body">
-    <div v-if="modelValue" class="overlay" @click="emit('update:modelValue', false)" />
+    <div
+      v-if="modelValue"
+      class="overlay"
+      @click="emit('update:modelValue', false)"
+    />
 
     <Transition name="slide">
-      <div v-if="modelValue" class="sidebar">
+      <div
+        v-if="modelValue"
+        class="sidebar"
+      >
         <div class="sidebar__header">
-          <IconCustom name="menu" :size="24" class="close-icon" @click="emit('update:modelValue', false)" />
+          <IconCustom
+            name="menu"
+            :size="24"
+            class="close-icon"
+            @click="emit('update:modelValue', false)"
+          />
           <div class="sidebar__logo">
-            <img src="~/assets/images/dchLogo.png" alt="DCH Logo">
+            <img
+              src="~/assets/images/dchLogo.png"
+              alt="DCH Logo"
+            >
           </div>
         </div>
 
@@ -16,10 +31,13 @@
             v-for="item in menuItems"
             :key="item.label"
             class="sidebar__item"
-            @click="onNavigateTo(item.path, item.tabIndex)"
+            @click="onNavigateTo(item)"
           >
             <div class="sidebar__icon">
-              <IconCustom :name="item.icon" :size="22" />
+              <IconCustom
+                :name="item.icon"
+                :size="22"
+              />
             </div>
             <span class="sidebar__label">{{ item.label }}</span>
           </div>
@@ -32,12 +50,19 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 
-const props = defineProps<{ modelValue: boolean }>()
+type SidebarMenuItem = {
+  icon: string
+  label: string
+  path?: string
+  tabIndex?: number
+}
+
+defineProps<{ modelValue: boolean }>()
 const emit = defineEmits(['update:modelValue'])
 const { t } = useAppI18n()
 const activeTab = useState('mobile:activeTab', () => 1)
 
-const menuItems = computed(() => {
+const menuItems = computed<SidebarMenuItem[]>(() => {
   return [
     { icon: 'document', label: t('nav.news'), path: '/mobile/news' },
     { icon: 'info', label: t('nav.companyInformation'), path: '/mobile/companyInformation' },
@@ -48,20 +73,21 @@ const menuItems = computed(() => {
     { icon: 'todo', label: t('nav.todo'), path: '/mobile', tabIndex: 2 },
     { icon: 'education', label: t('nav.eLearning') },
     { icon: 'shop', label: t('nav.eShop') },
-  ];
+  ]
 })
 
-const onNavigateTo = (path?: string, tabIndex?: number) => {
+const onNavigateTo = (item: SidebarMenuItem) => {
   emit('update:modelValue', false)
-  if (tabIndex) {
-    activeTab.value = tabIndex
+
+  if (item.tabIndex) {
+    activeTab.value = item.tabIndex
   }
 
-  if (!path) {
+  if (!item.path) {
     return
   }
 
-  navigateTo(path)
+  navigateTo(item.path)
 }
 </script>
 
