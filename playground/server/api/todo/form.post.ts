@@ -1,5 +1,5 @@
 export default defineEventHandler(async (event) => {
-    const config = useRuntimeConfig()
+    const config = useRuntimeConfig(event)
     if (config.mockEnabled) {
         return {
             "xml": "<?xml version=\"1.0\" encoding=\"UTF-8\"?><mxGraphModel grid=\"1\" gridSize=\"10\" guides=\"1\" tooltips=\"1\" connect=\"1\" arrows=\"1\" fold=\"1\" page=\"1\" pageScale=\"1\" pageWidth=\"1430\" pageHeight=\"516\" background=\"#ffffff\"><root><mxCell id=\"0\" vertex=\"1\"/><mxCell id=\"1\" vertex=\"1\" parent=\"0\"/><mxCell edge=\"1\" linkId=\"785\" id=\"link_785\" parent=\"1\" value=\"Pending\" source=\"node_655\" target=\"node_657\" isreject=\"0\" exitInfo=\"\" style=\"edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;exitX=1;exitY=0.5;entryX=0;entryY=0.45;jettySize=auto;orthogonalLoop=1;\"><mxGeometry as=\"geometry\" relative=\"1\"/></mxCell><mxCell edge=\"1\" linkId=\"787\" id=\"link_787\" parent=\"1\" value=\"Submitted\" source=\"node_657\" target=\"node_861\" isreject=\"0\" exitInfo=\"\" style=\"edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;exitX=1;exitY=0.5;entryX=0;entryY=0.5;jettySize=auto;orthogonalLoop=1;\"><mxGeometry as=\"geometry\" relative=\"1\"/></mxCell><mxCell edge=\"1\" linkId=\"788\" id=\"link_788\" parent=\"1\" value=\"BU Director Approved\" source=\"node_658\" target=\"node_863\" isreject=\"0\" exitInfo=\"\" style=\"edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;exitX=1;exitY=0.5;entryX=0.5;entryY=1;jettySize=auto;orthogonalLoop=1;\"><mxGeometry as=\"geometry\" relative=\"1\"/></mxCell><mxCell edge=\"1\" linkId=\"789\" id=\"link_789\" parent=\"1\" value=\"Reject\" source=\"node_658\" target=\"node_657\" isreject=\"1\" exitInfo=\"\" style=\"edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;exitX=0.5;exitY=1;entryX=0.5;entryY=1;jettySize=auto;orthogonalLoop=1;\"><mxGeometry as=\"geometry\" relative=\"1\"/></mxCell><mxCell edge=\"1\" linkId=\"1023\" id=\"link_1023\" parent=\"1\" value=\"Branch for BU Head\" source=\"node_861\" target=\"node_862\" isreject=\"0\" exitInfo=\"\" style=\"edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;exitX=1;exitY=0.5;entryX=0;entryY=0.5;jettySize=auto;orthogonalLoop=1;\"><mxGeometry as=\"geometry\" relative=\"1\"/></mxCell><mxCell edge=\"1\" linkId=\"1024\" id=\"link_1024\" parent=\"1\" value=\"Branch for BU Director\" source=\"node_861\" target=\"node_658\" isreject=\"0\" exitInfo=\"\" style=\"edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;exitX=0.5;exitY=1;entryX=0;entryY=0.5;jettySize=auto;orthogonalLoop=1;\"><mxGeometry as=\"geometry\" relative=\"1\"/></mxCell><mxCell edge=\"1\" linkId=\"1025\" id=\"link_1025\" parent=\"1\" value=\"Reject by BU Head\" source=\"node_862\" target=\"node_657\" isreject=\"1\" exitInfo=\"\" style=\"edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;exitX=0.5;exitY=0;entryX=0.5;entryY=0;jettySize=auto;orthogonalLoop=1;\"><mxGeometry as=\"geometry\" relative=\"1\"/></mxCell><mxCell edge=\"1\" linkId=\"1026\" id=\"link_1026\" parent=\"1\" value=\"BU Head Approved\" source=\"node_862\" target=\"node_863\" isreject=\"0\" exitInfo=\"\" style=\"edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;exitX=1;exitY=0.5;entryX=0;entryY=0.5;jettySize=auto;orthogonalLoop=1;\"><mxGeometry as=\"geometry\" relative=\"1\"/></mxCell><mxCell edge=\"1\" linkId=\"1027\" id=\"link_1027\" parent=\"1\" value=\"Approved\" source=\"node_863\" target=\"node_656\" isreject=\"0\" exitInfo=\"\" style=\"edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;exitX=1;exitY=0.5;entryX=0;entryY=0.5;jettySize=auto;orthogonalLoop=1;\"><mxGeometry as=\"geometry\" relative=\"1\"/></mxCell><mxCell id=\"node_655\" nodeId=\"655\" value=\"Created by GICRM\" vertex=\"1\" parent=\"1\" nodeType=\"0\" nodeAttriBute=\"0\" style=\"ellipse;whiteSpace=wrap;html=1;resizable=0;icons={&quot;right&quot;:&quot;icon-workflow-ceshi&quot;};fillColor=#BFF3C3;strokeColor=#5ABD6B;\"><mxGeometry x=\"80\" y=\"80\" width=\"93\" height=\"93\" as=\"geometry\"/></mxCell><mxCell id=\"node_656\" nodeId=\"656\" value=\"BU Submitted\" vertex=\"1\" parent=\"1\" nodeType=\"3\" nodeAttriBute=\"0\" style=\"ellipse;whiteSpace=wrap;html=1;icons={&quot;right&quot;:&quot;icon-workflow-guidang&quot;};fillColor=#BFF3C3;strokeColor=#5ABD6B;resizable=0;\"><mxGeometry x=\"1010\" y=\"80\" width=\"93\" height=\"93\" as=\"geometry\"/></mxCell><mxCell id=\"node_657\" nodeId=\"657\" value=\"Upload and submit Report Outline\" vertex=\"1\" parent=\"1\" nodeType=\"2\" nodeAttriBute=\"0\" style=\"rounded=0;whiteSpace=wrap;html=1;fillColor=#BFF3C3;strokeColor=#5ABD6B;resizable=0;\"><mxGeometry x=\"262\" y=\"91\" width=\"108\" height=\"70\" as=\"geometry\"/></mxCell><mxCell id=\"node_658\" nodeId=\"658\" value=\"BU Director Approval\" vertex=\"1\" parent=\"1\" nodeType=\"1\" nodeAttriBute=\"2\" style=\"rhombus;whiteSpace=wrap;html=1;fillColor=#BFF3C3;strokeColor=#5ABD6B;resizable=0;icons={&quot;left&quot;:&quot;icon-workflow-fenchazhongjiandian&quot;};\"><mxGeometry x=\"650\" y=\"287\" width=\"110\" height=\"100\" as=\"geometry\"/></mxCell><mxCell id=\"node_861\" nodeId=\"861\" value=\"Branch for BU Head and BU Director\" vertex=\"1\" parent=\"1\" nodeType=\"6\" nodeAttriBute=\"1\" style=\"shape=hexagon;perimeter=hexagonPerimeter2;whiteSpace=wrap;html=1;fixedSize=1;rotatable=0;icons={&quot;left&quot;:&quot;icon-workflow-fencha&quot;,&quot;center&quot;:&quot;icon icon-robot icon-robotRelease-preparation&quot;};fillColor=#BFF3C3;strokeColor=#5ABD6B;resizable=0;fontColor=#345e3a;\"><mxGeometry x=\"440\" y=\"86\" width=\"120\" height=\"80\" as=\"geometry\"/></mxCell><mxCell id=\"node_862\" nodeId=\"862\" value=\"BU Head Approval\" vertex=\"1\" parent=\"1\" nodeType=\"1\" nodeAttriBute=\"2\" style=\"rhombus;whiteSpace=wrap;html=1;fillColor=#BFF3C3;strokeColor=#5ABD6B;resizable=0;icons={&quot;left&quot;:&quot;icon-workflow-fenchazhongjiandian&quot;};\"><mxGeometry x=\"650\" y=\"76\" width=\"110\" height=\"100\" as=\"geometry\"/></mxCell><mxCell id=\"node_863\" nodeId=\"863\" value=\"Merge for BU Director and BU Head\" vertex=\"1\" parent=\"1\" nodeType=\"6\" nodeAttriBute=\"4\" targetBranchValue=\"link_788,link_1026\" style=\"shape=hexagon;perimeter=hexagonPerimeter2;rotatable=0;whiteSpace=wrap;html=1;fillColor=#BFF3C3;strokeColor=#5ABD6B;resizable=0;icons={&quot;left&quot;:&quot;icon-workflow-hebing&quot;,&quot;center&quot;:&quot;icon icon-robot icon-robotRelease-preparation&quot;};\"><mxGeometry x=\"830\" y=\"86\" width=\"120\" height=\"80\" as=\"geometry\"/></mxCell></root></mxGraphModel>",
@@ -4386,14 +4386,41 @@ export default defineEventHandler(async (event) => {
     }
     try {
         const body: Record<string, any> = await readBody<Record<string, any>>(event).catch(() => ({}))
+        const requestid = String(body.requestid ?? body.requestId ?? '').trim()
+
+        if (!requestid) {
+            throw createError({
+                statusCode: 400,
+                statusMessage: 'Workflow form requestid is required',
+            })
+        }
+
         const notificationApiPrefix = '/api/r/internal'
-        const response = await $fetch.raw<Record<string, unknown>>(`${config.public.apiBase}${notificationApiPrefix}/ecology_oa/workflow_form`, {
+        const targetUrl = `${config.public.apiBase}${notificationApiPrefix}/ecology_oa/workflow_form`
+        const response = await $fetch.raw<Record<string, unknown>>(targetUrl, {
             method: 'POST',
             headers: getForwardHeaders(event),
+            ignoreResponseError: true,
             body: {
-                requestid: body.requestid ?? body.requestId,
+                requestid,
             },
         })
+
+        if (response.status >= 400) {
+            console.error('Workflow form upstream error:', {
+                requestid,
+                targetUrl,
+                status: response.status,
+                statusText: response.statusText,
+                data: response._data,
+            })
+
+            throw createError({
+                statusCode: response.status,
+                statusMessage: 'Workflow form upstream API failed',
+                data: response._data,
+            })
+        }
 
         forwardSetCookieHeaders(event, response)
 

@@ -24,7 +24,7 @@ const getStatusMessage = (error: Record<string, unknown>) => {
 }
 
 export default defineEventHandler(async (event) => {
-  const config = useRuntimeConfig()
+  const config = useRuntimeConfig(event)
   const body: Record<string, unknown> = await readBody<Record<string, unknown>>(event).catch(() => ({}))
 
   if (config.mockEnabled) {

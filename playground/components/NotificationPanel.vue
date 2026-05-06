@@ -130,6 +130,7 @@ const {
   init: initPushSubscription,
 } = usePushSubscription()
 const route = useRoute()
+const toDoFrom: any = useState('mobile:todo-form', () => null)
 
 const activeFilter = ref('all')
 const isPushToggleLoading = ref(false)
@@ -219,17 +220,102 @@ const filteredNotifications = computed(() => {
   return sortedNotifications
 })
 
+const isExternalLink = (link: string) => /^https?:\/\//i.test(link)
+
+const getPayloadString = (payload: Record<string, any> | null | undefined, keys: string[]) => {
+  if (!payload) {
+    return ''
+  }
+
+  for (const key of keys) {
+    const value = payload[key]
+    if (typeof value === 'string' || typeof value === 'number') {
+      const normalized = String(value).trim()
+      if (normalized) {
+        return normalized
+      }
+    }
+  }
+
+  return ''
+}
+
+const getRequestIdFromLink = (link?: string) => {
+  if (!link) {
+    return ''
+  }
+
+  try {
+    const parsed = new URL(link, 'https://superapp.local')
+    return parsed.searchParams.get('requestId')
+      || parsed.searchParams.get('requestid')
+      || parsed.searchParams.get('request_id')
+      || ''
+  } catch {
+    return ''
+  }
+}
+
+const getNotificationRequestId = (item: NotificationItem) => {
+  return item.requestId?.trim()
+    || getPayloadString(item.payload, ['requestId', 'requestid', 'request_id'])
+    || getRequestIdFromLink(item.link)
+    || ''
+}
+
+const getNotificationReference = (item: NotificationItem, requestId: string) => {
+  return getPayloadString(item.payload, ['requestMark', 'requestmark', 'requestNo', 'request_no', 'referenceNo', 'referenceId'])
+    || item.referenceId?.trim()
+    || requestId
+}
+
 const handleSelect = async (item: NotificationItem) => {
   void markAsRead(item.id)
 
   const isMobileRoute = route.path.startsWith('/mobile')
+
+  if (isMobileRoute) {
+    const requestId = getNotificationRequestId(item)
+
+    if (requestId) {
+      const reference = getNotificationReference(item, requestId)
+      toDoFrom.value = {
+        requestId,
+        requestmark: reference,
+        requestName: item.title,
+        status: item.category || 'Pending',
+        creatorName: item.source,
+        createTime: item.createdAt,
+        receiveTime: item.createdAt,
+        workflowBaseInfo: {
+          workflowName: item.summary,
+        },
+      }
+
+      emit('close')
+
+      await navigateTo({
+        path: `/mobile/approval/${encodeURIComponent(reference)}`,
+        query: {
+          requestId,
+          source: 'notification',
+          notificationId: item.id,
+        },
+      })
+      return
+    }
+  }
+
   const fallback = isMobileRoute
     ? `/mobile/notifications/${encodeURIComponent(item.id)}`
     : `/desktop/notification/${encodeURIComponent(item.id)}`
+  const target = item.link?.trim() || fallback
 
   emit('close')
 
-  await navigateTo(fallback)
+  await navigateTo(target, {
+    external: isExternalLink(target),
+  })
 }
 
 const toggleDesktopSubscription = async () => {

@@ -23,6 +23,7 @@ const mockNotifications: Array<NotificationItem & { payload: NotificationPayload
     title: 'Action Required: Demand & Business Case Approval',
     content: 'Submitted by Victor Ho via WOA-DPM. Please review the latest demand and business case approval request.',
     summary: 'WOA-DPM-26010001',
+    requestId: '506594',
     link: 'https://outlook.office.com/',
     source: 'Victor Ho via WOA-DPM',
     category: 'it',
@@ -30,6 +31,7 @@ const mockNotifications: Array<NotificationItem & { payload: NotificationPayload
     readAt: null,
     payload: {
       variant: 'approval',
+      requestId: '506594',
       user_id: 'demo-user',
       author: 'Victor Ho',
       approval: {

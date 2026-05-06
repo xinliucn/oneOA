@@ -1,6 +1,4 @@
 import type { H3Event } from 'h3'
-import { normalizeNotification } from '../../utils/notification'
-import { getMockNotificationById } from '../../utils/notificationMock'
 
 const getErrorStatusCode = (error: unknown) => {
   if (error && typeof error === 'object' && 'statusCode' in error && typeof error.statusCode === 'number') {
@@ -33,25 +31,6 @@ const getForwardHeaders = (event: H3Event) => {
   }
 }
 
-const forwardSetCookieHeaders = (event: H3Event, response: { headers: Headers }) => {
-  const rawHeaders = response.headers as Headers & { getSetCookie?: () => string[] }
-  const setCookies = rawHeaders.getSetCookie?.() || []
-
-  if (setCookies.length > 0) {
-    setHeader(event, 'set-cookie', setCookies)
-    return
-  }
-
-  const singleSetCookie = response.headers.get('set-cookie')
-  if (singleSetCookie) {
-    setHeader(event, 'set-cookie', singleSetCookie)
-  }
-}
-
-const pickNotificationDetail = (response: any) => {
-  return response?.data?.item || response?.data || response?.item || response
-}
-
 export default defineEventHandler(async (event) => {
   const id = String(getRouterParam(event, 'id') || '').trim()
 
@@ -66,7 +45,29 @@ export default defineEventHandler(async (event) => {
 
   if (config.mockEnabled) {
     return {
-      item: getMockNotificationById(id),
+      "id": 192,
+      "body": "您有一条新的泛微通知",
+      "icon": "/icons/icon-192.png",
+      "title": "泛微通知",
+      "is_read": 1,
+      "read_at": "2026-04-30T16:29:00.831Z",
+      "subtitle": null,
+      "msg_group": "process",
+      "action_url": null,
+      "created_at": "2026-04-30T15:30:00.776Z",
+      "dedupe_key": "ingest:no_message_id:18c254c860ec49bab137fee6856967de",
+      "updated_at": "2026-04-30T16:29:00.831Z",
+      "msg_category": "process",
+      "payload_json": {
+        "msgId": "e9-lPg701d3-1eaad553",
+        "userId": "24703",
+        "requestId": "861868",
+        "userEmail": "xinliu@dchbi.com"
+      },
+      "dispatched_at": null,
+      "msg_publish_at": null,
+      "dispatch_status": "pending",
+      "source_message_id": null
     }
   }
 
@@ -78,10 +79,9 @@ export default defineEventHandler(async (event) => {
       headers: getForwardHeaders(event),
     })
 
-    return response
+    return response._data
   }
   catch (error: unknown) {
-    console.error('Get notification detail API error:', error)
 
     throw createError({
       statusCode: getErrorStatusCode(error),

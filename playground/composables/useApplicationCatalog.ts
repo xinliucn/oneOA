@@ -278,11 +278,17 @@ export const useApplicationCatalog = () => {
   }
 
   const getFormData = async (id: string) => {
+    const requestid = String(id || '').trim()
+    if (!requestid) {
+      form.value = null
+      return
+    }
+
     try {
       const response = await $fetch<any>('/api/todo/form', {
         method: 'POST',
         body: {
-          requestid: id,
+          requestid,
         },
       })
 

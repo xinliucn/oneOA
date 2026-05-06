@@ -1,3 +1,4 @@
+# syntax=docker/dockerfile:1.4
 # 多阶段构建 Dockerfile for Nuxt SSR (Monorepo with Yarn)
 
 # ============================================
@@ -8,16 +9,24 @@ FROM node:20-alpine AS builder
 # 设置工作目录
 WORKDIR /app
 
-# 安装 yarn
-RUN corepack enable && corepack prepare yarn@stable --activate
+# 安装项目锁定的 yarn，并使用国内镜像源提升 Docker 构建稳定性
+RUN corepack enable && corepack prepare yarn@1.22.22 --activate
+ENV NPM_CONFIG_REGISTRY=https://registry.npmmirror.com
+RUN npm config set registry https://registry.npmmirror.com \
+  && yarn config set registry https://registry.npmmirror.com \
+  && yarn config set network-timeout 600000
 
-# 复制整个项目（包括根目录的 package.json 和 workspace 配置）
+# 先复制依赖描述文件，避免业务代码变更导致依赖安装层失效
 COPY package*.json yarn.lock ./
-COPY src/ ./src/
-COPY playground/ ./playground/
+COPY playground/package.json ./playground/package.json
 
 # 安装所有依赖
-RUN yarn install --frozen-lockfile
+RUN --mount=type=cache,target=/usr/local/share/.cache/yarn \
+  yarn install --frozen-lockfile --network-timeout 600000 --network-concurrency 4 --cache-folder /usr/local/share/.cache/yarn
+
+# 复制源码
+COPY src/ ./src/
+COPY playground/ ./playground/
 
 # 准备和构建 superApp 模块
 WORKDIR /app

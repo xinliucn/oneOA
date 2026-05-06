@@ -7,8 +7,9 @@
     <header class="mobile-approval__header">
       <button class="mobile-approval__back" type="button" @click="handleBack">
         <IconCustom name="chevron-right" :size="18" :rotate="180" />
+        <span class="mobile-approval__back-label">{{ backLabel }}</span>
       </button>
-      <h1 class="mobile-approval__header-title">My Approvals</h1>
+      <h1 class="mobile-approval__header-title">{{ headerTitle }}</h1>
       <div class="mobile-approval__header-spacer" />
     </header>
 
@@ -144,6 +145,7 @@ definePageMeta({
 const route = useRoute()
 const approvalId = computed(() => String(route.params.id || ''))
 const requestId = computed(() => String(route.query.requestId || toDoFrom.value?.requestId || ''))
+const isNotificationSource = computed(() => route.query.source === 'notification')
 const isAttachmentRoute = computed(() => route.path.includes('/attachments'))
 const showAllApprovers = ref(false)
 const selectedAction = ref<ApprovalAction | ''>('')
@@ -353,7 +355,18 @@ const submitButtonName = computed(() => {
   return label
 })
 
-const handleBack = () => navigateTo('/mobile')
+const backLabel = computed(() => isNotificationSource.value ? 'Notifications' : '')
+
+const headerTitle = computed(() => {
+  if (isNotificationSource.value) {
+    const reference = approvalSummary.value.referenceNumber || approvalId.value
+    return reference ? `${reference} - Notification` : 'Notification'
+  }
+
+  return 'My Approvals'
+})
+
+const handleBack = () => navigateTo(isNotificationSource.value ? '/mobile/notifications' : '/mobile')
 
 const attachmentRoute = computed(() => {
   const requestQuery = {
@@ -498,7 +511,7 @@ watch(
 }
 
 .mobile-approval__back {
-  width: 32px;
+  min-width: 32px;
   height: 32px;
   border: none;
   border-radius: 999px;
@@ -507,7 +520,15 @@ watch(
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  gap: 2px;
+  padding: 0 8px;
   box-shadow: 0 8px 16px rgba(166, 10, 58, 0.12);
+}
+
+.mobile-approval__back-label {
+  font-size: 12px;
+  line-height: 1;
+  white-space: nowrap;
 }
 
 .mobile-approval__header-title {
@@ -515,6 +536,11 @@ watch(
   font-weight: 600;
   flex: 1;
   margin: 0;
+  min-width: 0;
+  overflow: hidden;
+  text-align: center;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .mobile-approval__header-spacer {

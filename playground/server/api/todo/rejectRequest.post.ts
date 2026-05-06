@@ -1,5 +1,5 @@
 export default defineEventHandler(async (event) => {
-  const config = useRuntimeConfig()
+  const config = useRuntimeConfig(event)
   const body: Record<string, any> = await readBody<Record<string, any>>(event).catch(() => ({}))
   const requestId = body.requestId ?? body.requestid
 

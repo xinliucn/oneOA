@@ -25,7 +25,8 @@ const toIsoString = (value: unknown) => {
 }
 
 export const normalizeNotification = (raw: any): NotificationItem => {
-  const payload = raw?.payload && typeof raw.payload === 'object' ? raw.payload : null
+  const payloadSource = raw?.payload ?? raw?.payload_json
+  const payload = payloadSource && typeof payloadSource === 'object' ? payloadSource : null
   const title = toNonEmptyString(raw?.title || raw?.subject || raw?.name, '消息通知')
   const content = toNonEmptyString(raw?.content || raw?.body || raw?.message, '')
   const createdAt = toIsoString(raw?.createdAt || raw?.created_at || raw?.timestamp || raw?.time)
@@ -34,6 +35,7 @@ export const normalizeNotification = (raw: any): NotificationItem => {
     raw?.referenceId || raw?.reference_id || raw?.referenceNo || raw?.request_id || payload?.referenceId || payload?.request_id,
     '',
   )
+  const requestId = toNonEmptyString(raw?.requestId || raw?.requestid || raw?.request_id || payload?.requestId || payload?.requestid || payload?.request_id, '')
 
   return {
     id: toNonEmptyString(raw?.id || raw?.notification_id || raw?.uuid || raw?._id, `${Date.now()}`),
@@ -41,6 +43,7 @@ export const normalizeNotification = (raw: any): NotificationItem => {
     content,
     summary: toNonEmptyString(raw?.summary || raw?.subtitle || raw?.description, ''),
     referenceId,
+    requestId,
     link: toNonEmptyString(raw?.link || raw?.url || raw?.target_url || raw?.action_url, ''),
     source: toNonEmptyString(raw?.source || raw?.from, ''),
     category: toNonEmptyString(raw?.category || raw?.msg_category || raw?.type, ''),

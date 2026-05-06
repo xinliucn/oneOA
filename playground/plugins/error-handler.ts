@@ -23,6 +23,10 @@ const shouldSkipAutoErrorRedirect = (requestPath: string) => {
 }
 
 export default defineNuxtPlugin((nuxtApp) => {
+  if (import.meta.server) {
+    return
+  }
+
   // 创建自定义 fetch 实例，配置错误处理
   const customFetch = $fetch.create({
     onResponseError({ request, response }) {
