@@ -8,7 +8,7 @@
       <div v-for="category in categories" :key="category.id" class="app-column">
         <div class="app-column__top" :style="{ borderTopColor: category.color }">
           <div class="app-column__icon" :style="{ color: category.color }">
-            <IconCustom :name="category.icon" :size="28" />
+            <IconCustom :name="category.icon" :size="34" />
           </div>
           <div class="app-column__name">{{ category.name }}</div>
           <div class="app-column__desc">{{ category.description }}</div>
@@ -36,7 +36,7 @@ const { t } = useAppI18n()
 
 const categories = computed(() => [
   {
-    id: 1, name: t('desktopApps.categories.digitalTechnology.name'), icon: 'digital-technology', color: '#1976D2',
+    id: 1, name: t('desktopApps.categories.digitalTechnology.name'), icon: 'digital-technology', color: '#3B82F6',
     description: t('desktopApps.categories.digitalTechnology.description'),
     intranetLabel: t('desktopApps.categories.digitalTechnology.intranet'),
     apps: [
@@ -47,7 +47,7 @@ const categories = computed(() => [
     ]
   },
   {
-    id: 2, name: t('desktopApps.categories.finance.name'), icon: 'finance-bars', color: '#00897B',
+    id: 2, name: t('desktopApps.categories.finance.name'), icon: 'finance-bars', color: '#00A78E',
     description: t('desktopApps.categories.finance.description'),
     intranetLabel: t('desktopApps.categories.finance.intranet'),
     apps: [
@@ -58,7 +58,7 @@ const categories = computed(() => [
     ]
   },
   {
-    id: 3, name: t('desktopApps.categories.legalCompliance.name'), icon: 'legal-compliance', color: '#A60A3A',
+    id: 3, name: t('desktopApps.categories.legalCompliance.name'), icon: 'legal-compliance', color: '#E11D8D',
     description: t('desktopApps.categories.legalCompliance.description'),
     intranetLabel: t('desktopApps.categories.legalCompliance.intranet'),
     apps: [
@@ -77,90 +77,106 @@ const handleClick = (app: { name: string }) => {
 
 <style scoped>
 .desktop-apps {
-  background: white;
-  padding: 24px;
-  border-top: 1px solid #F0F0F0;
+  background: #ffffff;
+  padding: 20px 48px 28px;
+  border-top: 1px solid #f0f0f0;
 }
 
 .desktop-apps__header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 16px;
+  padding-bottom: 26px;
+  margin-bottom: 40px;
+  border-bottom: 1px solid #d9d9d9;
 }
 
 .desktop-apps__title {
-  font-size: 18px;
-  font-weight: 600;
+  font-size: 20px;
+  line-height: 1.2;
+  font-weight: 700;
   color: #000000;
   margin: 0;
 }
 
 .desktop-apps__link {
   font-size: 13px;
-  color: #A60A3A;
-  text-decoration: none;
+  line-height: 1.2;
+  color: #a60a3a;
+  text-decoration: underline;
+  text-underline-offset: 2px;
 }
 
 .desktop-apps__columns {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 16px;
+  gap: 18px;
 }
 
 .app-column {
-  border: 1px solid #E0E0E0;
-  border-radius: 8px;
+  min-width: 0;
+  border: 1px solid #d9d9d9;
+  border-radius: 0;
+  background: #ffffff;
   overflow: hidden;
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.08);
 }
 
 .app-column__top {
-  padding: 16px;
+  min-height: 180px;
+  padding: 38px 24px 24px;
   border-top: 3px solid;
-  background: #FAFAFA;
+  background: #ffffff;
+  text-align: center;
 }
 
 .app-column__icon {
-  margin-bottom: 8px;
+  margin-bottom: 12px;
 }
 
 .app-column__name {
-  font-size: 15px;
-  font-weight: 600;
+  font-size: 14px;
+  line-height: 1.2;
+  font-weight: 700;
   color: #000000;
-  margin-bottom: 6px;
+  margin-bottom: 16px;
 }
 
 .app-column__desc {
-  font-size: 12px;
+  max-width: 250px;
+  margin: 0 auto 16px;
+  font-size: 10px;
   color: #666666;
-  margin-bottom: 8px;
-  line-height: 1.4;
+  line-height: 1.35;
 }
 
 .app-column__intranet {
-  font-size: 12px;
-  color: #A60A3A;
-  text-decoration: none;
-  font-weight: 500;
+  font-size: 10px;
+  line-height: 1.2;
+  color: #a60a3a;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  font-weight: 600;
 }
 
 .app-column__list {
-  padding: 8px 0;
+  padding: 0;
+  border-top: 1px solid #e3e3e3;
 }
 
 .app-row {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 10px 16px;
+  min-height: 48px;
+  padding: 8px 18px;
   cursor: pointer;
-  border-bottom: 1px solid #F5F5F5;
+  border-bottom: 1px solid #d9d9d9;
   transition: background 0.2s;
 }
 
 .app-row:hover {
-  background: #F5F5F5;
+  background: #f5f5f5;
 }
 
 .app-row__info {
@@ -170,6 +186,7 @@ const handleClick = (app: { name: string }) => {
 
 .app-row__name {
   font-size: 13px;
+  line-height: 1.2;
   font-weight: 500;
   color: #000000;
   overflow: hidden;
@@ -178,21 +195,26 @@ const handleClick = (app: { name: string }) => {
 }
 
 .app-row__sub {
-  font-size: 11px;
-  color: #999999;
+  margin-top: 2px;
+  font-size: 9px;
+  line-height: 1.2;
+  color: #666666;
 }
 
 .app-row__arrow {
-  color: #CCCCCC;
+  color: #5f5f5f;
   flex-shrink: 0;
 }
 
 .app-column__view-all {
   display: block;
-  padding: 10px 16px;
+  padding: 18px 16px 22px;
   font-size: 13px;
-  color: #A60A3A;
-  text-decoration: none;
-  font-weight: 500;
+  line-height: 1.2;
+  color: #a60a3a;
+  text-align: center;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  font-weight: 700;
 }
 </style>

@@ -10,10 +10,11 @@
                 <img src="~/assets/images/dchLogo.png" alt="SuperApp Logo">
             </button>
             <div class="desktop_header_actions">
-                <LocaleDropdown />
                 <el-button circle class="action-btn">
-                    <IconCustom name="search" :size="20" />
+                    <IconCustom name="share" :size="20" />
                 </el-button>
+                <LocaleDropdown />
+                
                 <NotificationBell />
                 <el-dropdown @command="handleCommand">
                     <span class="avatar-dropdown">
@@ -31,7 +32,7 @@
         <div class="desktop_layout_content">
             <div class="desktop__sidebar">
                 <el-menu :default-active="activeMenu" class="el-menu-vertical-demo" @select="handleMenuSelect"
-                    background-color="#D9D9D9" text-color="#000000" active-text-color="#000000">
+                    background-color="#F5F5F5" text-color="#000000" active-text-color="#000000">
                     <el-menu-item v-for="item in menuItems" :key="item.index" :index="item.index">
                         <template #title>
                             <IconCustom :name="item.icon" :size="26" />
@@ -203,11 +204,15 @@ onBeforeUnmount(() => {
 
 .desktop__sidebar {
     height: 100%;
-    background-color: #D9D9D9;
+    background-color: #F5F5F5;
     flex-shrink: 0;
     /* 防止侧边栏被压缩 */
     overflow-y: auto;
     /* 如果菜单项过多，侧边栏可以滚动 */
+
+    :deep(.el-menu) {
+        background-color: #F5F5F5;
+    }
 
     /* 菜单项样式 */
     :deep(.el-menu-item) {
@@ -227,7 +232,7 @@ onBeforeUnmount(() => {
 
         /* hover 状态 */
         &:hover {
-            background-color: #c0c0c0;
+            background-color: #eeeeee;
         }
     }
 }

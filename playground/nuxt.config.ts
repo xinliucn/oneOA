@@ -6,7 +6,7 @@ export default defineNuxtConfig({
   // 优化 CSS 加载
   css: [],
   runtimeConfig: {
-    mockEnabled: false,
+    mockEnabled: true,
     vapidPrivateKey: process.env.NUXT_VAPID_PRIVATE_KEY || '',
     vapidSubject: process.env.NUXT_VAPID_SUBJECT || '',
     public: {

@@ -43,7 +43,7 @@ const handleClick = (app: { url: string, label: string }) => {
 <style scoped>
 .favourites-grid {
   background: #FFFFFF;
-  padding: 24px;
+  padding: 120px;
 }
 
 .favourites-grid__header {

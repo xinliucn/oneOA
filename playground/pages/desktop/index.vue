@@ -36,7 +36,7 @@ definePageMeta({
     middleware: 'auth'
 })
 import { ref, computed, onMounted, onUnmounted } from 'vue'
-import desktopBanner from '~/assets/images/desktop-banner.jpg'
+import desktopBanner from '~/assets/images/Group 120.png'
 
 const { user } = useAuth()
 const { locale, t } = useAppI18n()
@@ -77,49 +77,60 @@ onUnmounted(() => { if (timer) clearInterval(timer) })
 .desktop__banner {
     background-size: cover;
     background-position: center;
-    padding: 32px 48px 40px;
-    min-height: 220px;
+    padding: 42px 0 44px 88px;
+    min-height: 400px;
     display: flex;
-    align-items: flex-end;
+    align-items: flex-start;
 }
 
 .desktop__banner-left {
     display: flex;
     flex-direction: column;
-    gap: 4px;
+    align-items: flex-start;
+    width: min(520px, 44vw);
 }
 
 .desktop__date {
-    font-size: 13px;
-    color: rgba(255, 255, 255, 0.85);
+    margin-bottom: 3px;
+    font-size: 11px;
+    line-height: 1.2;
+    font-weight: 500;
+    color: rgba(255, 255, 255, 0.92);
 }
 
 .desktop__time {
-    font-size: 48px;
+    margin-bottom: 56px;
+    font-size: 44px;
     font-weight: 700;
     color: #FFFFFF;
-    line-height: 1;
+    line-height: 0.95;
 }
 
 .desktop__greeting {
-    font-size: 22px;
-    font-weight: 600;
+    margin: 0 0 34px;
+    max-width: 390px;
+    font-size: 42px;
+    font-weight: 700;
     color: #FFFFFF;
-    margin-bottom: 12px;
+    line-height: 1.28;
+    letter-spacing: 0;
+    white-space: pre-line;
 }
 
 .desktop__search-bar {
     display: flex;
     align-items: center;
     gap: 8px;
-    background: white;
-    border-radius: 24px;
-    padding: 10px 10px 10px 16px;
-    width: 340px;
+    width: 450px;
+    height: 42px;
+    padding: 0 18px;
+    background: #ffffff;
+    border-radius: 999px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.14);
 }
 
 .desktop__search-icon {
-    color: #999999;
+    color: #5f5f5f;
     flex-shrink: 0;
 }
 
@@ -127,25 +138,20 @@ onUnmounted(() => { if (timer) clearInterval(timer) })
     flex: 1;
     border: none;
     outline: none;
-    font-size: 14px;
-    color: #333;
+    font-size: 11px;
+    font-weight: 400;
+    line-height: 1;
+    color: #555555;
     background: transparent;
 }
 
 .desktop__search-input::placeholder {
-    color: #999999;
+    color: #8f8f8f;
+    opacity: 1;
 }
 
 .desktop__ai-btn {
-    background: #A60A3A;
-    color: white;
-    border: none;
-    border-radius: 16px;
-    padding: 5px 12px;
-    font-size: 13px;
-    font-weight: 600;
-    cursor: pointer;
-    flex-shrink: 0;
+    display: none;
 }
 
 .desktop__content {
@@ -158,6 +164,7 @@ onUnmounted(() => { if (timer) clearInterval(timer) })
     display: grid;
     grid-template-columns: 3fr 2fr;
     gap: 0;
+    padding: 120px;
 }
 
 .desktop__footer {
