@@ -2,7 +2,7 @@ export interface FavouriteRecord {
   id: string
   userId: string
   itemidList: number[]
-  raw: Record<string, unknown>
+  raw: Record<string, any>
 }
 
 export interface FavouriteCatalogItem {
@@ -13,12 +13,12 @@ export interface FavouriteCatalogItem {
   icon: string
   homepageUrl: string
   mobileUrl: string
-  raw: Record<string, unknown>
+  raw: Record<string, any>
 }
 
-type FavouriteResponse = FavouriteRecord[] | { data?: FavouriteRecord[] | unknown[] } | unknown[]
+type FavouriteResponse = FavouriteRecord[] | { data?: FavouriteRecord[] | any[] } | any[]
 
-const normalizeNumberId = (value: unknown) => {
+const normalizeNumberId = (value: any) => {
   if (typeof value === 'number' && Number.isFinite(value)) {
     return value
   }
@@ -33,7 +33,7 @@ const normalizeNumberId = (value: unknown) => {
   return null
 }
 
-const normalizeItemIdList = (value: unknown): number[] => {
+const normalizeItemIdList = (value: any): number[] => {
   if (Array.isArray(value)) {
     return Array.from(
       new Set(
@@ -51,11 +51,11 @@ const normalizeItemIdList = (value: unknown): number[] => {
   return []
 }
 
-const isRecord = (value: unknown): value is Record<string, unknown> => {
+const isRecord = (value: any): value is Record<string, any> => {
   return !!value && typeof value === 'object' && !Array.isArray(value)
 }
 
-const unwrapFavouriteResponse = (response: FavouriteResponse): unknown[] => {
+const unwrapFavouriteResponse = (response: FavouriteResponse): any[] => {
   if (Array.isArray(response)) {
     return response
   }
@@ -67,7 +67,7 @@ const unwrapFavouriteResponse = (response: FavouriteResponse): unknown[] => {
   return []
 }
 
-const normalizeFavouriteRecord = (value: unknown): FavouriteRecord | null => {
+const normalizeFavouriteRecord = (value: any): FavouriteRecord | null => {
   if (!isRecord(value)) {
     return null
   }
@@ -90,7 +90,7 @@ const normalizeFavouriteResponse = (response: FavouriteResponse) => {
     .filter((item): item is FavouriteRecord => Boolean(item))
 }
 
-const normalizeString = (value: unknown) => {
+const normalizeString = (value: any) => {
   if (typeof value === 'string') {
     return value.trim()
   }
@@ -102,7 +102,7 @@ const normalizeString = (value: unknown) => {
   return ''
 }
 
-const getFirstString = (...values: unknown[]) => {
+const getFirstString = (...values: any[]) => {
   for (const value of values) {
     const normalizedValue = normalizeString(value)
     if (normalizedValue) {
@@ -113,7 +113,7 @@ const getFirstString = (...values: unknown[]) => {
   return ''
 }
 
-const normalizeFavouriteCatalogItem = (value: unknown): FavouriteCatalogItem | null => {
+const normalizeFavouriteCatalogItem = (value: any): FavouriteCatalogItem | null => {
   if (!isRecord(value)) {
     return null
   }
@@ -178,13 +178,15 @@ export const useFavourite = () => {
         items: items.value,
         itemidList: itemidList.value,
       }
-    } catch (caughtError) {
+    }
+    catch (caughtError) {
       error.value = caughtError instanceof Error ? caughtError : new Error('Get favourites failed')
       records.value = []
       items.value = []
       itemidList.value = []
       throw caughtError
-    } finally {
+    }
+    finally {
       loading.value = false
     }
   }
@@ -215,10 +217,12 @@ export const useFavourite = () => {
         items: items.value,
         itemidList: itemidList.value,
       }
-    } catch (caughtError) {
+    }
+    catch (caughtError) {
       error.value = caughtError instanceof Error ? caughtError : new Error('Save favourites failed')
       throw caughtError
-    } finally {
+    }
+    finally {
       saving.value = false
     }
   }

@@ -1,11 +1,17 @@
 <template>
   <div class="company-docs">
-    <section class="company-docs__hero" :style="{ backgroundImage: `url(${heroImage})` }">
+    <section
+      class="company-docs__hero"
+      :style="{ backgroundImage: `url(${heroImage})` }"
+    >
       <h1>Company Documents</h1>
     </section>
 
     <main class="company-docs__body">
-      <nav class="company-docs__breadcrumb" aria-label="Breadcrumb">
+      <nav
+        class="company-docs__breadcrumb"
+        aria-label="Breadcrumb"
+      >
         <NuxtLink to="/desktop">
           Home
         </NuxtLink>
@@ -15,13 +21,28 @@
 
       <div class="company-docs__toolbar">
         <label class="company-docs__search">
-          <IconCustom name="search" :size="14" />
-          <input v-model.trim="searchQuery" type="search" placeholder="Search Company Documents">
+          <IconCustom
+            name="search"
+            :size="14"
+          />
+          <input
+            v-model.trim="searchQuery"
+            type="search"
+            placeholder="Search Company Documents"
+          >
         </label>
 
-        <div class="company-docs__filters" aria-label="Document status">
-          <button v-for="filter in filters" :key="filter" type="button"
-            :class="['company-docs__filter', { 'is-active': activeFilter === filter }]" @click="activeFilter = filter">
+        <div
+          class="company-docs__filters"
+          aria-label="Document status"
+        >
+          <button
+            v-for="filter in filters"
+            :key="filter"
+            type="button"
+            :class="['company-docs__filter', { 'is-active': activeFilter === filter }]"
+            @click="activeFilter = filter"
+          >
             {{ filter }}
           </button>
         </div>
@@ -40,17 +61,30 @@
           </button>
         </div>
 
-        <div v-if="loading" class="company-docs-table__state">
+        <div
+          v-if="loading"
+          class="company-docs-table__state"
+        >
           Loading...
         </div>
-        <div v-else-if="error" class="company-docs-table__state company-docs-table__state--error">
+        <div
+          v-else-if="error"
+          class="company-docs-table__state company-docs-table__state--error"
+        >
           Failed to load company documents.
         </div>
-        <div v-else-if="paginatedFolders.length === 0" class="company-docs-table__state">
+        <div
+          v-else-if="paginatedFolders.length === 0"
+          class="company-docs-table__state"
+        >
           No company documents found.
         </div>
         <template v-else>
-          <div v-for="folder in paginatedFolders" :key="folder.slug" class="company-docs-table__row">
+          <div
+            v-for="folder in paginatedFolders"
+            :key="folder.slug"
+            class="company-docs-table__row"
+          >
             <NuxtLink
               class="company-docs-table__link"
               :to="{
@@ -74,9 +108,21 @@
           {{ recordCountLabel }}
         </span>
 
-        <div class="company-docs__pagination" aria-label="Pagination">
-          <button type="button" class="company-docs__page-nav" :disabled="currentPage === 1" @click="goToPage(currentPage - 1)">
-            <IconCustom name="chevron-right" :size="16" :rotate="180" />
+        <div
+          class="company-docs__pagination"
+          aria-label="Pagination"
+        >
+          <button
+            type="button"
+            class="company-docs__page-nav"
+            :disabled="currentPage === 1"
+            @click="goToPage(currentPage - 1)"
+          >
+            <IconCustom
+              name="chevron-right"
+              :size="16"
+              :rotate="180"
+            />
           </button>
           <button
             v-for="page in visiblePages"
@@ -88,8 +134,16 @@
           >
             {{ page }}
           </button>
-          <button type="button" class="company-docs__page-nav" :disabled="currentPage === totalPages" @click="goToPage(currentPage + 1)">
-            <IconCustom name="chevron-right" :size="16" />
+          <button
+            type="button"
+            class="company-docs__page-nav"
+            :disabled="currentPage === totalPages"
+            @click="goToPage(currentPage + 1)"
+          >
+            <IconCustom
+              name="chevron-right"
+              :size="16"
+            />
           </button>
         </div>
       </div>
@@ -144,7 +198,7 @@ const loading = ref(true)
 const error = ref<Error | null>(null)
 const currentPage = ref(1)
 const pageSize = 15
-const companyDocumentResponse = ref<unknown>(null)
+const companyDocumentResponse = ref<any>(null)
 
 const normalizeCompanyDocumentResponse = (response: any): CompanyDocumentGroupResponseItem[] => {
   if (Array.isArray(response)) {
@@ -162,7 +216,7 @@ const normalizeCompanyDocumentResponse = (response: any): CompanyDocumentGroupRe
   return []
 }
 
-const getNumber = (value: unknown) => {
+const getNumber = (value: any) => {
   const numberValue = Number(value)
   return Number.isFinite(numberValue) ? numberValue : 0
 }
@@ -272,10 +326,12 @@ const fetchCompanyDocuments = async () => {
         pageSize: 100,
       },
     })
-  } catch (caughtError) {
+  }
+  catch (caughtError) {
     error.value = caughtError instanceof Error ? caughtError : new Error('Fetch company documents failed')
     companyDocumentResponse.value = null
-  } finally {
+  }
+  finally {
     loading.value = false
   }
 }

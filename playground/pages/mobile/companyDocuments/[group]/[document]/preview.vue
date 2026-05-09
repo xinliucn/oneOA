@@ -128,7 +128,7 @@ const normalizedContentType = computed(() => {
       return 'application/pdf'
     }
 
-    if (/\.(png|jpe?g|gif|webp|bmp|svg)$/i.test(name)) {
+    if (/\.(?:png|jpe?g|gif|webp|bmp|svg)$/i.test(name)) {
       return `image/${name.split('.').pop()?.replace('jpg', 'jpeg') || 'png'}`
     }
 
@@ -141,7 +141,7 @@ const normalizedContentType = computed(() => {
 })
 
 const isPdf = computed(() => normalizedContentType.value.includes('application/pdf') || /\.pdf$/i.test(previewFile.value?.fileName || fileName.value))
-const isImage = computed(() => normalizedContentType.value.startsWith('image/') || /\.(png|jpe?g|gif|webp|bmp|svg)$/i.test(previewFile.value?.fileName || fileName.value))
+const isImage = computed(() => normalizedContentType.value.startsWith('image/') || /\.(?:png|jpe?g|gif|webp|bmp|svg)$/i.test(previewFile.value?.fileName || fileName.value))
 const isDocx = computed(() => /\.docx$/i.test(previewFile.value?.fileName || fileName.value)
   || normalizedContentType.value.includes('wordprocessingml.document'))
 
@@ -176,7 +176,7 @@ const getUint32 = (bytes: Uint8Array, offset: number) => {
 
 const findZipEntry = (bytes: Uint8Array, targetName: string) => {
   for (let offset = bytes.length - 22; offset >= 0; offset -= 1) {
-    if (getUint32(bytes, offset) !== 0x06054b50) {
+    if (getUint32(bytes, offset) !== 0x06054B50) {
       continue
     }
 
@@ -185,7 +185,7 @@ const findZipEntry = (bytes: Uint8Array, targetName: string) => {
     let cursor = centralDirectoryOffset
     const end = centralDirectoryOffset + centralDirectorySize
 
-    while (cursor < end && getUint32(bytes, cursor) === 0x02014b50) {
+    while (cursor < end && getUint32(bytes, cursor) === 0x02014B50) {
       const compressionMethod = getUint16(bytes, cursor + 10)
       const compressedSize = getUint32(bytes, cursor + 20)
       const fileNameLength = getUint16(bytes, cursor + 28)
@@ -280,7 +280,8 @@ const loadPreview = async () => {
       ...response,
       documentId: documentSlug.value,
     }
-  } finally {
+  }
+  finally {
     loading.value = false
   }
 }
@@ -316,7 +317,8 @@ watch(
           if (token === docxPreviewToken.value) {
             docxParagraphs.value = paragraphs
           }
-        } catch (error) {
+        }
+        catch (error) {
           console.error('DOCX preview parse failed:', error)
         }
       }

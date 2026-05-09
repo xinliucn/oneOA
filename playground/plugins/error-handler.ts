@@ -2,7 +2,8 @@ const resolveRequestPath = (request: Request | string | URL) => {
   if (typeof request === 'string') {
     try {
       return new URL(request, 'http://localhost').pathname
-    } catch {
+    }
+    catch {
       return request
     }
   }
@@ -13,7 +14,8 @@ const resolveRequestPath = (request: Request | string | URL) => {
 
   try {
     return new URL(request.url, 'http://localhost').pathname
-  } catch {
+  }
+  catch {
     return request.url || ''
   }
 }
@@ -41,10 +43,11 @@ export default defineNuxtPlugin((nuxtApp) => {
       // 当响应状态码为 403 或 500 时，跳转到对应错误页面
       if (response.status === 403) {
         navigateTo('/403')
-      } else if (response.status === 500) {
+      }
+      else if (response.status === 500) {
         navigateTo('/500')
       }
-    }
+    },
   })
 
   // 覆盖全局 $fetch，使所有使用 $fetch 的地方都自动应用错误处理
@@ -60,7 +63,8 @@ export default defineNuxtPlugin((nuxtApp) => {
     // 检查是否是 HTTP 错误
     if (error?.statusCode === 403 || error?.status === 403) {
       navigateTo('/403')
-    } else if (error?.statusCode === 500 || error?.status === 500) {
+    }
+    else if (error?.statusCode === 500 || error?.status === 500) {
       navigateTo('/500')
     }
   })
@@ -71,7 +75,8 @@ export default defineNuxtPlugin((nuxtApp) => {
 
     if (error?.statusCode === 403 || error?.status === 403) {
       navigateTo('/403')
-    } else if (error?.statusCode === 500 || error?.status === 500) {
+    }
+    else if (error?.statusCode === 500 || error?.status === 500) {
       navigateTo('/500')
     }
   })

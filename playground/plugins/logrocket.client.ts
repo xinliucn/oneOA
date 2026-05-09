@@ -37,7 +37,7 @@ export const identifyLogRocketUser = (user: {
     name: user.name,
     email: user.email,
     username: user.username,
-    displayName: user.displayName
+    displayName: user.displayName,
   }).reduce<Record<string, string | number | boolean>>((result, [key, value]) => {
     if (value !== undefined) {
       result[key] = value
@@ -45,7 +45,7 @@ export const identifyLogRocketUser = (user: {
 
     return result
   }, {})
-  
+
   LogRocket.identify(identifier, traits)
 }
 
@@ -54,7 +54,7 @@ export default defineNuxtPlugin(() => {
 
   return {
     provide: {
-      identifyLogRocketUser
-    }
+      identifyLogRocketUser,
+    },
   }
 })

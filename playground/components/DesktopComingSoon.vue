@@ -1,7 +1,10 @@
 <template>
   <div class="desktop-coming-soon">
     <header class="desktop-coming-soon__header">
-      <nav class="desktop-coming-soon__breadcrumb" aria-label="Breadcrumb">
+      <nav
+        class="desktop-coming-soon__breadcrumb"
+        aria-label="Breadcrumb"
+      >
         <NuxtLink to="/desktop">
           Home
         </NuxtLink>
@@ -12,9 +15,16 @@
     </header>
 
     <main class="desktop-coming-soon__body">
-      <section class="desktop-coming-soon__panel" aria-live="polite">
+      <section
+        class="desktop-coming-soon__panel"
+        aria-live="polite"
+      >
         <div class="desktop-coming-soon__mark">
-          <IconCustom :name="icon" :size="32" color="#A60A3A" />
+          <IconCustom
+            :name="icon"
+            :size="32"
+            color="#A60A3A"
+          />
         </div>
 
         <p class="desktop-coming-soon__eyebrow">
@@ -25,9 +35,16 @@
           {{ description }}
         </p>
 
-        <div class="desktop-coming-soon__divider" aria-hidden="true" />
+        <div
+          class="desktop-coming-soon__divider"
+          aria-hidden="true"
+        />
 
-        <button type="button" class="desktop-coming-soon__button" @click="navigateTo('/desktop')">
+        <button
+          type="button"
+          class="desktop-coming-soon__button"
+          @click="navigateTo('/desktop')"
+        >
           {{ actionLabel }}
         </button>
       </section>

@@ -13,11 +13,11 @@ export interface RecentItem {
 
 const RECENT_ITEMS_LIMIT = 20
 
-const isRecord = (value: unknown): value is Record<string, unknown> => {
+const isRecord = (value: any): value is Record<string, any> => {
   return !!value && typeof value === 'object' && !Array.isArray(value)
 }
 
-const normalizeString = (value: unknown) => {
+const normalizeString = (value: any) => {
   if (typeof value === 'string') {
     return value.trim()
   }
@@ -29,7 +29,7 @@ const normalizeString = (value: unknown) => {
   return ''
 }
 
-const normalizeRecentItem = (value: unknown): RecentItem | null => {
+const normalizeRecentItem = (value: any): RecentItem | null => {
   if (!isRecord(value)) {
     return null
   }
@@ -86,10 +86,12 @@ export const useRecentItems = (scope = 'mobile') => {
         : []
 
       items.value = sortRecentItems(normalizedItems).slice(0, RECENT_ITEMS_LIMIT)
-    } catch (error) {
+    }
+    catch (error) {
       console.error('Load recent items failed:', error)
       items.value = []
-    } finally {
+    }
+    finally {
       hydrated.value = true
     }
   }

@@ -91,11 +91,11 @@ export const usePushSubscription = () => {
     }
 
     const userAgent = navigator.userAgent
-    const isSafariUA =
-      /Safari\//.test(userAgent) &&
-      !/Chrome\//.test(userAgent) &&
-      !/Chromium\//.test(userAgent) &&
-      !/Edg\//.test(userAgent)
+    const isSafariUA
+      = /Safari\//.test(userAgent)
+        && !/Chrome\//.test(userAgent)
+        && !/Chromium\//.test(userAgent)
+        && !/Edg\//.test(userAgent)
 
     return isSafariUA || (isIOS() && !/CriOS|FxiOS|EdgiOS/i.test(userAgent))
   }
@@ -142,8 +142,8 @@ export const usePushSubscription = () => {
     }
 
     return (
-      Boolean((window.navigator as any).standalone) ||
-      window.matchMedia('(display-mode: standalone)').matches
+      Boolean((window.navigator as Navigator & { standalone?: boolean }).standalone)
+      || window.matchMedia('(display-mode: standalone)').matches
     )
   }
 
@@ -283,7 +283,7 @@ export const usePushSubscription = () => {
         storageBucket: runtimeConfig.public.firebaseStorageBucket,
         messagingSenderId: runtimeConfig.public.firebaseMessagingSenderId,
         appId: runtimeConfig.public.firebaseAppId,
-      } as any
+      } as Record<string, any>
 
       const missingKeys = Object.entries(firebaseConfig)
         .filter(([, value]) => !value)
@@ -322,7 +322,8 @@ export const usePushSubscription = () => {
       try {
         const { ingestNotification } = useNotification()
         void ingestNotification(normalizeIncomingNotification(payload))
-      } catch (error) {
+      }
+      catch (error) {
         console.error('Handle FCM foreground message failed:', error)
       }
     })
@@ -338,7 +339,7 @@ export const usePushSubscription = () => {
     if (!('token' in value) && !value.endpoint) {
       return
     }
-    
+
     return await $fetch<NotificationSubscribeResponse>('/api/notifications/subscribe', {
       method: 'POST',
       body,
@@ -410,14 +411,15 @@ export const usePushSubscription = () => {
             token: await getFCMToken(registration),
           }
         }
-      } else {
+      }
+      else {
         const existing = await registration.pushManager.getSubscription()
         existingSubscription = existing?.toJSON() || null
       }
 
-      const shouldSync =
-        Boolean(getSubscriptionIdentity(existingSubscription)) &&
-        getSubscriptionIdentity(existingSubscription) !== getSubscriptionIdentity(subscription.value)
+      const shouldSync
+        = Boolean(getSubscriptionIdentity(existingSubscription))
+          && getSubscriptionIdentity(existingSubscription) !== getSubscriptionIdentity(subscription.value)
 
       subscription.value = existingSubscription
       status.value = existingSubscription ? 'subscribed' : 'idle'
@@ -426,7 +428,8 @@ export const usePushSubscription = () => {
       if (existingSubscription && shouldSync) {
         await syncSubscription(existingSubscription)
       }
-    } catch (error: any) {
+    }
+    catch (error: any) {
       status.value = 'error'
       errorMessage.value = error?.message || '读取推送订阅状态失败'
       console.error('Init push subscription failed:', error)
@@ -434,7 +437,7 @@ export const usePushSubscription = () => {
   }
 
   const subscribe = async () => {
-    const logSubscribeDebug = (stage: string, extra: Record<string, unknown> = {}) => {
+    const logSubscribeDebug = (stage: string, extra: Record<string, any> = {}) => {
       if (!import.meta.client) {
         return
       }
@@ -499,7 +502,8 @@ export const usePushSubscription = () => {
           platform: 'fcm',
           token: await getFCMToken(registration),
         }
-      } else {
+      }
+      else {
         let pushSubscription = await registration.pushManager.getSubscription()
 
         if (!pushSubscription) {
@@ -518,7 +522,8 @@ export const usePushSubscription = () => {
       })
 
       return nextSubscription
-    } catch (error: any) {
+    }
+    catch (error: any) {
       status.value = 'error'
       errorMessage.value = error?.message || '推送订阅失败'
       logSubscribeDebug('error', { error })
@@ -544,7 +549,8 @@ export const usePushSubscription = () => {
         try {
           const client = await getFirebaseMessagingClient()
           success = await client.deleteToken(client.messaging)
-        } catch (error) {
+        }
+        catch (error) {
           console.error('Delete FCM token failed:', error)
         }
 
@@ -585,7 +591,8 @@ export const usePushSubscription = () => {
       errorMessage.value = null
 
       return success
-    } catch (error: any) {
+    }
+    catch (error: any) {
       status.value = 'error'
       errorMessage.value = error?.message || '取消推送订阅失败'
       console.error('Unsubscribe push failed:', error)

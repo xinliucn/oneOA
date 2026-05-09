@@ -11,7 +11,7 @@ const PROBE_CACHE_TTL_MS = 15 * 1000
 let bootstrapStarted = false
 let probeTimer: ReturnType<typeof setInterval> | null = null
 
-const toBoolean = (value: unknown, fallback = false) => {
+const toBoolean = (value: any, fallback = false) => {
   if (typeof value === 'boolean') {
     return value
   }

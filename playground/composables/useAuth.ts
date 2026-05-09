@@ -24,17 +24,19 @@ export const useAuth = () => {
   const login = async () => {
     try {
       const response = await $fetch<{ authorization_url: string }>('/api/auth/login', {
-        method: 'POST'
+        method: 'POST',
       })
 
       if (response?.authorization_url) {
         if (import.meta.client) {
           window.location.href = response.authorization_url
         }
-      } else {
+      }
+      else {
         throw new Error('未获取到登录 URL')
       }
-    } catch (error) {
+    }
+    catch (error) {
       console.error('Login failed:', error)
       throw error
     }
@@ -43,7 +45,8 @@ export const useAuth = () => {
   const handleCallback = async () => {
     try {
       return await checkAuth(true)
-    } catch (error) {
+    }
+    catch (error) {
       console.error('Callback handling failed:', error)
       throw error
     }
@@ -59,10 +62,10 @@ export const useAuth = () => {
       const response = await $fetch<any>('/api/auth/user')
       const responseUser = response?.user || response?.data?.user || response?.data || response
       const authenticated = Boolean(
-        response?.authenticated ||
-          response?.token_valid ||
-          response?.code === 1 ||
-          responseUser?.token_verified,
+        response?.authenticated
+        || response?.token_valid
+        || response?.code === 1
+        || responseUser?.token_verified,
       )
 
       if (authenticated && responseUser) {
@@ -74,7 +77,7 @@ export const useAuth = () => {
         }
         isLoggedIn.value = true
         lastCheckTime.value = now
-        
+
         identifyAuthUser(user.value)
 
         // 登录成功后静默恢复推送订阅，但不阻塞主登录流程。
@@ -92,7 +95,8 @@ export const useAuth = () => {
       isLoggedIn.value = false
       lastCheckTime.value = 0
       return false
-    } catch (error: any) {
+    }
+    catch (error: any) {
       console.error('Check auth failed:', error)
       user.value = null
       isLoggedIn.value = false
@@ -123,8 +127,8 @@ export const useAuth = () => {
 
   const logout = async () => {
     try {
-      const response = await $fetch<{ code: number; logout_url?: string; message: string }>('/api/auth/logout', {
-        method: 'POST'
+      const response = await $fetch<{ code: number, logout_url?: string, message: string }>('/api/auth/logout', {
+        method: 'POST',
       })
 
       user.value = null
@@ -139,7 +143,8 @@ export const useAuth = () => {
       }
 
       return response
-    } catch (error) {
+    }
+    catch (error) {
       console.error('Logout failed:', error)
       user.value = null
       isLoggedIn.value = false

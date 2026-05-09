@@ -8,8 +8,8 @@ export interface ApplicationCatalogItem {
   mobileUrl: string
   description: string
   icon: string
-  raw: Record<string, any>,
-  mainTable: any
+  raw: Record<string, any>
+  mainTable: Record<string, any>
 }
 export interface ApplicationCatalogGroup {
   id: string
@@ -50,6 +50,10 @@ const normalizeString = (value?: string | null) => {
   return typeof value === 'string' ? value.trim() : ''
 }
 
+const isRecord = (value: any): value is Record<string, any> => {
+  return !!value && typeof value === 'object' && !Array.isArray(value)
+}
+
 const uniq = <T>(items: T[]) => {
   return Array.from(new Set(items))
 }
@@ -72,7 +76,7 @@ const normalizeApplicationIconPath = (iconx64?: string | null) => {
     return ''
   }
 
-  if (/^(https?:)?\/\//.test(iconName) || iconName.startsWith('/')) {
+  if (/^(?:https?:)?\/\//.test(iconName) || iconName.startsWith('/')) {
     return iconName
   }
 
@@ -207,13 +211,13 @@ export const useApplicationCatalog = () => {
     })
     const responseData = Array.isArray(response) ? response : response?.data
 
-    return (responseData || []).map((item) => ({
+    return (responseData || []).filter(isRecord).map(item => ({
       ...item,
       mainTable: {
-        ...item?.mainTable,
-        iconx64: normalizeApplicationIconPath(item?.mainTable?.iconx64),
+        ...(isRecord(item.mainTable) ? item.mainTable : {}),
+        iconx64: normalizeApplicationIconPath(isRecord(item.mainTable) ? normalizeString(item.mainTable.iconx64 as string | null) : ''),
       },
-    }))
+    })) as any as ApplicationCatalogItem[]
   }
 
   const refreshFromServer = async (filters: ApplicationCatalogFilters = {}) => {
@@ -228,12 +232,14 @@ export const useApplicationCatalog = () => {
       if (currentRequestVersion === requestVersion.value) {
         catalog.value = nextCatalog
       }
-    } catch (error) {
+    }
+    catch (error) {
       console.error('Fetch application catalog failed:', error)
       if (currentRequestVersion === requestVersion.value) {
         catalog.value = []
       }
-    } finally {
+    }
+    finally {
       if (currentRequestVersion === requestVersion.value) {
         loading.value = false
         syncing.value = false
@@ -254,9 +260,9 @@ export const useApplicationCatalog = () => {
   }
   const getApplicationCatalogData = async (filters: ApplicationCatalogFilters = {}) => {
     return refreshFromServer({
-      'business': filters.business,
-      'type': filters.type,
-      'tag': filters.tag,
+      business: filters.business,
+      type: filters.type,
+      tag: filters.tag,
     })
   }
 
@@ -292,9 +298,9 @@ export const useApplicationCatalog = () => {
         },
       })
 
-      form.value = response?.data ?? response
-
-    } catch (error) {
+      form.value = isRecord(response) ? response.data ?? response : response
+    }
+    catch (error) {
       console.error('Fetch application catalog failed:', error)
       form.value = null
     }

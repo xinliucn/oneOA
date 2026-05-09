@@ -1,78 +1,107 @@
 <template>
-    <div
-        class="desktop-layout"
-        style="display: flex; flex-direction: column; width: 100%; height: 100vh; overflow: hidden; background: #FFFFFF;"
-    >
-        <header class="desktop__header">
-            <button
-                type="button"
-                class="desktop__logo"
-                aria-label="Back to desktop home"
-                @click="handleLogoClick"
+  <div
+    class="desktop-layout"
+    style="display: flex; flex-direction: column; width: 100%; height: 100vh; overflow: hidden; background: #FFFFFF;"
+  >
+    <header class="desktop__header">
+      <button
+        type="button"
+        class="desktop__logo"
+        aria-label="Back to desktop home"
+        @click="handleLogoClick"
+      >
+        <img
+          src="~/assets/images/dchLogo.png"
+          alt="SuperApp Logo"
+          width="200"
+          height="40"
+        >
+      </button>
+      <div class="desktop_header_actions">
+        <el-button
+          circle
+          class="action-btn"
+        >
+          <IconCustom
+            name="share"
+            :size="20"
+          />
+        </el-button>
+        <LocaleDropdown />
+
+        <NotificationBell />
+        <el-dropdown @command="handleCommand">
+          <span class="avatar-dropdown">
+            <img
+              class="desktop__avatar-img"
+              src="/favicon.png"
+              alt="User avatar"
+              width="40"
+              height="40"
             >
-                <img
-                    src="~/assets/images/dchLogo.png"
-                    alt="SuperApp Logo"
-                    width="200"
-                    height="40"
-                >
-            </button>
-            <div class="desktop_header_actions">
-                <el-button circle class="action-btn">
-                    <IconCustom name="share" :size="20" />
-                </el-button>
-                <LocaleDropdown />
-                
-                <NotificationBell />
-                <el-dropdown @command="handleCommand">
-                    <span class="avatar-dropdown">
-                        <img
-                            class="desktop__avatar-img"
-                            src="/favicon.png"
-                            alt="User avatar"
-                            width="40"
-                            height="40"
-                        >
-                    </span>
-                    <template #dropdown>
-                        <el-dropdown-menu>
-                            <el-dropdown-item command="profile">{{ t('user.profile') }}</el-dropdown-item>
-                            <el-dropdown-item command="logout">{{ t('user.logout') }}</el-dropdown-item>
-                        </el-dropdown-menu>
-                    </template>
-                </el-dropdown>
+          </span>
+          <template #dropdown>
+            <el-dropdown-menu>
+              <el-dropdown-item command="profile">
+                {{ t('user.profile') }}
+              </el-dropdown-item>
+              <el-dropdown-item command="logout">
+                {{ t('user.logout') }}
+              </el-dropdown-item>
+            </el-dropdown-menu>
+          </template>
+        </el-dropdown>
+      </div>
+    </header>
+    <div class="desktop_layout_content">
+      <div class="desktop__sidebar">
+        <el-menu
+          :default-active="activeMenu"
+          class="el-menu-vertical-demo"
+          background-color="#F5F5F5"
+          text-color="#000000"
+          active-text-color="#A60A3A"
+          @select="handleMenuSelect"
+        >
+          <el-menu-item
+            v-for="item in menuItems"
+            :key="item.index"
+            :index="item.index"
+          >
+            <template #title>
+              <IconCustom
+                :name="item.icon"
+                :size="26"
+              />
+              {{ item.label }}
+            </template>
+          </el-menu-item>
+        </el-menu>
+      </div>
+      <main
+        ref="desktopMainRef"
+        class="desktop__main"
+      >
+        <slot />
+        <div
+          v-if="!isLayoutReady"
+          class="desktop__main-loading"
+        >
+          <div class="desktop__loading-content">
+            <div class="desktop__loading-title">
+              Loading...
             </div>
-        </header>
-        <div class="desktop_layout_content">
-            <div class="desktop__sidebar">
-                <el-menu :default-active="activeMenu" class="el-menu-vertical-demo" @select="handleMenuSelect"
-                    background-color="#F5F5F5" text-color="#000000" active-text-color="#A60A3A">
-                    <el-menu-item v-for="item in menuItems" :key="item.index" :index="item.index">
-                        <template #title>
-                            <IconCustom :name="item.icon" :size="26" />
-                            {{ item.label }}
-                        </template>
-                    </el-menu-item>
-                </el-menu>
+            <div
+              class="desktop__loading-track"
+              aria-hidden="true"
+            >
+              <span class="desktop__loading-bar" />
             </div>
-            <main ref="desktopMainRef" class="desktop__main">
-                <slot />
-                <div
-                    v-if="!isLayoutReady"
-                    class="desktop__main-loading"
-                >
-                    <div class="desktop__loading-content">
-                        <div class="desktop__loading-title">
-                            Loading...
-                        </div>
-                        <div class="desktop__loading-track" aria-hidden="true">
-                            <span class="desktop__loading-bar" />
-                        </div>
-                    </div>
-                </div>
-            </main>
+          </div>
         </div>
+      </main>
     </div>
+  </div>
 </template>
 
 <script setup lang="ts">
@@ -87,129 +116,131 @@ const desktopMainRef = ref<HTMLElement | null>(null)
 let loadingVersion = 0
 
 const menuRoutes: Record<string, string> = {
-    '1': '/desktop/news',
-    '2': '/desktop/company-information',
-    '3': '/desktop/company-documents',
-    '4': '/desktop/applications',
-    '5': '/desktop/department-intranets',
-    '6': '/desktop/dashboards',
-    '7': '/desktop/todo',
-    '8': '/desktop/elearning',
-    '9': '/desktop/eshop',
+  1: '/desktop/news',
+  2: '/desktop/company-information',
+  3: '/desktop/company-documents',
+  4: '/desktop/applications',
+  5: '/desktop/department-intranets',
+  6: '/desktop/dashboards',
+  7: '/desktop/todo',
+  8: '/desktop/elearning',
+  9: '/desktop/eshop',
 }
 
 const menuItems = computed(() => [
-    { index: '1', icon: 'document', label: t('nav.news') },
-    { index: '2', icon: 'info', label: t('nav.companyInformation') },
-    { index: '3', icon: 'download', label: t('nav.companyDocuments') },
-    { index: '4', icon: 'apps', label: t('nav.applications') },
-    { index: '5', icon: 'building', label: t('nav.departmentIntranets') },
-    { index: '6', icon: 'dashboard', label: t('nav.dashboards') },
-    { index: '7', icon: 'document', label: t('nav.todo') },
-    { index: '8', icon: 'education', label: t('nav.eLearning') },
-    { index: '9', icon: 'shop', label: t('nav.eShop') },
+  { index: '1', icon: 'document', label: t('nav.news') },
+  { index: '2', icon: 'info', label: t('nav.companyInformation') },
+  { index: '3', icon: 'download', label: t('nav.companyDocuments') },
+  { index: '4', icon: 'apps', label: t('nav.applications') },
+  { index: '5', icon: 'building', label: t('nav.departmentIntranets') },
+  { index: '6', icon: 'dashboard', label: t('nav.dashboards') },
+  { index: '7', icon: 'document', label: t('nav.todo') },
+  { index: '8', icon: 'education', label: t('nav.eLearning') },
+  { index: '9', icon: 'shop', label: t('nav.eShop') },
 ])
 
 const activeMenu = computed(() => {
-    const matched = Object.entries(menuRoutes).find(([, path]) => route.path.startsWith(path))
-    return matched?.[0] ?? ''
+  const matched = Object.entries(menuRoutes).find(([, path]) => route.path.startsWith(path))
+  return matched?.[0] ?? ''
 })
 
 const handleMenuSelect = (index: string) => {
-    const path = menuRoutes[index]
-    if (path) navigateTo(path)
+  const path = menuRoutes[index]
+  if (path) navigateTo(path)
 }
 
 const handleLogoClick = () => navigateTo('/')
 
 const handleCommand = async (command: string) => {
-    if (command === 'profile') {
-        console.log('打开个人信息页面')
-        // TODO: 导航到个人信息页面
-    } else if (command === 'logout') {
-        try {
-            await unsubscribe()
-            await logout()
-            await navigateTo('/')
-        } catch (error) {
-            console.error('退出登录失败:', error)
-        }
+  if (command === 'profile') {
+    console.log('打开个人信息页面')
+    // TODO: 导航到个人信息页面
+  }
+  else if (command === 'logout') {
+    try {
+      await unsubscribe()
+      await logout()
+      await navigateTo('/')
     }
+    catch (error) {
+      console.error('退出登录失败:', error)
+    }
+  }
 }
 
 const waitForAnimationFrame = () => {
-    return new Promise<void>((resolve) => {
-        requestAnimationFrame(() => resolve())
-    })
+  return new Promise<void>((resolve) => {
+    requestAnimationFrame(() => resolve())
+  })
 }
 
 const hasRenderedPageContent = () => {
-    const main = desktopMainRef.value
-    if (!main) {
-        return false
-    }
+  const main = desktopMainRef.value
+  if (!main) {
+    return false
+  }
 
-    return Array.from(main.children).some((child) => {
-        return child instanceof HTMLElement && !child.classList.contains('desktop__main-loading')
-    })
+  return Array.from(main.children).some((child) => {
+    return child instanceof HTMLElement && !child.classList.contains('desktop__main-loading')
+  })
 }
 
 const waitForDesktopContent = async (timeout = 4000) => {
-    const startedAt = Date.now()
+  const startedAt = Date.now()
 
-    while (!hasRenderedPageContent() && Date.now() - startedAt < timeout) {
-        await waitForAnimationFrame()
-    }
+  while (!hasRenderedPageContent() && Date.now() - startedAt < timeout) {
+    await waitForAnimationFrame()
+  }
 }
 
 const waitForDesktopReady = async () => {
-    const currentLoadingVersion = ++loadingVersion
-    isLayoutReady.value = false
+  const currentLoadingVersion = ++loadingVersion
+  isLayoutReady.value = false
 
-    await nextTick()
-    await waitForDesktopContent()
-    await waitForAnimationFrame()
-    await waitForAnimationFrame()
+  await nextTick()
+  await waitForDesktopContent()
+  await waitForAnimationFrame()
+  await waitForAnimationFrame()
 
-    if (document.fonts?.ready) {
-        await Promise.race([
-            document.fonts.ready,
-            new Promise(resolve => setTimeout(resolve, 300)),
-        ])
-    }
+  if (document.fonts?.ready) {
+    await Promise.race([
+      document.fonts.ready,
+      new Promise(resolve => setTimeout(resolve, 300)),
+    ])
+  }
 
-    await new Promise(resolve => setTimeout(resolve, route.path === '/desktop' ? 650 : 180))
+  await new Promise(resolve => setTimeout(resolve, route.path === '/desktop' ? 650 : 180))
 
-    if (currentLoadingVersion !== loadingVersion) {
-        return
-    }
+  if (currentLoadingVersion !== loadingVersion) {
+    return
+  }
 
-    isLayoutReady.value = true
+  isLayoutReady.value = true
 }
 
 // 在组件挂载后创建水印
 onMounted(async () => {
-    await waitForDesktopReady()
+  await waitForDesktopReady()
 
-    if (user.value) {
-        createUserWatermark(user.value)
-    }
+  if (user.value) {
+    createUserWatermark(user.value)
+  }
 })
 
 watch(
-    () => route.path,
-    async (path, previousPath) => {
-        if (path !== '/desktop' || previousPath === undefined) {
-            return
-        }
+  () => route.path,
+  async (path, previousPath) => {
+    if (path !== '/desktop' || previousPath === undefined) {
+      return
+    }
 
-        await waitForDesktopReady()
-    },
+    await waitForDesktopReady()
+  },
 )
 
 // 在组件卸载前移除水印
 onBeforeUnmount(() => {
-    removeWatermark()
+  removeWatermark()
 })
 </script>
 

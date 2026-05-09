@@ -27,15 +27,15 @@ const props = withDefaults(
     size: 20,
     color: 'currentColor',
     rotate: 0,
-    spin: false
-  }
+    spin: false,
+  },
 )
 
 // 图标映射表
 const iconMap: Record<string, any> = {
   globe: GlobeIcon,
   search: SearchIcon,
-  bell: BellIcon
+  bell: BellIcon,
 }
 
 // 动态获取图标组件
@@ -49,7 +49,7 @@ const style = computed(() => ({
   animation: props.spin ? 'icon-spin 1s linear infinite' : 'none',
   display: 'inline-flex',
   alignItems: 'center',
-  justifyContent: 'center'
+  justifyContent: 'center',
 }))
 </script>
 

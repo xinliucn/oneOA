@@ -160,12 +160,12 @@ export const useNotification = () => {
   }
 
   // 处理 Service Worker 转发的新通知消息
-  const handleServiceWorkerMessage = (payload: unknown) => {
+  const handleServiceWorkerMessage = (payload: any) => {
     if (!payload || typeof payload !== 'object') {
       return
     }
 
-    const message = payload as { type?: string; item?: NotificationItem }
+    const message = payload as { type?: string, item?: NotificationItem }
     if (message.type === 'notification:push' && message.item) {
       return ingestNotification(message.item)
     }

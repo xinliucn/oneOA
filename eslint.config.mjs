@@ -16,5 +16,10 @@ export default createConfigForNuxt({
   },
 })
   .append(
-    // your custom flat config here...
+    {
+      files: ['playground/**/*.{ts,vue}'],
+      rules: {
+        '@typescript-eslint/no-explicit-any': 'off',
+      },
+    },
   )

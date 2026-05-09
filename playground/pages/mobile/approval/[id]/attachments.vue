@@ -1,7 +1,10 @@
 <template>
   <NuxtPage v-if="isPreviewRoute" />
 
-  <div v-else class="mobile-approval-attachments">
+  <div
+    v-else
+    class="mobile-approval-attachments"
+  >
     <header class="mobile-approval-attachments__header">
       <button
         type="button"
@@ -125,7 +128,8 @@ watch(
     loading.value = true
     try {
       await getFormAttachments(id)
-    } finally {
+    }
+    finally {
       loading.value = false
     }
   },

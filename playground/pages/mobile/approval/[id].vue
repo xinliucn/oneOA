@@ -1,15 +1,28 @@
 <template>
   <NuxtPage v-if="isAttachmentRoute" />
 
-  <div v-else class="mobile-approval">
+  <div
+    v-else
+    class="mobile-approval"
+  >
     <MobileToast />
 
     <header class="mobile-approval__header">
-      <button class="mobile-approval__back" type="button" @click="handleBack">
-        <IconCustom name="chevron-right" :size="18" :rotate="180" />
+      <button
+        class="mobile-approval__back"
+        type="button"
+        @click="handleBack"
+      >
+        <IconCustom
+          name="chevron-right"
+          :size="18"
+          :rotate="180"
+        />
         <span class="mobile-approval__back-label">{{ backLabel }}</span>
       </button>
-      <h1 class="mobile-approval__header-title">{{ headerTitle }}</h1>
+      <h1 class="mobile-approval__header-title">
+        {{ headerTitle }}
+      </h1>
       <div class="mobile-approval__header-spacer" />
     </header>
 
@@ -17,14 +30,23 @@
       <section class="mobile-approval__sheet">
         <div class="mobile-approval__meta">
           <span class="mobile-approval__ref">{{ approvalSummary.referenceNumber }}</span>
-          <span class="mobile-approval__status-text" :class="statusClass">{{ approvalSummary.status }}</span>
+          <span
+            class="mobile-approval__status-text"
+            :class="statusClass"
+          >{{ approvalSummary.status }}</span>
         </div>
 
-        <h2 class="mobile-approval__title">{{ approvalSummary.title }}</h2>
+        <h2 class="mobile-approval__title">
+          {{ approvalSummary.title }}
+        </h2>
 
         <div class="mobile-approval__submitter">
           <div class="mobile-approval__submitter-avatar">
-            <IconCustom name="personnel" :size="18" color="#ffffff" />
+            <IconCustom
+              name="personnel"
+              :size="18"
+              color="#ffffff"
+            />
           </div>
           <div class="mobile-approval__submitter-info">
             <span class="mobile-approval__submitter-label">Submitted by</span>
@@ -34,13 +56,28 @@
         </div>
 
         <div class="mobile-approval__progress">
-          <div class="mobile-approval__progress-bar" :class="statusClass">{{ approvalSummary.status }}</div>
+          <div
+            class="mobile-approval__progress-bar"
+            :class="statusClass"
+          >
+            {{ approvalSummary.status }}
+          </div>
           <div class="mobile-approval__timeline">
-            <div v-for="approver in visibleTimelineItems" :key="approver.id"
-              class="mobile-approval__timeline-item">
+            <div
+              v-for="approver in visibleTimelineItems"
+              :key="approver.id"
+              class="mobile-approval__timeline-item"
+            >
               <div class="mobile-approval__timeline-marker">
-                <div class="mobile-approval__timeline-avatar" :class="getApproverStatusClass(approver.action)">
-                  <IconCustom name="personnel" :size="14" color="#ffffff" />
+                <div
+                  class="mobile-approval__timeline-avatar"
+                  :class="getApproverStatusClass(approver.action)"
+                >
+                  <IconCustom
+                    name="personnel"
+                    :size="14"
+                    color="#ffffff"
+                  />
                 </div>
               </div>
               <div class="mobile-approval__timeline-info">
@@ -50,20 +87,31 @@
                 </span>
               </div>
             </div>
-            <button v-if="timelineItems.length > timelinePreviewCount" type="button" class="mobile-approval__show-more"
-              @click="showAllApprovers = !showAllApprovers">
+            <button
+              v-if="timelineItems.length > timelinePreviewCount"
+              type="button"
+              class="mobile-approval__show-more"
+              @click="showAllApprovers = !showAllApprovers"
+            >
               {{ showAllApprovers ? 'Show less' : 'Show more' }}
             </button>
           </div>
         </div>
 
-        <div v-if="attachments.length > 0" class="mobile-approval__attachments">
+        <div
+          v-if="attachments.length > 0"
+          class="mobile-approval__attachments"
+        >
           <NuxtLink
             :to="attachmentRoute"
             class="mobile-approval__attachment"
           >
             <span class="mobile-approval__attachment-icon">
-              <IconCustom name="document" :size="13" color="#3b82f6" />
+              <IconCustom
+                name="document"
+                :size="13"
+                color="#3b82f6"
+              />
             </span>
             <span class="mobile-approval__attachment-name">{{ attachments[0]?.name }}</span>
           </NuxtLink>
@@ -77,12 +125,15 @@
         </div>
 
         <div class="mobile-approval__fields">
-          <div v-for="field in formFields" :key="field.label" class="mobile-approval__field">
+          <div
+            v-for="field in formFields"
+            :key="field.label"
+            class="mobile-approval__field"
+          >
             <span class="mobile-approval__field-label">{{ field.label }}</span>
             <span class="mobile-approval__field-value">{{ field.value }}</span>
           </div>
         </div>
-
 
         <button
           type="button"
@@ -94,20 +145,34 @@
       </section>
     </main>
 
-    <footer v-if="actionMode !== 'viewOnly'" class="mobile-approval__footer">
+    <footer
+      v-if="actionMode !== 'viewOnly'"
+      class="mobile-approval__footer"
+    >
       <textarea
         v-if="actionMode === 'approveReject'"
         v-model="actionComment"
         class="mobile-approval__comment"
         :placeholder="t('mobile.approval.actions.commentPlaceholder')"
       />
-      <div v-if="actionMode === 'approveReject'" class="mobile-approval__actions mobile-approval__actions--approval">
-        <button type="button" class="mobile-approval__action mobile-approval__action--approve"
-          :class="{ active: selectedAction === 'Approve' }" @click="selectAction('Approve')">
+      <div
+        v-if="actionMode === 'approveReject'"
+        class="mobile-approval__actions mobile-approval__actions--approval"
+      >
+        <button
+          type="button"
+          class="mobile-approval__action mobile-approval__action--approve"
+          :class="{ active: selectedAction === 'Approve' }"
+          @click="selectAction('Approve')"
+        >
           {{ t('mobile.approval.actions.approve') }}
         </button>
-        <button type="button" class="mobile-approval__action mobile-approval__action--reject"
-          :class="{ active: selectedAction === 'Reject' }" @click="selectAction('Reject')">
+        <button
+          type="button"
+          class="mobile-approval__action mobile-approval__action--reject"
+          :class="{ active: selectedAction === 'Reject' }"
+          @click="selectAction('Reject')"
+        >
           {{ t('mobile.approval.actions.reject') }}
         </button>
       </div>
@@ -127,7 +192,6 @@
     <button type="button" class="mobile-approval__empty-back" @click="handleBack">Back to list</button>
   </div> -->
 </template>
-
 
 <script setup lang="ts">
 import type { ApprovalAction } from '~/types/approval'
@@ -321,11 +385,11 @@ const timelineItems = computed<TimelineItem[]>(() => {
   const logs = processInfo.value?.workflowRequestLogs
   const items: TimelineItem[] = Array.isArray(logs)
     ? logs.map((log: Record<string, any>, index: number) => ({
-      id: String(log.id || `${log.nodeId || 'log'}-${index}`),
-      nodeName: stripHtml(log.nodeName || log.operatorName || `Step ${index + 1}`),
-      action: stripHtml(log.operateType || 'Processed'),
-      date: formatDateTime(log.operateDate, log.operateTime),
-    }))
+        id: String(log.id || `${log.nodeId || 'log'}-${index}`),
+        nodeName: stripHtml(log.nodeName || log.operatorName || `Step ${index + 1}`),
+        action: stripHtml(log.operateType || 'Processed'),
+        date: formatDateTime(log.operateDate, log.operateTime),
+      }))
     : []
 
   const currentNodeName = stripHtml(processInfo.value?.currentNodeName || toDoFrom.value?.currentNodeName)
@@ -358,7 +422,7 @@ const submitButtonName = computed(() => {
   return label
 })
 
-const toBoolean = (value: unknown) => {
+const toBoolean = (value: any) => {
   if (typeof value === 'boolean') {
     return value
   }
@@ -528,7 +592,8 @@ const handleConfirm = async () => {
           requestId: currentRequestId,
         },
       })
-    } else {
+    }
+    else {
       await $fetch(workflowFormActionEndpoint, {
         method: 'POST',
         body: {
@@ -552,15 +617,16 @@ const handleConfirm = async () => {
     actionComment.value = ''
     mobileActiveTab.value = 2
     await navigateTo('/mobile')
-  } catch (error) {
+  }
+  catch (error) {
     const message = error instanceof Error ? error.message : 'Submit failed'
     showToast(message, 'error')
     console.error('Failed to submit approval action:', error)
-  } finally {
+  }
+  finally {
     submittingAction.value = false
   }
 }
-
 
 watch(
   [approvalId, requestId],

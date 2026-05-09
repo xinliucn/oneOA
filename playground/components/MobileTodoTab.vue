@@ -1,172 +1,313 @@
 <template>
   <div class="mobile-todo">
-    <div v-if="!isLoadingScreenVisible" class="mobile-todo__header">
+    <div
+      v-if="!isLoadingScreenVisible"
+      class="mobile-todo__header"
+    >
       <template v-if="isSearchOpen">
         <div class="mobile-todo__search">
-          <IconCustom name="search" :size="20" class="mobile-todo__search-icon" />
-          <input ref="searchInputRef" v-model.trim="searchQuery" type="text" class="mobile-todo__search-input"
-            :placeholder="searchPlaceholder">
+          <IconCustom
+            name="search"
+            :size="20"
+            class="mobile-todo__search-icon"
+          />
+          <input
+            ref="searchInputRef"
+            v-model.trim="searchQuery"
+            type="text"
+            class="mobile-todo__search-input"
+            :placeholder="searchPlaceholder"
+          >
         </div>
-        <button type="button" class="mobile-todo__search-cancel" @click="closeSearch">
-          {{ text('mobile.todo.actions.cancel', { 'zh-CN': '取消', 'zh-TW': '取消', en: 'Cancel' }) }}
+        <button
+          type="button"
+          class="mobile-todo__search-cancel"
+          @click="closeSearch"
+        >
+          {{ text('mobile.todo.actions.cancel', { 'zh-CN': '取消', 'zh-TW': '取消', "en": 'Cancel' }) }}
         </button>
       </template>
 
       <template v-else>
-        <div ref="dropdownRef" class="mobile-todo__dropdown">
-          <button type="button" class="mobile-todo__title" @click="toggleDropdown">
+        <div
+          ref="dropdownRef"
+          class="mobile-todo__dropdown"
+        >
+          <button
+            type="button"
+            class="mobile-todo__title"
+            @click="toggleDropdown"
+          >
             <h2>{{ selectedView.label }}</h2>
-            <span class="mobile-todo__arrow" :class="{ 'is-open': isDropdownOpen }">
-              <IconCustom name="downArrowIcon" :size="20" />
+            <span
+              class="mobile-todo__arrow"
+              :class="{ 'is-open': isDropdownOpen }"
+            >
+              <IconCustom
+                name="downArrowIcon"
+                :size="20"
+              />
             </span>
           </button>
 
-          <div v-if="isDropdownOpen" class="mobile-todo__menu">
-            <button v-for="option in todoOptions" :key="option.value" type="button" class="mobile-todo__menu-item"
-              :class="{ 'is-active': selectedView.value === option.value }" @click="selectView(option)">
-              <span class="mobile-todo__menu-check" :class="{ 'is-visible': selectedView.value === option.value }" />
+          <div
+            v-if="isDropdownOpen"
+            class="mobile-todo__menu"
+          >
+            <button
+              v-for="option in todoOptions"
+              :key="option.value"
+              type="button"
+              class="mobile-todo__menu-item"
+              :class="{ 'is-active': selectedView.value === option.value }"
+              @click="selectView(option)"
+            >
+              <span
+                class="mobile-todo__menu-check"
+                :class="{ 'is-visible': selectedView.value === option.value }"
+              />
               <span>{{ option.label }}</span>
             </button>
           </div>
         </div>
 
         <div class="mobile-todo__actions">
-          <div ref="filterTriggerRef" class="mobile-todo__filter-trigger">
-            <el-button circle class="action-btn_left" :class="{ 'is-active': isFilterPanelOpen }"
-              @click="toggleFilterPanel">
-              <IconCustom name="filterIcon" :size="20" />
+          <div
+            ref="filterTriggerRef"
+            class="mobile-todo__filter-trigger"
+          >
+            <el-button
+              circle
+              class="action-btn_left"
+              :class="{ 'is-active': isFilterPanelOpen }"
+              @click="toggleFilterPanel"
+            >
+              <IconCustom
+                name="filterIcon"
+                :size="20"
+              />
             </el-button>
           </div>
-          <el-button circle class="action-btn" @click="openSearch">
-            <IconCustom name="search" :size="20" />
+          <el-button
+            circle
+            class="action-btn"
+            @click="openSearch"
+          >
+            <IconCustom
+              name="search"
+              :size="20"
+            />
           </el-button>
         </div>
       </template>
     </div>
 
-    <div v-if="!isLoadingScreenVisible && isFilterPanelOpen && !isSearchOpen" ref="filterPanelRef"
-      class="mobile-todo__filter-panel">
+    <div
+      v-if="!isLoadingScreenVisible && isFilterPanelOpen && !isSearchOpen"
+      ref="filterPanelRef"
+      class="mobile-todo__filter-panel"
+    >
       <div class="mobile-todo__filter-group">
-        <div class="mobile-todo__filter-label">{{ text('mobile.todo.filters.category', {
-          'zh-CN': '筛选 1', 'zh-TW': '篩選1',
-          en: 'Filter 1'
-        }) }}</div>
+        <div class="mobile-todo__filter-label">
+          {{ text('mobile.todo.filters.category', {
+            'zh-CN': '筛选 1',
+            'zh-TW': '篩選1',
+            "en": 'Filter 1',
+          }) }}
+        </div>
         <div class="mobile-todo__filter-options">
-          <button v-for="filter in categoryFilters" :key="filter.value" type="button" class="mobile-todo__filter-chip"
-            :class="{ 'is-active': draftCategoryFilter === filter.value }" @click="draftCategoryFilter = filter.value">
+          <button
+            v-for="filter in categoryFilters"
+            :key="filter.value"
+            type="button"
+            class="mobile-todo__filter-chip"
+            :class="{ 'is-active': draftCategoryFilter === filter.value }"
+            @click="draftCategoryFilter = filter.value"
+          >
             {{ filter.label }}{{ filter.count ? ` ${filter.count}` : '' }}
           </button>
         </div>
       </div>
 
       <div class="mobile-todo__filter-group">
-        <div class="mobile-todo__filter-label">{{ text('mobile.todo.filters.status', {
-          'zh-CN': '筛选 2', 'zh-TW': '篩選 2',
-          en:
-            'Filter 2'
-        }) }}</div>
+        <div class="mobile-todo__filter-label">
+          {{ text('mobile.todo.filters.status', {
+            'zh-CN': '筛选 2',
+            'zh-TW': '篩選 2',
+            "en":
+              'Filter 2',
+          }) }}
+        </div>
         <div class="mobile-todo__filter-options">
-          <button v-for="filter in statusFilters" :key="filter.value" type="button" class="mobile-todo__filter-chip"
-            :class="{ 'is-active': draftStatusFilter === filter.value }" @click="draftStatusFilter = filter.value">
+          <button
+            v-for="filter in statusFilters"
+            :key="filter.value"
+            type="button"
+            class="mobile-todo__filter-chip"
+            :class="{ 'is-active': draftStatusFilter === filter.value }"
+            @click="draftStatusFilter = filter.value"
+          >
             {{ filter.label }}{{ filter.count ? ` ${filter.count}` : '' }}
           </button>
         </div>
       </div>
 
       <div class="mobile-todo__filter-actions">
-        <button type="button" class="mobile-todo__panel-btn" @click="cancelFilters">
-          {{ text('mobile.todo.actions.cancel', { 'zh-CN': '取消', 'zh-TW': '取消', en: 'Cancel' }) }}
+        <button
+          type="button"
+          class="mobile-todo__panel-btn"
+          @click="cancelFilters"
+        >
+          {{ text('mobile.todo.actions.cancel', { 'zh-CN': '取消', 'zh-TW': '取消', "en": 'Cancel' }) }}
         </button>
-        <button type="button" class="mobile-todo__panel-btn" @click="applyFilters">
-          {{ text('mobile.todo.actions.apply', { 'zh-CN': '应用', 'zh-TW': '套用', en: 'Apply' }) }}
+        <button
+          type="button"
+          class="mobile-todo__panel-btn"
+          @click="applyFilters"
+        >
+          {{ text('mobile.todo.actions.apply', { 'zh-CN': '应用', 'zh-TW': '套用', "en": 'Apply' }) }}
         </button>
       </div>
     </div>
 
     <div class="mobile-todo__list">
-      <div v-if="isLoadingScreenVisible" class="mobile-todo__loading-screen">
+      <div
+        v-if="isLoadingScreenVisible"
+        class="mobile-todo__loading-screen"
+      >
         <div class="mobile-todo__loading-content">
-          <div class="mobile-todo__loading-title">{{ loadingLabel }}</div>
-          <div class="mobile-todo__loading-track" aria-hidden="true">
+          <div class="mobile-todo__loading-title">
+            {{ loadingLabel }}
+          </div>
+          <div
+            class="mobile-todo__loading-track"
+            aria-hidden="true"
+          >
             <span class="mobile-todo__loading-bar" />
           </div>
         </div>
       </div>
-      <div v-else-if="!loading && filteredTasks.length === 0" class="mobile-todo__state">{{
-        text('mobile.todo.states.empty',
-          { 'zh-CN': '暂无消息', 'zh-TW': '暫無消息', en: 'No items' }) }}</div>
+      <div
+        v-else-if="!loading && filteredTasks.length === 0"
+        class="mobile-todo__state"
+      >
+        {{
+          text('mobile.todo.states.empty',
+               { 'zh-CN': '暂无消息', 'zh-TW': '暫無消息', "en": 'No items' }) }}
+      </div>
       <template v-else>
-        <div v-if="selectedViewValue === 'approvals'" v-for="task in filteredTasks" :key="task.id" class="todo-item"
-          @click="handleTaskClick(selectedViewValue, task)">
-          <div class="todo-item__content">
-            <div class="todo-item__header">
-              <div class="todo-item__meta">
-                <span class="todo-item__code">{{ getTaskReference(task) }}</span>
-                <span class="todo-item__status" :class="`status-pending`">
-                  {{ t(`${task.status}`) }}
+        <template v-if="selectedViewValue === 'approvals'">
+          <div
+            v-for="task in filteredTasks"
+            :key="task.id"
+            class="todo-item"
+            @click="handleTaskClick(selectedViewValue, task)"
+          >
+            <div class="todo-item__content">
+              <div class="todo-item__header">
+                <div class="todo-item__meta">
+                  <span class="todo-item__code">{{ getTaskReference(task) }}</span>
+                  <span
+                    class="todo-item__status"
+                    :class="`status-pending`"
+                  >
+                    {{ t(`${task.status}`) }}
+                  </span>
+                </div>
+                <div class="todo-item__date">
+                  {{ task.createTime }}
+                </div>
+              </div>
+              <div class="todo-item__title">
+                {{ task.requestName }}
+              </div>
+              <div class="todo-item__subtitle">
+                <span>{{ task.creatorName }}</span>
+                <span>{{ ' | ' }}</span>
+                <span class="todo-item__portfolio">{{ task.workflowBaseInfo?.workflowName
+                }}</span>
+              </div>
+            </div>
+            <IconCustom
+              name="chevron-right"
+              :size="20"
+              color="#A60A3A"
+              class="todo-item__arrow"
+            />
+          </div>
+        </template>
+        <template v-if="selectedViewValue === 'requests'">
+          <div
+            v-for="task in filteredTasks"
+            :key="task.id"
+            class="todo-item"
+            @click="handleTaskClick(selectedViewValue, task)"
+          >
+            <div class="todo-item__content">
+              <div class="todo-item__header">
+                <div class="todo-item__meta">
+                  <span class="todo-item__code">{{ task.requestmark }}</span>
+                </div>
+              </div>
+              <div class="todo-item__title">
+                {{ task.requestName }} <span
+                  class="todo-item__status"
+                  :class="`status-pending`"
+                >
+                  {{ t(`${task.currentNodeName}`) }}
                 </span>
+                <div class="todo-item__date">
+                  {{ task.createTime }}
+                </div>
               </div>
-              <div class="todo-item__date">{{ task.createTime }}</div>
-            </div>
-            <div class="todo-item__title">{{ task.requestName }}</div>
-            <div class="todo-item__subtitle">
-              <span>{{ task.creatorName }}</span>
-              <span>{{ ' | ' }}</span>
-              <span class="todo-item__portfolio">{{ task.workflowBaseInfo.workflowName
+              <div class="todo-item__title">
+                <span>{{ task.creatorSubcompanyName }}</span>
+                <span>-></span>
+                <span>{{ task.creatorDepartmentName }}</span>
+              </div>
+              <div class="todo-item__subtitle">
+                <span>{{ task.creatorName }}</span>
+                <span>{{ ' | ' }}</span>
+                <span class="todo-item__portfolio">{{ task.workflowBaseInfo?.workflowName
                 }}</span>
+              </div>
             </div>
           </div>
-          <IconCustom name="chevron-right" :size="20" color="#A60A3A" class="todo-item__arrow" />
-        </div>
-        <div v-if="selectedViewValue === 'requests'" v-for="task in filteredTasks" :key="task.id" class="todo-item"
-          @click="handleTaskClick(selectedViewValue, task)">
-          <div class="todo-item__content">
-            <div class="todo-item__header">
-              <div class="todo-item__meta">
-                <span class="todo-item__code">{{ task.requestmark }}</span>
+        </template>
+        <template v-if="selectedViewValue === 'tasks'">
+          <div
+            v-for="task in filteredTasks"
+            :key="task.id"
+            class="todo-item"
+            @click="handleTaskClick(selectedViewValue, task)"
+          >
+            <div class="todo-item__content">
+              <div class="todo-item__header">
+                <div class="todo-item__meta">
+                  <span class="todo-item__code">{{ getTaskReference(task) }}</span>
+                </div>
+                <div class="todo-item__date">
+                  {{ task.createTime }}
+                </div>
               </div>
-            </div>
-            <div class="todo-item__title">{{ task.requestName }} <span class="todo-item__status"
-                :class="`status-pending`">
-                {{ t(`${task.currentNodeName}`) }}
+              <div class="todo-item__title">
+                {{ task.requestName }}
+              </div>
+              <span
+                class="todo-item__status"
+                :class="`status-pending`"
+              >
+                {{ t(`${task.status}`) }}
               </span>
-              <div class="todo-item__date">{{ task.createTime }}</div>
-            </div>
-            <div class="todo-item__title">
-              <span>{{ task.creatorSubcompanyName }}</span>
-              <span>-></span>
-              <span>{{ task.creatorDepartmentName }}</span>
-            </div>
-            <div class="todo-item__subtitle">
-              <span>{{ task.creatorName }}</span>
-              <span>{{ ' | ' }}</span>
-              <span class="todo-item__portfolio">{{ task.workflowBaseInfo.workflowName
+              <div class="todo-item__subtitle">
+                <span>{{ task.creatorName }}</span>
+                <span>{{ ' | ' }}</span>
+                <span class="todo-item__portfolio">{{ task.workflowBaseInfo?.workflowName
                 }}</span>
-            </div>
-          </div>
-        </div>
-        <div v-if="selectedViewValue === 'tasks'" v-for="task in filteredTasks" :key="task.id" class="todo-item"
-          @click="handleTaskClick(selectedViewValue, task)">
-          <div class="todo-item__content">
-            <div class="todo-item__header">
-              <div class="todo-item__meta">
-                <span class="todo-item__code">{{ getTaskReference(task) }}</span>
               </div>
-              <div class="todo-item__date">{{ task.createTime }}</div>
-            </div>
-            <div class="todo-item__title">{{ task.requestName }}</div>
-            <span class="todo-item__status" :class="`status-pending`">
-              {{ t(`${task.status}`) }}
-            </span>
-            <div class="todo-item__subtitle">
-              <span>{{ task.creatorName }}</span>
-              <span>{{ ' | ' }}</span>
-              <span class="todo-item__portfolio">{{ task.workflowBaseInfo.workflowName
-                }}</span>
             </div>
           </div>
-
-        </div>
+        </template>
       </template>
     </div>
   </div>
@@ -174,8 +315,9 @@
 
 <script setup lang="ts">
 import { computed, nextTick, ref } from 'vue'
-import type { ApprovalItem } from '~/types/approval'
-const toDoFrom: any = useState('mobile:todo-form', () => null)
+import type { TodoItem } from '~/composables/useToDoData'
+
+const toDoFrom = useState<TodoItem | null>('mobile:todo-form', () => null)
 
 type TodoOption = {
   label: string
@@ -211,7 +353,6 @@ const draftCategoryFilter = ref('all')
 const draftStatusFilter = ref('all')
 const { list, loading, fetchByView } = useToDoData()
 
-
 const defaultFallbacks = {
   all: 'All',
   search: 'Search',
@@ -229,7 +370,7 @@ const localizedFallbacks: Record<string, { all: string, search: string, others: 
     search: '搜尋',
     others: '其他',
   },
-  en: defaultFallbacks,
+  'en': defaultFallbacks,
 }
 
 const text = (key: string, fallback: LocaleMessages) => {
@@ -254,15 +395,15 @@ const normalizeFilterValue = (value?: string | null) => {
   return String(value || '').trim().toLowerCase()
 }
 
-const getTaskStatus = (task: any) => {
+const getTaskStatus = (task: TodoItem) => {
   return normalizeFilterValue(task.status || task.currentNodeName)
 }
 
-const getTaskStatusLabel = (task: any) => {
+const getTaskStatusLabel = (task: TodoItem) => {
   return String(task.status || task.currentNodeName || '').trim()
 }
 
-const getTaskSearchFields = (task: any) => {
+const getTaskSearchFields = (task: TodoItem) => {
   return [
     task.code,
     task.title,
@@ -281,7 +422,7 @@ const getTaskSearchFields = (task: any) => {
   ].map(field => normalizeFilterValue(field))
 }
 
-const getTaskTitleCodeFields = (task: any) => {
+const getTaskTitleCodeFields = (task: TodoItem) => {
   return [
     task.code,
     task.title,
@@ -291,11 +432,11 @@ const getTaskTitleCodeFields = (task: any) => {
   ].map(field => normalizeFilterValue(field))
 }
 
-const getTaskReference = (task: any) => {
+const getTaskReference = (task: TodoItem) => {
   return String(task?.requestmark || task?.requestId || task?.id || '').trim()
 }
 
-const getTaskTitle = (task: any) => {
+const getTaskTitle = (task: TodoItem) => {
   return String(task?.title || task?.requestName || task?.workflowBaseInfo?.workflowName || getTaskReference(task) || 'To-Do').trim()
 }
 
@@ -339,7 +480,7 @@ const getCategoryKeywords = (filterValue: string) => {
     .filter((value, index, values) => value && value !== 'all' && values.indexOf(value) === index)
 }
 
-const matchesCategoryFilter = (task: any, filterValue: string) => {
+const matchesCategoryFilter = (task: TodoItem, filterValue: string) => {
   const normalizedFilterValue = normalizeFilterValue(filterValue)
   if (normalizedFilterValue === 'all') {
     return true
@@ -350,13 +491,13 @@ const matchesCategoryFilter = (task: any, filterValue: string) => {
   return categoryKeywords.some(categoryKeyword => taskTitleCodeFields.some(field => field.includes(categoryKeyword)))
 }
 
-const matchesStatusFilter = (task: any, filterValue: string) => {
+const matchesStatusFilter = (task: TodoItem, filterValue: string) => {
   const normalizedFilterValue = normalizeFilterValue(filterValue)
   return normalizedFilterValue === 'all'
     || getTaskStatus(task) === normalizedFilterValue
 }
 
-const matchesSearchFilter = (task: any, keyword: string) => {
+const matchesSearchFilter = (task: TodoItem, keyword: string) => {
   return !keyword
     || getTaskSearchFields(task).some(field => field.includes(keyword))
 }
@@ -440,7 +581,7 @@ const filteredTasks = computed(() => {
   })
 })
 
-const handleTaskClick = (selectedViewValue: string, task: ApprovalItem) => {
+const handleTaskClick = (selectedViewValue: string, task: TodoItem) => {
   toDoFrom.value = {
     ...task,
     todoView: selectedViewValue,

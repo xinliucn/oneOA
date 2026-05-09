@@ -1,7 +1,9 @@
 <template>
   <div class="desktop-apps">
     <div class="desktop-apps__header">
-      <h3 class="desktop-apps__title">{{ t('desktopApps.title') }}</h3>
+      <h3 class="desktop-apps__title">
+        {{ t('desktopApps.title') }}
+      </h3>
       <button
         type="button"
         class="desktop-apps__link"
@@ -10,16 +12,46 @@
         {{ t('desktopApps.viewAll') }}
       </button>
     </div>
-    <div v-if="loading" class="desktop-apps__state">Loading...</div>
-    <div v-else-if="visibleCategories.length === 0" class="desktop-apps__state">No applications found.</div>
-    <div v-else class="desktop-apps__columns">
-      <div v-for="category in visibleCategories" :key="category.id" class="app-column">
-        <div class="app-column__top" :style="{ borderTopColor: category.color }">
-          <div class="app-column__icon" :style="{ color: category.color }">
-            <IconCustom :name="category.icon" :size="34" />
+    <div
+      v-if="loading"
+      class="desktop-apps__state"
+    >
+      Loading...
+    </div>
+    <div
+      v-else-if="visibleCategories.length === 0"
+      class="desktop-apps__state"
+    >
+      No applications found.
+    </div>
+    <div
+      v-else
+      class="desktop-apps__columns"
+    >
+      <div
+        v-for="category in visibleCategories"
+        :key="category.id"
+        class="app-column"
+      >
+        <div
+          class="app-column__top"
+          :style="{ borderTopColor: category.color }"
+        >
+          <div
+            class="app-column__icon"
+            :style="{ color: category.color }"
+          >
+            <IconCustom
+              :name="category.icon"
+              :size="34"
+            />
           </div>
-          <div class="app-column__name">{{ category.name }}</div>
-          <div class="app-column__desc">{{ category.description }}</div>
+          <div class="app-column__name">
+            {{ category.name }}
+          </div>
+          <div class="app-column__desc">
+            {{ category.description }}
+          </div>
           <button
             type="button"
             class="app-column__intranet"
@@ -29,12 +61,25 @@
           </button>
         </div>
         <div class="app-column__list">
-          <div v-for="app in category.apps" :key="app.id" class="app-row" @click="handleClick(app)">
+          <div
+            v-for="app in category.apps"
+            :key="app.id"
+            class="app-row"
+            @click="handleClick(app)"
+          >
             <div class="app-row__info">
-              <div class="app-row__name">{{ app.name }}</div>
-              <div class="app-row__sub">{{ app.subtitle }}</div>
+              <div class="app-row__name">
+                {{ app.name }}
+              </div>
+              <div class="app-row__sub">
+                {{ app.subtitle }}
+              </div>
             </div>
-            <IconCustom name="chevron-right" :size="14" class="app-row__arrow" />
+            <IconCustom
+              name="chevron-right"
+              :size="14"
+              class="app-row__arrow"
+            />
           </div>
           <button
             type="button"
@@ -93,7 +138,7 @@ const businessCategoryNames = [
 const desktopCatalog = ref<ApplicationCatalogItem[]>([])
 const loading = ref(true)
 
-const normalizeString = (value?: unknown) => {
+const normalizeString = (value?: any) => {
   if (typeof value === 'string') {
     return value.trim()
   }
@@ -105,7 +150,7 @@ const normalizeString = (value?: unknown) => {
   return ''
 }
 
-const getFirstString = (...values: unknown[]) => {
+const getFirstString = (...values: any[]) => {
   for (const value of values) {
     const normalizedValue = normalizeString(value)
     if (normalizedValue) {
@@ -353,7 +398,8 @@ const visibleCategories = computed(() => {
 
     if (currentCategory) {
       currentCategory.items.push(item)
-    } else {
+    }
+    else {
       categoryMap.set(meta.slug, {
         meta,
         items: [item],
@@ -419,10 +465,12 @@ const fetchDesktopApplications = async () => {
 
   try {
     desktopCatalog.value = await requestApplicationCatalogData()
-  } catch (error) {
+  }
+  catch (error) {
     console.error('Fetch desktop applications failed:', error)
     desktopCatalog.value = []
-  } finally {
+  }
+  finally {
     loading.value = false
   }
 }

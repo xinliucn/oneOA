@@ -36,11 +36,13 @@ export const useNewsList = () => {
 
       newsList.value = []
       return newsList.value
-    } catch (err: any) {
+    }
+    catch (err: any) {
       console.error('Failed to fetch news list:', err)
       error.value = err
       throw err
-    } finally {
+    }
+    finally {
       loading.value = false
     }
   }
@@ -61,6 +63,6 @@ export const useNewsList = () => {
     error,
     fetchNewsList,
     refreshNewsList,
-    clearNewsList
+    clearNewsList,
   }
 }

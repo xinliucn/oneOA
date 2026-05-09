@@ -226,7 +226,8 @@ const isApiLink = (link: string) => {
   try {
     const parsed = new URL(link, 'https://superapp.local')
     return parsed.pathname.startsWith('/api/')
-  } catch {
+  }
+  catch {
     return link.startsWith('/api/')
   }
 }
@@ -260,7 +261,8 @@ const getRequestIdFromLink = (link?: string) => {
       || parsed.searchParams.get('requestid')
       || parsed.searchParams.get('request_id')
       || ''
-  } catch {
+  }
+  catch {
     return ''
   }
 }

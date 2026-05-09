@@ -39,7 +39,7 @@ export interface ApprovalItem {
   attachments: ApprovalAttachment[]
   approvers: ApprovalTimelineItem[]
   fields: ApprovalField[]
-  requestmark: string
+  requestmark?: string
   requestId?: string
   currentNodeId?: string
   workflowBaseInfo?: {

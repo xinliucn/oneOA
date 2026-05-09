@@ -20,7 +20,7 @@ export const useWatermark = (options: WatermarkOptions = {}) => {
     opacity: 1,
     rotate: -20,
     zIndex: 9999,
-    gap: [100, 100]
+    gap: [100, 100],
   }
 
   const config = { ...defaultOptions, ...options }
@@ -36,8 +36,7 @@ export const useWatermark = (options: WatermarkOptions = {}) => {
     const ctx = canvas.getContext('2d')
     if (!ctx) return ''
 
-    const { fontSize, fontColor, rotate, gap } = config
-    const [gapX, gapY] = gap
+    const { fontSize, fontColor, rotate } = config
 
     // 设置canvas尺寸
     canvas.width = 400
@@ -100,7 +99,7 @@ export const useWatermark = (options: WatermarkOptions = {}) => {
       zIndex: String(config.zIndex),
       backgroundImage: `url(${base64Url})`,
       backgroundRepeat: 'repeat',
-      opacity: String(config.opacity)
+      opacity: String(config.opacity),
     })
 
     document.body.appendChild(watermarkDiv)
@@ -130,7 +129,7 @@ export const useWatermark = (options: WatermarkOptions = {}) => {
       attributes: true,
       childList: true,
       characterData: true,
-      subtree: true
+      subtree: true,
     })
 
     // 监听body的子元素变化，防止水印被删除
@@ -151,7 +150,7 @@ export const useWatermark = (options: WatermarkOptions = {}) => {
     })
 
     parentObserver.observe(document.body, {
-      childList: true
+      childList: true,
     })
   }
 
@@ -184,6 +183,6 @@ export const useWatermark = (options: WatermarkOptions = {}) => {
   return {
     createWatermark,
     removeWatermark,
-    updateWatermark
+    updateWatermark,
   }
 }

@@ -16,7 +16,7 @@ export default defineEventHandler(async (event) => {
 
   try {
     const notificationApiPrefix = '/api/r/internal'
-    const response = await $fetch.raw<Record<string, unknown>>(`${config.public.apiBase}${notificationApiPrefix}/ecology_oa/workflow_action/rejectRequest`, {
+    const response = await $fetch.raw<Record<string, any>>(`${config.public.apiBase}${notificationApiPrefix}/ecology_oa/workflow_action/rejectRequest`, {
       method: 'POST',
       headers: getForwardHeaders(event),
       body: {
@@ -27,8 +27,9 @@ export default defineEventHandler(async (event) => {
     forwardSetCookieHeaders(event, response)
 
     return response._data
-  } catch (error: unknown) {
-    const errorRecord = error && typeof error === 'object' ? error as Record<string, unknown> : {}
+  }
+  catch (error: any) {
+    const errorRecord = error && typeof error === 'object' ? error as Record<string, any> : {}
     const statusCode = Number(errorRecord.statusCode || errorRecord.status) || 500
     const statusMessage = typeof errorRecord.statusMessage === 'string'
       ? errorRecord.statusMessage

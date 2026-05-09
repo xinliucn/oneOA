@@ -22,7 +22,11 @@
     </section>
 
     <section class="mobile-profile__section">
-      <button type="button" class="mobile-profile__action" @click="handleLogout">
+      <button
+        type="button"
+        class="mobile-profile__action"
+        @click="handleLogout"
+      >
         Sign out
       </button>
     </section>

@@ -1,7 +1,10 @@
 <template>
   <div class="company-document-view">
     <header class="company-document-view__header">
-      <nav class="company-document-view__breadcrumb" aria-label="Breadcrumb">
+      <nav
+        class="company-document-view__breadcrumb"
+        aria-label="Breadcrumb"
+      >
         <NuxtLink to="/desktop">Home</NuxtLink>
         <span>&gt;</span>
         <NuxtLink to="/desktop/company-documents">Company Documents</NuxtLink>
@@ -24,11 +27,17 @@
       <h1>{{ documentDetail?.title || documentTitle }}</h1>
     </header>
 
-    <main v-if="loading" class="company-document-view__state">
+    <main
+      v-if="loading"
+      class="company-document-view__state"
+    >
       Loading...
     </main>
 
-    <main v-else-if="documentDetail" class="company-document-view__content">
+    <main
+      v-else-if="documentDetail"
+      class="company-document-view__content"
+    >
       <section class="company-document-view__summary">
         <div class="company-document-view__status-panel">
           <div
@@ -39,7 +48,11 @@
           </div>
           <div class="company-document-view__status-body">
             <span class="company-document-view__status-icon">
-              <IconCustom name="personnel" :size="18" color="#666666" />
+              <IconCustom
+                name="personnel"
+                :size="18"
+                color="#666666"
+              />
             </span>
             <span>{{ documentDetail.status === 'Acknowledged' ? 'Acknowledged' : 'Acknowledgment required' }}</span>
           </div>
@@ -48,7 +61,11 @@
         <aside class="company-document-view__meta">
           <div class="company-document-view__creator">
             <span class="company-document-view__avatar">
-              <IconCustom name="personnel" :size="20" color="#ffffff" />
+              <IconCustom
+                name="personnel"
+                :size="20"
+                color="#ffffff"
+              />
             </span>
             <div class="company-document-view__creator-copy">
               <span>Created by:</span>
@@ -66,9 +83,16 @@
           </div>
 
           <div class="company-document-view__file">
-            <IconCustom name="document" :size="15" color="#a60a3a" />
+            <IconCustom
+              name="document"
+              :size="15"
+              color="#a60a3a"
+            />
             <span>{{ documentDetail.fileName }}</span>
-            <button type="button" @click="downloadDocument">
+            <button
+              type="button"
+              @click="downloadDocument"
+            >
               Download
             </button>
           </div>
@@ -91,20 +115,30 @@
           <p>我已閱讀並願意遵守本政策內容。</p>
 
           <label>
-            <input v-model="accepted" type="checkbox">
+            <input
+              v-model="accepted"
+              type="checkbox"
+            >
             <span>我已阅读并愿意遵守本政策内容。</span>
           </label>
 
           <p>I have read and agreed with the policy content.</p>
         </div>
 
-        <button type="button" class="company-document-view__accept" @click="handleAccept">
+        <button
+          type="button"
+          class="company-document-view__accept"
+          @click="handleAccept"
+        >
           Accept
         </button>
       </section>
     </main>
 
-    <main v-else class="company-document-view__state">
+    <main
+      v-else
+      class="company-document-view__state"
+    >
       Document not found
     </main>
 
@@ -173,7 +207,7 @@ const folderbaseid = computed(() => String(route.query.folderbaseid || groupSlug
 const groupTitle = computed(() => String(route.query.groupTitle || route.query.title || 'Company Documents'))
 const documentTitle = computed(() => String(route.query.title || 'Company Document'))
 const selectedDocumentDetail = useState<CompanyDocumentDetailResponseItem | null>('company-document:selected-detail', () => null)
-const companyDocumentDetailResponse = ref<unknown>(null)
+const companyDocumentDetailResponse = ref<any>(null)
 const loading = ref(true)
 const accepted = ref(false)
 
@@ -208,11 +242,14 @@ const getStatus = (item: CompanyDocumentDetailResponseItem): CompanyDocumentStat
 
 const getDocumentCodeAndVersion = (numberVersion?: string) => {
   const value = numberVersion || String(route.query.code || '')
-  const match = value.match(/^(.*?)(\[[^\]]+\])$/)
+  const bracketStart = value.lastIndexOf('[')
+  const hasVersionSuffix = bracketStart > -1 && value.endsWith(']')
+  const code = hasVersionSuffix ? value.slice(0, bracketStart) : value
+  const version = hasVersionSuffix ? value.slice(bracketStart) : ''
 
   return {
-    code: String(route.query.code || match?.[1] || value),
-    version: String(route.query.version || match?.[2] || ''),
+    code: String(route.query.code || code || value),
+    version: String(route.query.version || version),
   }
 }
 
@@ -297,7 +334,8 @@ const fetchCompanyDocumentDetail = async () => {
         pageSize: 100,
       },
     })
-  } finally {
+  }
+  finally {
     loading.value = false
   }
 }

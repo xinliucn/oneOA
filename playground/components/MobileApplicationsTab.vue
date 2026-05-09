@@ -51,7 +51,10 @@
             class="app-card__fallback"
             :aria-label="app.mainTable.name_en"
           >
-            <IconCustom name="apps" :size="26" />
+            <IconCustom
+              name="apps"
+              :size="26"
+            />
           </div>
         </div>
         <div class="app-card__name">
@@ -87,7 +90,10 @@
               :style="{ color: getBusinessAccentColor(biz.mainTable.name_en, biz.color) }"
               :aria-label="biz.mainTable.name_en"
             >
-              <IconCustom :name="getBusinessFallbackIcon(biz.mainTable.name_en)" :size="24" />
+              <IconCustom
+                :name="getBusinessFallbackIcon(biz.mainTable.name_en)"
+                :size="24"
+              />
             </div>
           </div>
         </div>
@@ -175,7 +181,7 @@ const normalizeString = (value?: string | null) => {
 
 const splitMultiValue = (value?: string | null) => {
   return normalizeString(value)
-    .split(/[\/,]/)
+    .split(/[/,]/)
     .map(item => item.trim())
     .filter(Boolean)
 }

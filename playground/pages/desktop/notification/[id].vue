@@ -67,67 +67,107 @@ const statusColor = computed(() => statusColorMap[notification.value.status] || 
   <div class="notification-detail">
     <div class="notification-detail__breadcrumb">
       <el-breadcrumb separator=">">
-        <el-breadcrumb-item :to="{ path: '/desktop' }">Home</el-breadcrumb-item>
-        <el-breadcrumb-item :to="{ path: '/desktop/todo' }">To-Do</el-breadcrumb-item>
+        <el-breadcrumb-item :to="{ path: '/desktop' }">
+          Home
+        </el-breadcrumb-item>
+        <el-breadcrumb-item :to="{ path: '/desktop/todo' }">
+          To-Do
+        </el-breadcrumb-item>
         <el-breadcrumb-item>{{ id }}</el-breadcrumb-item>
       </el-breadcrumb>
-      <h2 class="notification-detail__title">{{ notification.title }}</h2>
-
+      <h2 class="notification-detail__title">
+        {{ notification.title }}
+      </h2>
     </div>
 
     <div class="notification-detail__content">
-
       <div class="notification-detail__status__content">
-        <div class="notification-detail__status-bar" :style="{ backgroundColor: statusColor }">
+        <div
+          class="notification-detail__status-bar"
+          :style="{ backgroundColor: statusColor }"
+        >
           {{ notification.status }}
         </div>
 
         <div class="notification-detail__approvers">
-          <div v-for="(approver, index) in visibleApprovers" :key="index" class="notification-detail__approver-item">
+          <div
+            v-for="(approver, index) in visibleApprovers"
+            :key="index"
+            class="notification-detail__approver-item"
+          >
             <div class="notification-detail__approver-marker">
               <div class="notification-detail__approver-avatar">
-                <IconCustom name="personnel" :size="20" />
+                <IconCustom
+                  name="personnel"
+                  :size="20"
+                />
               </div>
-              <div class="notification-detail__approver-connector" v-if="index < visibleApprovers.length - 1" />
+              <div
+                v-if="index < visibleApprovers.length - 1"
+                class="notification-detail__approver-connector"
+              />
             </div>
             <div class="notification-detail__approver-info">
               <span class="notification-detail__approver-name">{{ approver.name }}</span>
-              <span class="notification-detail__approver-date" v-if="approver.date">
+              <span
+                v-if="approver.date"
+                class="notification-detail__approver-date"
+              >
                 {{ approver.action }} {{ approver.date }}
               </span>
             </div>
           </div>
-          <button v-if="approvers.length > 2" class="notification-detail__show-more"
-            @click="showAllApprovers = !showAllApprovers">
+          <button
+            v-if="approvers.length > 2"
+            class="notification-detail__show-more"
+            @click="showAllApprovers = !showAllApprovers"
+          >
             {{ showAllApprovers ? 'Show less' : 'Show more' }}
           </button>
         </div>
-
       </div>
 
       <div class="notification-detail__form">
-
         <div class="notification-detail__row">
           <div class="notification-detail__row__left">
             <div class="notification-detail__field">
-              <span>Reference No.</span><el-input :value="notification.referenceNo" style="width: 327px;height: 40px;"
-                :disabled="true" />
+              <span>Reference No.</span><el-input
+                :value="notification.referenceNo"
+                style="width: 327px;height: 40px;"
+                :disabled="true"
+              />
             </div>
             <div class="notification-detail__field">
               <span>Applicant</span>
-              <el-input :value="notification.applicant" readonly style="width: 327px;height: 40px;" />
+              <el-input
+                :value="notification.applicant"
+                readonly
+                style="width: 327px;height: 40px;"
+              />
             </div>
             <div class="notification-detail__field">
               <label>Contract Name</label>
-              <el-input :value="notification.contractName" readonly style="width: 327px;height: 40px;" />
+              <el-input
+                :value="notification.contractName"
+                readonly
+                style="width: 327px;height: 40px;"
+              />
             </div>
             <div class="notification-detail__field">
               <label>Contract Start</label>
-              <el-input :value="notification.contractStart" readonly style="width: 327px;height: 40px;" />
+              <el-input
+                :value="notification.contractStart"
+                readonly
+                style="width: 327px;height: 40px;"
+              />
             </div>
             <div class="notification-detail__field">
               <label>Contract End</label>
-              <el-input :value="notification.contractEnd" readonly style="width: 327px;height: 40px;" />
+              <el-input
+                :value="notification.contractEnd"
+                readonly
+                style="width: 327px;height: 40px;"
+              />
             </div>
           </div>
           <div class="notification-detail__row__right">
@@ -139,19 +179,32 @@ const statusColor = computed(() => statusColorMap[notification.value.status] || 
             </div>
             <div class="notification-detail__field">
               <label>Application Date</label>
-              <el-input :value="notification.applicationDate" readonly style="width: 327px;height: 40px;" />
+              <el-input
+                :value="notification.applicationDate"
+                readonly
+                style="width: 327px;height: 40px;"
+              />
             </div>
             <div class="notification-detail__field">
               <label>Contract Type</label>
-              <el-input :value="notification.contractType" readonly style="width: 327px;height: 40px;" />
+              <el-input
+                :value="notification.contractType"
+                readonly
+                style="width: 327px;height: 40px;"
+              />
             </div>
           </div>
         </div>
         <div class="notification-detail__row notification-detail__row--full">
           <div class="notification-detail__field__comments">
             <label>Comments</label>
-            <el-input :value="notification.comments" type="textarea" :rows="3" readonly
-              style="width: 912px;height: 120px;display: flex;align-items: center;margin-left: 20px;" />
+            <el-input
+              :value="notification.comments"
+              type="textarea"
+              :rows="3"
+              readonly
+              style="width: 912px;height: 120px;display: flex;align-items: center;margin-left: 20px;"
+            />
           </div>
         </div>
 
@@ -159,64 +212,102 @@ const statusColor = computed(() => statusColorMap[notification.value.status] || 
           <div class="notification-detail__row__left">
             <div class="notification-detail__field">
               <label>DCH Party A Unit</label>
-              <el-input :value="notification.dchPartyAUnit" readonly  style="width: 327px;height: 40px;" />
+              <el-input
+                :value="notification.dchPartyAUnit"
+                readonly
+                style="width: 327px;height: 40px;"
+              />
             </div>
             <div class="notification-detail__field">
               <label>Affiliated BU</label>
-              <el-input :value="notification.affiliatedBU" readonly  style="width: 327px;height: 40px;" />
+              <el-input
+                :value="notification.affiliatedBU"
+                readonly
+                style="width: 327px;height: 40px;"
+              />
             </div>
             <div class="notification-detail__field">
               <label>Contract Owner</label>
-              <el-input :value="notification.contractOwner" readonly  style="width: 327px;height: 40px;" />
+              <el-input
+                :value="notification.contractOwner"
+                readonly
+                style="width: 327px;height: 40px;"
+              />
             </div>
             <div class="notification-detail__field">
-             <div style="display: flex;flex-direction: column;justify-content: flex-end;">
-               <span>Contract Amount
-              </span>
-              <span>
-                (HKD)
-              </span>
-             </div>
-              <el-input :value="notification.contractAmountHKD" readonly  style="width: 327px;height: 40px;" />
+              <div style="display: flex;flex-direction: column;justify-content: flex-end;">
+                <span>Contract Amount
+                </span>
+                <span>
+                  (HKD)
+                </span>
+              </div>
+              <el-input
+                :value="notification.contractAmountHKD"
+                readonly
+                style="width: 327px;height: 40px;"
+              />
             </div>
           </div>
           <div class="notification-detail__row__right__a">
             <div class="notification-detail__field">
               <label>Party B Unit</label>
-              <el-input :value="notification.partyBUnit" readonly  style="width: 327px;height: 40px;" />
+              <el-input
+                :value="notification.partyBUnit"
+                readonly
+                style="width: 327px;height: 40px;"
+              />
             </div>
-
 
             <div class="notification-detail__field">
               <label>Amount</label>
-              <el-input :value="notification.amount" readonly  style="width: 327px;height: 40px;" />
+              <el-input
+                :value="notification.amount"
+                readonly
+                style="width: 327px;height: 40px;"
+              />
             </div>
           </div>
         </div>
+        <div class="notification-detail__row" />
         <div class="notification-detail__row">
-
-
-        </div>
-        <div class="notification-detail__row">
-
           <div class="notification-detail__field" />
         </div>
         <div class="notification-detail__row">
-
           <div class="notification-detail__field" />
         </div>
-        <div class="notification-detail__row">
-
-        </div>
+        <div class="notification-detail__row" />
       </div>
 
       <div class="notification-detail__action-area">
-        <el-input v-model="actionComment" type="textarea" :rows="3" placeholder="Add Comments" style="width: 992px;height: 80px;"/>
+        <el-input
+          v-model="actionComment"
+          type="textarea"
+          :rows="3"
+          placeholder="Add Comments"
+          style="width: 992px;height: 80px;"
+        />
         <div class="notification-detail__action-row">
-          <el-select v-model="selectedAction" placeholder="Action" style="width: 160px">
-            <el-option v-for="opt in actionOptions" :key="opt" :label="opt" :value="opt" />
+          <el-select
+            v-model="selectedAction"
+            placeholder="Action"
+            style="width: 160px"
+          >
+            <el-option
+              v-for="opt in actionOptions"
+              :key="opt"
+              :label="opt"
+              :value="opt"
+            />
           </el-select>
-          <el-button class="notification-detail__submit-btn" type="primary" :disabled="!selectedAction" style="width: 120px;height: 40px; font-size: 14px;">Submit</el-button>
+          <el-button
+            class="notification-detail__submit-btn"
+            type="primary"
+            :disabled="!selectedAction"
+            style="width: 120px;height: 40px; font-size: 14px;"
+          >
+            Submit
+          </el-button>
         </div>
       </div>
     </div>

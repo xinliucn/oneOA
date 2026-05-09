@@ -1,35 +1,14 @@
+import { proxyWindmill } from '../../utils/windmillProxy'
+
 export default defineEventHandler(async (event) => {
-  const config = useRuntimeConfig()
-  const apiBase = config.public.apiBase
-
   try {
-    // 获取客户端的请求头
-    const cookieHeader = getRequestHeader(event, 'cookie')
-    const userAgent = getRequestHeader(event, 'user-agent')
-
-    // 调用 Windmill API 登出，使用 raw 获取完整响应
-    const response = await $fetch.raw(`${apiBase}/api/r/weaver/auth/logout`, {
+    return await proxyWindmill(event, '/api/r/weaver/auth/logout', {
       method: 'POST',
-      headers: {
-        ...(cookieHeader && { cookie: cookieHeader }),
-        ...(userAgent && { 'user-agent': userAgent }),
-        'X-Real-IP': getHeader(event, 'x-forwarded-for') || getHeader(event, 'x-real-ip') || '',
-        'X-Forwarded-For': getHeader(event, 'x-forwarded-for') || getHeader(event, 'x-real-ip') || '',
-      }
+      errorMessage: '登出失败',
     })
-
-    // 转发 Windmill 返回的 Set-Cookie 到客户端（清除 cookie）
-    const setCookieHeaders = response.headers.get('set-cookie')
-    if (setCookieHeaders) {
-      setHeader(event, 'set-cookie', setCookieHeaders)
-    }
-
-    return response._data
-  } catch (error: any) {
+  }
+  catch (error: unknown) {
     console.error('Logout API error:', error)
-    throw createError({
-      statusCode: error.statusCode || 500,
-      message: error.message || '登出失败'
-    })
+    throw error
   }
 })

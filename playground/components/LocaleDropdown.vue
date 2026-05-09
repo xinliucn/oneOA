@@ -11,7 +11,10 @@
       :class="['locale-dropdown__trigger', `locale-dropdown__trigger--${variant}`]"
       :aria-label="t('locale.ariaLabel')"
     >
-      <IconCustom name="globe" :size="20" />
+      <IconCustom
+        name="globe"
+        :size="20"
+      />
     </button>
 
     <template #dropdown>
@@ -38,8 +41,8 @@ withDefaults(
   }>(),
   {
     variant: 'desktop',
-    placement: 'bottom-start'
-  }
+    placement: 'bottom-start',
+  },
 )
 
 const { locale, locales, setLocale, t } = useAppI18n()

@@ -197,11 +197,14 @@ const normalizeCompanyDocumentDetailResponse = (response: any): CompanyDocumentD
 
 const getDocumentCodeAndVersion = (numberVersion?: string) => {
   const value = numberVersion || String(route.query.code || '')
-  const match = value.match(/^(.*?)(\[[^\]]+\])$/)
+  const bracketStart = value.lastIndexOf('[')
+  const hasVersionSuffix = bracketStart > -1 && value.endsWith(']')
+  const code = hasVersionSuffix ? value.slice(0, bracketStart) : value
+  const version = hasVersionSuffix ? value.slice(bracketStart) : ''
 
   return {
-    code: String(route.query.code || match?.[1] || value),
-    version: String(route.query.version || match?.[2] || ''),
+    code: String(route.query.code || code || value),
+    version: String(route.query.version || version),
   }
 }
 
@@ -227,7 +230,7 @@ const getMainTableServerRelativeUrl = (mainTable?: CompanyDocumentDetailResponse
     || fixedPreviewServerRelativeUrl
 }
 
-const fetchCompanyDocumentDetail = $fetch as typeof $fetch<unknown>
+const fetchCompanyDocumentDetail = $fetch as typeof $fetch<any>
 
 const { data: companyDocumentDetailResponse } = await useAsyncData(
   'company-document-sign-detail',

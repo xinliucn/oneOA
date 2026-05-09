@@ -4,14 +4,21 @@
       <!-- Logo -->
       <div class="error-header">
         <div class="error-logo">
-          <img src="../assets/images/image002.jpg" alt="logo">
+          <img
+            src="../assets/images/image002.jpg"
+            alt="logo"
+          >
         </div>
       </div>
 
       <!-- Error Content -->
       <div class="error-content">
-        <div class="error-code">500</div>
-        <div class="error-title">服务器错误</div>
+        <div class="error-code">
+          500
+        </div>
+        <div class="error-title">
+          服务器错误
+        </div>
         <div class="error-message">
           抱歉，服务器遇到了一个错误，无法完成您的请求。
         </div>
@@ -21,10 +28,18 @@
 
         <!-- Action Buttons -->
         <div class="error-actions">
-          <el-button class="error-button" size="large" @click="goHome">
+          <el-button
+            class="error-button"
+            size="large"
+            @click="goHome"
+          >
             返回首页
           </el-button>
-          <el-button class="error-button-secondary" size="large" @click="goBack">
+          <el-button
+            class="error-button-secondary"
+            size="large"
+            @click="goBack"
+          >
             返回上一页
           </el-button>
         </div>
@@ -37,7 +52,7 @@
 // 禁用默认布局和全局中间件
 definePageMeta({
   layout: false,
-  middleware: [] // 禁用所有中间件，包括全局中间件
+  middleware: [], // 禁用所有中间件，包括全局中间件
 })
 
 const router = useRouter()
@@ -186,4 +201,3 @@ const goBack = () => {
   }
 }
 </style>
-

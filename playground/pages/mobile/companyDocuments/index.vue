@@ -107,7 +107,7 @@ const normalizeCompanyDocumentResponse = (response: any): CompanyDocumentGroupRe
   return []
 }
 
-const getNumber = (value: unknown) => {
+const getNumber = (value: any) => {
   const numberValue = Number(value)
   return Number.isFinite(numberValue) ? numberValue : 0
 }

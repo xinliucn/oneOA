@@ -4,32 +4,56 @@
       <h3 class="group-news__title">
         {{ t('groupNews.title') }}
       </h3>
-      <button type="button" class="group-news__link" @click="navigateTo('/desktop/news')">
+      <button
+        type="button"
+        class="group-news__link"
+        @click="navigateTo('/desktop/news')"
+      >
         {{ t('groupNews.viewAll') }}
       </button>
     </div>
 
-    <div v-if="loading" class="group-news__state">
+    <div
+      v-if="loading"
+      class="group-news__state"
+    >
       Loading news...
     </div>
-    <div v-else-if="error" class="group-news__state group-news__state--error">
+    <div
+      v-else-if="error"
+      class="group-news__state group-news__state--error"
+    >
       Failed to load news.
     </div>
-    <div v-else-if="homeNewsList.length === 0" class="group-news__state">
+    <div
+      v-else-if="homeNewsList.length === 0"
+      class="group-news__state"
+    >
       No news found.
     </div>
 
-    <div v-else class="group-news__grid">
-      <div v-for="news in homeNewsList" :key="news.id" class="news-card" @click="handleClick(news)">
+    <div
+      v-else
+      class="group-news__grid"
+    >
+      <div
+        v-for="news in homeNewsList"
+        :key="news.id"
+        class="news-card"
+        @click="handleClick(news)"
+      >
         <div class="news-card__image">
-          <img :src="news.image" :alt="news.title">
+          <img
+            :src="news.image"
+            :alt="news.title"
+          >
         </div>
         <div class="news-card__content">
           <h4 class="news-card__title">
             {{ news.title }}
           </h4>
           <p class="news-card__date">
-            {{ formatNewsDate(news.date, locale.value) }}
+            {{ formatNewsDate(news.date, locale) }}
           </p>
         </div>
       </div>

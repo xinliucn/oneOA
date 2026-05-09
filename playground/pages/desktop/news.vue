@@ -1,11 +1,17 @@
 <template>
   <div class="desktop-news">
-    <section class="desktop-news__hero" :style="{ backgroundImage: `url(${heroImage})` }">
+    <section
+      class="desktop-news__hero"
+      :style="{ backgroundImage: `url(${heroImage})` }"
+    >
       <h1>News</h1>
     </section>
 
     <section class="desktop-news__body">
-      <nav class="desktop-news__breadcrumb" aria-label="Breadcrumb">
+      <nav
+        class="desktop-news__breadcrumb"
+        aria-label="Breadcrumb"
+      >
         <NuxtLink to="/desktop">
           Home
         </NuxtLink>
@@ -14,10 +20,17 @@
       </nav>
 
       <div class="desktop-news__toolbar">
-        <div class="desktop-news__filters" aria-label="News categories">
-          <button v-for="category in categories" :key="category" type="button"
+        <div
+          class="desktop-news__filters"
+          aria-label="News categories"
+        >
+          <button
+            v-for="category in categories"
+            :key="category"
+            type="button"
             :class="['desktop-news__filter', { 'is-active': activeCategory === category }]"
-            @click="activeCategory = category">
+            @click="activeCategory = category"
+          >
             {{ category }}
           </button>
         </div>
@@ -31,8 +44,15 @@
       </div>
 
       <div class="desktop-news__cards">
-        <article v-for="item in newsItems" :key="item.id" class="desktop-news-card">
-          <img :src="item.image" :alt="item.title">
+        <article
+          v-for="item in newsItems"
+          :key="item.id"
+          class="desktop-news-card"
+        >
+          <img
+            :src="item.image"
+            :alt="item.title"
+          >
           <div class="desktop-news-card__content">
             <h2>{{ item.title }}</h2>
             <time>{{ item.date }}</time>

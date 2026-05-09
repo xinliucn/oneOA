@@ -18,7 +18,8 @@ export default defineNuxtPlugin((nuxtApp) => {
       navigator.serviceWorker.addEventListener('message', (event) => {
         void handleServiceWorkerMessage(event.data)
       })
-    } catch (error) {
+    }
+    catch (error) {
       console.error('Register notification service worker failed:', error)
     }
   }

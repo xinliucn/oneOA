@@ -6,16 +6,20 @@ type RuntimeI18nConfig = {
   storageKey?: string
   cookieKey?: string
   defaultLocale?: string
+  locales?: Array<{
+    code: string
+    label: string
+  }>
 }
 
 export default defineNuxtPlugin(() => {
   const runtimeConfig = useRuntimeConfig()
-  const config = (runtimeConfig.public.superAppI18n || {}) as RuntimeI18nConfig
+  const config = (runtimeConfig.public.superAppI18n || {}) as unknown as RuntimeI18nConfig
   const storageKey = config.storageKey || 'superapp-locale'
   const cookieKey = config.cookieKey || 'superapp-locale'
   const locale = useState<string>('superapp:locale', () => normalizeAppLocale(config.defaultLocale, config))
   const localeCookie = useCookie<string>(cookieKey, {
-    sameSite: 'lax'
+    sameSite: 'lax',
   })
 
   const syncLocale = (candidate?: string | null) => {
@@ -42,15 +46,16 @@ export default defineNuxtPlugin(() => {
         localStorage.setItem(storageKey, normalizedLocale)
         document.documentElement.lang = normalizedLocale
       },
-      { immediate: true }
+      { immediate: true },
     )
-  } else {
+  }
+  else {
     syncLocale(localeCookie.value || locale.value)
   }
 
   useHead(() => ({
     htmlAttrs: {
-      lang: locale.value
-    }
+      lang: locale.value,
+    },
   }))
 })

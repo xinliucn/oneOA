@@ -1,6 +1,6 @@
 import type { NotificationItem, NotificationListResponse } from '~/types/notification'
 
-const toNonEmptyString = (value: unknown, fallback = '') => {
+const toNonEmptyString = (value: any, fallback = '') => {
   if (typeof value === 'string' && value.trim().length > 0) {
     return value
   }
@@ -12,7 +12,7 @@ const toNonEmptyString = (value: unknown, fallback = '') => {
   return fallback
 }
 
-const toIsoString = (value: unknown) => {
+const toIsoString = (value: any) => {
   if (typeof value === 'string' && value.trim()) {
     return value
   }
@@ -62,21 +62,21 @@ export const normalizeNotificationList = (
   pageSize: number,
 ): NotificationListResponse => {
   const candidate = raw?.data ?? raw
-  const sourceItems =
-    candidate?.items ||
-    candidate?.list ||
-    candidate?.rows ||
-    candidate?.records ||
-    (Array.isArray(candidate) ? candidate : [])
+  const sourceItems
+    = candidate?.items
+      || candidate?.list
+      || candidate?.rows
+      || candidate?.records
+      || (Array.isArray(candidate) ? candidate : [])
 
-  const items = (Array.isArray(sourceItems) ? sourceItems : []).map((item) => normalizeNotification(item))
+  const items = (Array.isArray(sourceItems) ? sourceItems : []).map(item => normalizeNotification(item))
   const total = Number(candidate?.total || candidate?.count || candidate?.pagination?.total || items.length)
   const unreadCount = Number(
-    candidate?.unreadCount ||
-      candidate?.unread ||
-      candidate?.total_unread ||
-      candidate?.unread_count ||
-      items.filter((item) => !item.readAt).length,
+    candidate?.unreadCount
+    || candidate?.unread
+    || candidate?.total_unread
+    || candidate?.unread_count
+    || items.filter(item => !item.readAt).length,
   )
   const resolvedPage = Number(candidate?.page || page)
   const resolvedPageSize = Number(candidate?.pageSize || candidate?.page_size || pageSize)

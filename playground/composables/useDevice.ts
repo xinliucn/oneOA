@@ -18,6 +18,6 @@ export const useDevice = () => {
 
   return {
     isMobile,
-    getDeviceRoute
+    getDeviceRoute,
   }
 }

@@ -5,7 +5,11 @@
       :class="['desktop-todo-toast', `desktop-todo-toast--${toast.type}`]"
     >
       <div class="desktop-todo-toast__icon">
-        <IconCustom name="personnel" :size="18" color="#ffffff" />
+        <IconCustom
+          name="personnel"
+          :size="18"
+          color="#ffffff"
+        />
       </div>
       <div class="desktop-todo-toast__copy">
         <span>{{ toast.reference }}</span>

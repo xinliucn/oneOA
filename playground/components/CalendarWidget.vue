@@ -1,16 +1,37 @@
 <template>
   <div class="calendar-widget">
     <div class="calendar-widget__header">
-      <h3 class="calendar-widget__title">Calendar</h3>
-      <a href="#" class="calendar-widget__link">></a>
+      <h3 class="calendar-widget__title">
+        Calendar
+      </h3>
+      <a
+        href="#"
+        class="calendar-widget__link"
+      >></a>
     </div>
     <div class="calendar-widget__nav">
-      <button class="calendar-widget__nav-btn" @click="previousMonth">&lt;</button>
-      <div class="calendar-widget__month">{{ currentMonthYear }}</div>
-      <button class="calendar-widget__nav-btn" @click="nextMonth">&gt;</button>
+      <button
+        class="calendar-widget__nav-btn"
+        @click="previousMonth"
+      >
+        &lt;
+      </button>
+      <div class="calendar-widget__month">
+        {{ currentMonthYear }}
+      </div>
+      <button
+        class="calendar-widget__nav-btn"
+        @click="nextMonth"
+      >
+        &gt;
+      </button>
     </div>
     <div class="calendar-widget__grid">
-      <div v-for="day in weekDays" :key="day" class="calendar-widget__weekday">
+      <div
+        v-for="day in weekDays"
+        :key="day"
+        class="calendar-widget__weekday"
+      >
         {{ day }}
       </div>
       <div
@@ -18,7 +39,7 @@
         :key="date.key"
         :class="['calendar-widget__date', {
           'calendar-widget__date--today': date.isToday,
-          'calendar-widget__date--empty': date.isEmpty
+          'calendar-widget__date--empty': date.isEmpty,
         }]"
       >
         {{ date.day }}
@@ -35,7 +56,7 @@ const weekDays = ['S', 'M', 'T', 'W', 'T', 'F', 'S']
 
 const currentMonthYear = computed(() => {
   const months = ['January', 'February', 'March', 'April', 'May', 'June',
-                  'July', 'August', 'September', 'October', 'November', 'December']
+    'July', 'August', 'September', 'October', 'November', 'December']
   return `${months[currentDate.value.getMonth()]} ${currentDate.value.getFullYear()}`
 })
 
@@ -57,7 +78,7 @@ const calendarDates = computed(() => {
       key: `empty-${i}`,
       day: '',
       isEmpty: true,
-      isToday: false
+      isToday: false,
     })
   }
 
@@ -68,9 +89,9 @@ const calendarDates = computed(() => {
       key: `current-${i}`,
       day: i,
       isEmpty: false,
-      isToday: year === today.getFullYear() &&
-               month === today.getMonth() &&
-               i === today.getDate()
+      isToday: year === today.getFullYear()
+        && month === today.getMonth()
+        && i === today.getDate(),
     })
   }
 
@@ -81,7 +102,7 @@ const previousMonth = () => {
   currentDate.value = new Date(
     currentDate.value.getFullYear(),
     currentDate.value.getMonth() - 1,
-    1
+    1,
   )
 }
 
@@ -89,7 +110,7 @@ const nextMonth = () => {
   currentDate.value = new Date(
     currentDate.value.getFullYear(),
     currentDate.value.getMonth() + 1,
-    1
+    1,
   )
 }
 </script>

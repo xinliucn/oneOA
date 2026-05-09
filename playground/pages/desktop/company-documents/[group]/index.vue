@@ -1,7 +1,10 @@
 <template>
   <div class="company-docs-detail">
     <header class="company-docs-detail__header">
-      <nav class="company-docs-detail__breadcrumb" aria-label="Breadcrumb">
+      <nav
+        class="company-docs-detail__breadcrumb"
+        aria-label="Breadcrumb"
+      >
         <NuxtLink to="/desktop">
           Home
         </NuxtLink>
@@ -19,8 +22,15 @@
     <main class="company-docs-detail__body">
       <div class="company-docs-detail__toolbar">
         <label class="company-docs-detail__search">
-          <IconCustom name="search" :size="14" />
-          <input v-model.trim="searchQuery" type="search" placeholder="Search Document Information">
+          <IconCustom
+            name="search"
+            :size="14"
+          />
+          <input
+            v-model.trim="searchQuery"
+            type="search"
+            placeholder="Search Document Information"
+          >
         </label>
       </div>
 
@@ -40,13 +50,22 @@
           </button>
         </div>
 
-        <div v-if="loading" class="company-docs-detail-table__state">
+        <div
+          v-if="loading"
+          class="company-docs-detail-table__state"
+        >
           Loading...
         </div>
-        <div v-else-if="error" class="company-docs-detail-table__state company-docs-detail-table__state--error">
+        <div
+          v-else-if="error"
+          class="company-docs-detail-table__state company-docs-detail-table__state--error"
+        >
           Failed to load document information.
         </div>
-        <div v-else-if="filteredDocuments.length === 0" class="company-docs-detail-table__state">
+        <div
+          v-else-if="filteredDocuments.length === 0"
+          class="company-docs-detail-table__state"
+        >
           No documents found.
         </div>
         <template v-else>
@@ -139,7 +158,7 @@ const groupTitle = computed(() => String(route.query.title || 'Company Documents
 const searchQuery = ref('')
 const loading = ref(true)
 const error = ref<Error | null>(null)
-const companyDocumentDetailResponse = ref<unknown>(null)
+const companyDocumentDetailResponse = ref<any>(null)
 const selectedDocumentDetail = useState<CompanyDocumentDetailResponseItem | null>('company-document:selected-detail', () => null)
 
 const normalizeCompanyDocumentDetailResponse = (response: any): CompanyDocumentDetailResponseItem[] => {
@@ -170,11 +189,12 @@ const getStatus = (item: CompanyDocumentDetailResponseItem): CompanyDocumentStat
 
 const getDocumentCodeAndVersion = (numberVersion?: string) => {
   const value = numberVersion || ''
-  const match = value.match(/^(.*?)(\[[^\]]+\])$/)
+  const bracketStart = value.lastIndexOf('[')
+  const hasVersionSuffix = bracketStart > -1 && value.endsWith(']')
 
   return {
-    code: match?.[1] || value,
-    version: match?.[2] || '',
+    code: hasVersionSuffix ? value.slice(0, bracketStart) : value,
+    version: hasVersionSuffix ? value.slice(bracketStart) : '',
   }
 }
 
@@ -246,10 +266,12 @@ const fetchCompanyDocumentDetail = async () => {
         pageSize: 100,
       },
     })
-  } catch (caughtError) {
+  }
+  catch (caughtError) {
     error.value = caughtError instanceof Error ? caughtError : new Error('Fetch company document detail failed')
     companyDocumentDetailResponse.value = null
-  } finally {
+  }
+  finally {
     loading.value = false
   }
 }

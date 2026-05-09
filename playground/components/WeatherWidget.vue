@@ -1,9 +1,15 @@
 <template>
   <div class="weather-widget">
-    <div class="weather-widget__condition">{{ condition }}</div>
+    <div class="weather-widget__condition">
+      {{ condition }}
+    </div>
     <div class="weather-widget__main">
-      <div class="weather-widget__icon">☀️</div>
-      <div class="weather-widget__temp">{{ temperature }}°</div>
+      <div class="weather-widget__icon">
+        ☀️
+      </div>
+      <div class="weather-widget__temp">
+        {{ temperature }}°
+      </div>
     </div>
     <div class="weather-widget__range">
       H: {{ highTemp }}° L: {{ lowTemp }}°

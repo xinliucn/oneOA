@@ -13,14 +13,18 @@ type RuntimeI18nConfig = {
   storageKey?: string
   cookieKey?: string
   locales?: LocaleDefinition[]
-  messages?: Record<string, Record<string, any>>
+  messages?: Record<string, Record<string, unknown>>
 }
 
 const DEFAULT_LOCALES: LocaleDefinition[] = [
   { code: 'zh-CN', label: '简体' },
   { code: 'zh-TW', label: '繁體' },
-  { code: 'en', label: 'ENG' }
+  { code: 'en', label: 'ENG' },
 ]
+
+const isRecord = (value: unknown): value is Record<string, unknown> => {
+  return !!value && typeof value === 'object' && !Array.isArray(value)
+}
 
 const normalizeLocaleDefinitions = (locales?: LocaleDefinition[]) => {
   const source = locales?.length ? locales : DEFAULT_LOCALES
@@ -40,13 +44,13 @@ const normalizeLocaleDefinitions = (locales?: LocaleDefinition[]) => {
   return Array.from(deduped.values())
 }
 
-const getNestedValue = (source: Record<string, any> | undefined, path: string) => {
+const getNestedValue = (source: Record<string, unknown> | undefined, path: string) => {
   if (!source) {
     return undefined
   }
 
-  return path.split('.').reduce<any>((current, segment) => {
-    if (current && typeof current === 'object' && segment in current) {
+  return path.split('.').reduce<unknown>((current, segment) => {
+    if (isRecord(current) && segment in current) {
       return current[segment]
     }
 
@@ -71,7 +75,7 @@ const resolveI18nConfig = (config?: RuntimeI18nConfig): Required<Pick<RuntimeI18
   return {
     ...config,
     locales,
-    defaultLocale
+    defaultLocale,
   }
 }
 
@@ -151,6 +155,6 @@ export const useAppI18n = () => {
     fallbackLocale,
     hasLocale,
     setLocale,
-    t
+    t,
   }
 }

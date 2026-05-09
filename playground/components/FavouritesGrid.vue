@@ -1,7 +1,11 @@
 <template>
   <div class="favourites-grid">
     <div class="favourites-grid__header">
-      <div class="favourites-grid__tabs" role="tablist" aria-label="Favourite views">
+      <div
+        class="favourites-grid__tabs"
+        role="tablist"
+        aria-label="Favourite views"
+      >
         <button
           type="button"
           class="favourites-grid__tab"
@@ -19,38 +23,83 @@
           Recents
         </button>
       </div>
-      <button type="button" class="favourites-grid__edit" @click="openEditModal">
+      <button
+        type="button"
+        class="favourites-grid__edit"
+        @click="openEditModal"
+      >
         {{ t('favourites.edit') }}
       </button>
     </div>
-    <div v-if="activeView === 'favourites' && favouriteLoading" class="favourites-grid__empty">Loading...</div>
-    <div v-else-if="visibleApps.length" class="favourites-grid__items">
-      <div v-for="app in visibleApps" :key="app.id" class="favourite-card" @click="handleClick(app)">
+    <div
+      v-if="activeView === 'favourites' && favouriteLoading"
+      class="favourites-grid__empty"
+    >
+      Loading...
+    </div>
+    <div
+      v-else-if="visibleApps.length"
+      class="favourites-grid__items"
+    >
+      <div
+        v-for="app in visibleApps"
+        :key="app.id"
+        class="favourite-card"
+        @click="handleClick(app)"
+      >
         <div class="favourite-card__icon">
-          <IconCustom :name="app.icon" :size="32" />
+          <IconCustom
+            :name="app.icon"
+            :size="32"
+          />
         </div>
-        <div class="favourite-card__label">{{ app.label }}</div>
+        <div class="favourite-card__label">
+          {{ app.label }}
+        </div>
       </div>
     </div>
-    <div v-else class="favourites-grid__empty">
+    <div
+      v-else
+      class="favourites-grid__empty"
+    >
       {{ activeView === 'recents' ? 'No recent items yet.' : 'No favourites selected yet.' }}
     </div>
 
     <Teleport to="body">
-      <div v-if="isEditModalOpen" class="favourites-modal" role="dialog" aria-modal="true">
+      <div
+        v-if="isEditModalOpen"
+        class="favourites-modal"
+        role="dialog"
+        aria-modal="true"
+      >
         <div class="favourites-modal__panel">
-          <button type="button" class="favourites-modal__close" aria-label="Close" @click="closeEditModal">
+          <button
+            type="button"
+            class="favourites-modal__close"
+            aria-label="Close"
+            @click="closeEditModal"
+          >
             <span />
             <span />
           </button>
 
-          <h2 class="favourites-modal__title">Edit My Favourites</h2>
+          <h2 class="favourites-modal__title">
+            Edit My Favourites
+          </h2>
           <div class="favourites-modal__divider" />
 
           <div class="favourites-modal__toolbar">
             <label class="favourites-modal__search">
-              <IconCustom name="search" :size="18" class="favourites-modal__search-icon" />
-              <input v-model="searchQuery" type="search" placeholder="Search All Items">
+              <IconCustom
+                name="search"
+                :size="18"
+                class="favourites-modal__search-icon"
+              />
+              <input
+                v-model="searchQuery"
+                type="search"
+                placeholder="Search All Items"
+              >
             </label>
 
             <label class="favourites-modal__sort">
@@ -62,13 +111,22 @@
             </label>
           </div>
 
-          <div v-if="catalogLoading" class="favourites-modal__list favourites-modal__list--state">
+          <div
+            v-if="catalogLoading"
+            class="favourites-modal__list favourites-modal__list--state"
+          >
             Loading...
           </div>
-          <div v-else-if="editableFavourites.length === 0" class="favourites-modal__list favourites-modal__list--state">
+          <div
+            v-else-if="editableFavourites.length === 0"
+            class="favourites-modal__list favourites-modal__list--state"
+          >
             No items found.
           </div>
-          <div v-else class="favourites-modal__list">
+          <div
+            v-else
+            class="favourites-modal__list"
+          >
             <label
               v-for="item in editableFavourites"
               :key="item.itemId"
@@ -89,7 +147,9 @@
           </div>
 
           <div class="favourites-modal__footer">
-            <div class="favourites-modal__count">{{ draftSelectedItemIds.length }}/{{ maxSelected }}</div>
+            <div class="favourites-modal__count">
+              {{ draftSelectedItemIds.length }}/{{ maxSelected }}
+            </div>
             <button
               type="button"
               class="favourites-modal__save"
@@ -150,7 +210,7 @@ const catalogLoaded = ref(false)
 
 type CatalogRecord = ApplicationCatalogItem & Record<string, any>
 
-const normalizeString = (value?: unknown) => {
+const normalizeString = (value?: any) => {
   if (typeof value === 'string') {
     return value.trim()
   }
@@ -162,7 +222,7 @@ const normalizeString = (value?: unknown) => {
   return ''
 }
 
-const getFirstString = (...values: unknown[]) => {
+const getFirstString = (...values: any[]) => {
   for (const value of values) {
     const normalizedValue = normalizeString(value)
     if (normalizedValue) {
@@ -283,26 +343,28 @@ const apiFavouriteItems = computed<FavouriteItem[]>(() => {
 })
 
 const catalogFavouriteItems = computed<FavouriteItem[]>(() => {
-  return catalogItems.value
-    .map((item) => {
-      const itemId = getCatalogItemId(item)
-      if (itemId === null) {
-        return null
-      }
+  const items: FavouriteItem[] = []
 
-      const type = getCatalogItemType(item)
+  for (const item of catalogItems.value) {
+    const itemId = getCatalogItemId(item)
+    if (itemId === null) {
+      continue
+    }
 
-      return {
-        id: `catalog-${itemId}`,
-        itemId,
-        label: getCatalogItemName(item),
-        subtitle: type,
-        icon: getCatalogIcon(item),
-        kind: type.toLowerCase() === 'business' ? 'intranet' : 'application',
-        url: getCatalogItemUrl(item),
-      } satisfies FavouriteItem
+    const type = getCatalogItemType(item)
+
+    items.push({
+      id: `catalog-${itemId}`,
+      itemId,
+      label: getCatalogItemName(item),
+      subtitle: type,
+      icon: getCatalogIcon(item),
+      kind: type.toLowerCase() === 'business' ? 'intranet' : 'application',
+      url: getCatalogItemUrl(item),
     })
-    .filter((item): item is FavouriteItem => Boolean(item))
+  }
+
+  return items
 })
 
 const editableSource = computed(() => {
@@ -402,7 +464,8 @@ const saveFavourites = async () => {
   try {
     await saveFavourite(draftSelectedItemIds.value)
     closeEditModal()
-  } catch (error) {
+  }
+  catch (error) {
     console.error('Save favourites failed:', error)
   }
 }
@@ -439,10 +502,12 @@ const fetchCatalogItems = async () => {
   try {
     catalogItems.value = await requestApplicationCatalogData()
     catalogLoaded.value = true
-  } catch (error) {
+  }
+  catch (error) {
     console.error('Fetch application catalog failed:', error)
     catalogItems.value = []
-  } finally {
+  }
+  finally {
     catalogLoading.value = false
   }
 }
@@ -455,7 +520,8 @@ onMounted(async () => {
       bootstrapFavourite(),
       fetchCatalogItems(),
     ])
-  } catch (error) {
+  }
+  catch (error) {
     console.error('Get favourites failed:', error)
   }
 })

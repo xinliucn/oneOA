@@ -1,11 +1,17 @@
 <template>
   <div class="company-info">
-    <section class="company-info__hero" :style="{ backgroundImage: `url(${heroImage})` }">
+    <section
+      class="company-info__hero"
+      :style="{ backgroundImage: `url(${heroImage})` }"
+    >
       <h1>Company Information</h1>
     </section>
 
     <main class="company-info__body">
-      <nav class="company-info__breadcrumb" aria-label="Breadcrumb">
+      <nav
+        class="company-info__breadcrumb"
+        aria-label="Breadcrumb"
+      >
         <NuxtLink to="/desktop">
           Home
         </NuxtLink>
@@ -14,13 +20,20 @@
       </nav>
 
       <section class="company-info__article">
-        <div v-for="section in sections" :key="section.title" class="company-info__section">
+        <div
+          v-for="section in sections"
+          :key="section.title"
+          class="company-info__section"
+        >
           <h2>{{ section.title }}</h2>
           <p>{{ section.content }}</p>
         </div>
 
         <figure class="company-info__values">
-          <img :src="valuesImage" alt="Dah Chong Hong team">
+          <img
+            :src="valuesImage"
+            alt="Dah Chong Hong team"
+          >
         </figure>
       </section>
     </main>

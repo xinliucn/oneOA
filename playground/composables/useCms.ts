@@ -18,15 +18,17 @@ export const useCms = () => {
 
       const response = await $fetch('/api/r/cms/graphql', {
         method: 'POST',
-        body: query
+        body: query,
       })
 
       return response as T
-    } catch (err: any) {
+    }
+    catch (err: any) {
       console.error('CMS GraphQL request failed:', err)
       error.value = err
       throw err
-    } finally {
+    }
+    finally {
       loading.value = false
     }
   }
@@ -34,6 +36,6 @@ export const useCms = () => {
   return {
     loading,
     error,
-    getCmsdata
+    getCmsdata,
   }
 }

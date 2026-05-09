@@ -21,7 +21,7 @@ withDefaults(
   }>(),
   {
     size: 20,
-    color: 'currentColor'
-  }
+    color: 'currentColor',
+  },
 )
 </script>

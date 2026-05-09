@@ -1,17 +1,86 @@
 import type { H3Event } from 'h3'
 
+type ProxyBody = BodyInit | Record<string, unknown> | unknown[] | null
+
+type ProxyWindmillOptions = {
+  method?: string
+  body?: ProxyBody
+  headers?: Record<string, string>
+  skipCookies?: boolean
+  errorMessage?: string
+}
+
+type RuntimeConfigWithProxy = {
+  trustedProxyIps?: string | string[]
+  public: {
+    apiBase?: string
+    notificationApiPrefix?: string
+  }
+}
+
+const getErrorStatusCode = (error: unknown) => {
+  if (error && typeof error === 'object' && 'statusCode' in error && typeof error.statusCode === 'number') {
+    return error.statusCode
+  }
+
+  return 500
+}
+
+const getErrorMessage = (error: unknown, fallback: string) => {
+  if (error && typeof error === 'object' && 'message' in error && typeof error.message === 'string') {
+    return error.message
+  }
+
+  return fallback
+}
+
+const normalizeTrustedProxyIps = (value: string | string[] | undefined) => {
+  if (Array.isArray(value)) {
+    return value.map(item => item.trim()).filter(Boolean)
+  }
+
+  return String(value || '')
+    .split(',')
+    .map(item => item.trim())
+    .filter(Boolean)
+}
+
+const getSocketRemoteAddress = (event: H3Event) => {
+  return event.node.req.socket.remoteAddress || ''
+}
+
+const isTrustedProxyRequest = (event: H3Event) => {
+  const config = useRuntimeConfig() as unknown as RuntimeConfigWithProxy
+  const trustedProxyIps = normalizeTrustedProxyIps(config.trustedProxyIps)
+
+  return trustedProxyIps.includes(getSocketRemoteAddress(event))
+}
+
+export const getTrustedClientIp = (event: H3Event) => {
+  if (isTrustedProxyRequest(event)) {
+    const forwardedFor = getHeader(event, 'x-forwarded-for')
+    const realIp = getHeader(event, 'x-real-ip')
+    const forwardedIp = forwardedFor?.split(',')[0]?.trim() || realIp?.trim()
+
+    if (forwardedIp) {
+      return forwardedIp
+    }
+  }
+
+  return getSocketRemoteAddress(event)
+}
+
 export const getForwardHeaders = (event: H3Event): Record<string, string> => {
   const cookieHeader = getRequestHeader(event, 'cookie')
   const userAgent = getRequestHeader(event, 'user-agent')
   const referer = getRequestHeader(event, 'referer')
-  const forwardedIp = getHeader(event, 'x-forwarded-for') || getHeader(event, 'x-real-ip') || ''
+  const clientIp = getTrustedClientIp(event)
 
   return {
     ...(cookieHeader ? { cookie: cookieHeader } : {}),
     ...(userAgent ? { 'user-agent': userAgent } : {}),
     ...(referer ? { referer: referer } : {}),
-    'X-Real-IP': forwardedIp,
-    'X-Forwarded-For': forwardedIp,
+    ...(clientIp ? { 'X-Real-IP': clientIp, 'X-Forwarded-For': clientIp } : {}),
   }
 }
 
@@ -31,16 +100,16 @@ export const forwardSetCookieHeaders = (event: H3Event, response: { headers: Hea
 }
 
 export const getNotificationApiPrefix = () => {
-  const config = useRuntimeConfig()
+  const config = useRuntimeConfig() as unknown as RuntimeConfigWithProxy
   return config.public.notificationApiPrefix || '/api/r/weaver/notifications'
 }
 
 export const proxyWindmill = async <T>(
   event: H3Event,
   path: string,
-  options: { method?: string; body?: BodyInit | Record<string, any> | null; headers?: Record<string, string>; skipCookies?: boolean } = {},
+  options: ProxyWindmillOptions = {},
 ): Promise<T> => {
-  const config = useRuntimeConfig()
+  const config = useRuntimeConfig() as unknown as RuntimeConfigWithProxy
   const apiBase = config.public.apiBase
 
   type HttpMethod = 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH' | 'HEAD' | 'OPTIONS' | 'TRACE' | 'CONNECT'
@@ -50,15 +119,23 @@ export const proxyWindmill = async <T>(
     delete forwardHeaders.cookie
   }
 
-  const response = await $fetch.raw<T>(`${apiBase}${path}`, {
-    ...options,
-    method: options.method as HttpMethod | undefined,
-    headers: {
-      ...forwardHeaders,
-      ...((options.headers || {}) as Record<string, string>),
-    },
-  })
+  try {
+    const response = await $fetch.raw<T>(`${apiBase}${path}`, {
+      ...options,
+      method: options.method as HttpMethod | undefined,
+      headers: {
+        ...forwardHeaders,
+        ...(options.headers || {}),
+      },
+    })
 
-  forwardSetCookieHeaders(event, response)
-  return response._data as T
+    forwardSetCookieHeaders(event, response)
+    return response._data as T
+  }
+  catch (error: unknown) {
+    throw createError({
+      statusCode: getErrorStatusCode(error),
+      message: getErrorMessage(error, options.errorMessage || 'Windmill proxy request failed'),
+    })
+  }
 }

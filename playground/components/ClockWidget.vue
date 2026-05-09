@@ -1,7 +1,11 @@
 <template>
   <div class="clock-widget">
-    <div class="clock-widget__date">{{ formattedDate }}</div>
-    <div class="clock-widget__time">{{ formattedTime }}</div>
+    <div class="clock-widget__date">
+      {{ formattedDate }}
+    </div>
+    <div class="clock-widget__time">
+      {{ formattedTime }}
+    </div>
   </div>
 </template>
 

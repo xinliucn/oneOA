@@ -1,17 +1,17 @@
-const getErrorRecord = (error: unknown) => {
+const getErrorRecord = (error: any) => {
   return error && typeof error === 'object'
-    ? error as Record<string, unknown>
+    ? error as Record<string, any>
     : {}
 }
 
-const getStatusCode = (error: Record<string, unknown>) => {
+const getStatusCode = (error: Record<string, any>) => {
   const value = error.statusCode || error.status
   const statusCode = typeof value === 'number' ? value : Number(value)
 
   return Number.isFinite(statusCode) ? statusCode : 500
 }
 
-const getStatusMessage = (error: Record<string, unknown>) => {
+const getStatusMessage = (error: Record<string, any>) => {
   if (typeof error.statusMessage === 'string') {
     return error.statusMessage
   }
@@ -25,7 +25,7 @@ const getStatusMessage = (error: Record<string, unknown>) => {
 
 export default defineEventHandler(async (event) => {
   const config = useRuntimeConfig(event)
-  const body: Record<string, unknown> = await readBody<Record<string, unknown>>(event).catch(() => ({}))
+  const body: Record<string, any> = await readBody<Record<string, any>>(event).catch(() => ({}))
 
   if (config.mockEnabled) {
     return {
@@ -68,7 +68,7 @@ export default defineEventHandler(async (event) => {
 
   try {
     const notificationApiPrefix = '/api/r/internal'
-    const response = await $fetch.raw<Record<string, unknown>>(`${config.public.apiBase}${notificationApiPrefix}/ecology_oa/workflow_form_attachments`, {
+    const response = await $fetch.raw<Record<string, any>>(`${config.public.apiBase}${notificationApiPrefix}/ecology_oa/workflow_form_attachments`, {
       method: 'POST',
       headers: getForwardHeaders(event),
       body: {
@@ -83,7 +83,7 @@ export default defineEventHandler(async (event) => {
       data: response._data,
     }
   }
-  catch (error: unknown) {
+  catch (error: any) {
     const errorRecord = getErrorRecord(error)
     const statusCode = getStatusCode(errorRecord)
     const statusMessage = getStatusMessage(errorRecord)

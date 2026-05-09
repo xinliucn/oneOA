@@ -9,7 +9,7 @@ const META_LAST_SYNC_AT = 'last_sync_at'
 
 interface MetaRecord {
   key: string
-  value: unknown
+  value: any
   updatedAt: number
 }
 
@@ -141,7 +141,7 @@ export const useNotificationDB = () => {
     await waitForTransaction(tx)
   }
 
-  const setMeta = async (key: string, value: unknown) => {
+  const setMeta = async (key: string, value: any) => {
     const db = await openDatabase()
     if (!db) {
       return
@@ -160,7 +160,7 @@ export const useNotificationDB = () => {
     await waitForTransaction(tx)
   }
 
-  const getMeta = async <T = unknown>(key: string): Promise<T | null> => {
+  const getMeta = async <T = any>(key: string): Promise<T | null> => {
     const db = await openDatabase()
     if (!db) {
       return null

@@ -2,14 +2,18 @@
   <div class="mobile-search">
     <div class="mobile-search__header">
       <div class="search-bar">
-        <IconCustom name="search" :size="18" class="search-bar__icon" />
+        <IconCustom
+          name="search"
+          :size="18"
+          class="search-bar__icon"
+        />
         <input
           v-model="searchQuery"
           type="text"
           class="search-bar__input"
           placeholder="Search Intranet"
           @keyup.enter="handleSearch"
-        />
+        >
       </div>
       <button
         type="button"
@@ -20,30 +24,50 @@
       >
         <span>{{ aiButtonLabel }}</span>
         <span class="ai-star">
-          <IconCustom name="starIcon" :size="20" />
+          <IconCustom
+            name="starIcon"
+            :size="20"
+          />
         </span>
       </button>
     </div>
 
     <!-- 默认：最近搜索 -->
-    <div v-if="!normalizedSearchQuery" class="mobile-search__recent">
+    <div
+      v-if="!normalizedSearchQuery"
+      class="mobile-search__recent"
+    >
       <div
         v-for="item in recentSearches"
         :key="item.id"
         class="recent-item"
         @click="selectRecent(item.query)"
       >
-        <IconCustom name="clockIcon" :size="28" class="recent-item__icon" />
+        <IconCustom
+          name="clockIcon"
+          :size="28"
+          class="recent-item__icon"
+        />
         <span class="recent-item__text">{{ item.query }}</span>
       </div>
     </div>
 
     <!-- 搜索结果 -->
-    <div v-else class="mobile-search__results">
-      <div v-if="aiStatusMessage" class="ai-status" :class="{ 'ai-status--error': aiError }">
+    <div
+      v-else
+      class="mobile-search__results"
+    >
+      <div
+        v-if="aiStatusMessage"
+        class="ai-status"
+        :class="{ 'ai-status--error': aiError }"
+      >
         {{ aiStatusMessage }}
       </div>
-      <div v-if="displayedResults.length === 0 && !isAiBusy" class="no-results">
+      <div
+        v-if="displayedResults.length === 0 && !isAiBusy"
+        class="no-results"
+      >
         <p>No results found for "{{ searchQuery }}"</p>
       </div>
       <div v-else>
@@ -57,7 +81,10 @@
             <div class="result-item__title">
               {{ result.title }}
             </div>
-            <div v-if="isAiMode && result.aiScore !== undefined" class="result-item__score">
+            <div
+              v-if="isAiMode && result.aiScore !== undefined"
+              class="result-item__score"
+            >
               {{ Math.round(result.aiScore * 100) }}%
             </div>
           </div>
@@ -95,6 +122,8 @@ type TransformersModule = {
 }
 
 const AI_MODEL = 'Xenova/multilingual-e5-small'
+const LOCAL_AI_SEARCH_ENABLED = false
+const TRANSFORMERS_PACKAGE = '@huggingface/transformers'
 
 const searchQuery = ref('')
 const isAiMode = ref(false)
@@ -228,8 +257,12 @@ const getExtractor = async () => {
     throw new Error('AI search only runs in the browser.')
   }
 
+  if (!LOCAL_AI_SEARCH_ENABLED) {
+    throw new Error('AI semantic search is disabled.')
+  }
+
   if (!extractorPromise) {
-    extractorPromise = import('@huggingface/transformers').then(async (module) => {
+    extractorPromise = import(/* @vite-ignore */ TRANSFORMERS_PACKAGE).then(async (module: unknown) => {
       const transformers = module as unknown as TransformersModule
 
       if (transformers.env) {
@@ -325,6 +358,13 @@ const scheduleAiSearch = () => {
 }
 
 const runAiSearch = () => {
+  if (!LOCAL_AI_SEARCH_ENABLED) {
+    aiError.value = 'AI search is not enabled. Showing keyword results instead.'
+    isAiMode.value = false
+    semanticResults.value = []
+    return
+  }
+
   void performAiSearch()
 }
 

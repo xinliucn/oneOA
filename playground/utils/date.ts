@@ -11,9 +11,9 @@ export const formatNewsDate = (value: string, locale: string) => {
     year: 'numeric',
   }).formatToParts(date)
 
-  const day = parts.find((item) => item.type === 'day')?.value ?? ''
-  const month = parts.find((item) => item.type === 'month')?.value ?? ''
-  const year = parts.find((item) => item.type === 'year')?.value ?? ''
+  const day = parts.find(item => item.type === 'day')?.value ?? ''
+  const month = parts.find(item => item.type === 'month')?.value ?? ''
+  const year = parts.find(item => item.type === 'year')?.value ?? ''
 
   if (locale === 'en') {
     return `${day} ${month}, ${year}`

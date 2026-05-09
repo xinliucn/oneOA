@@ -54,7 +54,7 @@ const businessCategoryNames = [
   'human resources',
 ]
 
-const normalizeString = (value?: unknown) => {
+const normalizeString = (value?: any) => {
   if (typeof value === 'string') {
     return value.trim()
   }
@@ -66,7 +66,7 @@ const normalizeString = (value?: unknown) => {
   return ''
 }
 
-const getFirstString = (...values: unknown[]) => {
+const getFirstString = (...values: any[]) => {
   for (const value of values) {
     const normalizedValue = normalizeString(value)
     if (normalizedValue) {
@@ -320,7 +320,8 @@ const categories = computed(() => {
 
     if (currentCategory) {
       currentCategory.items.push(item)
-    } else {
+    }
+    else {
       categoryMap.set(meta.slug, {
         meta,
         items: [item],
@@ -377,7 +378,8 @@ const getVisibleApps = (category: DesktopApplicationCategory) => {
 const toggleCategory = (categoryId: string) => {
   if (isCategoryExpanded(categoryId)) {
     expandedCategoryIds.value = expandedCategoryIds.value.filter(id => id !== categoryId)
-  } else {
+  }
+  else {
     expandedCategoryIds.value = [...expandedCategoryIds.value, categoryId]
   }
 }
@@ -418,10 +420,12 @@ const handleIntranetClick = async (category: DesktopApplicationCategory) => {
 
 try {
   desktopCatalog.value = await requestApplicationCatalogData()
-} catch (error) {
+}
+catch (error) {
   console.error('Fetch application catalog failed:', error)
   desktopCatalog.value = []
-} finally {
+}
+finally {
   loading.value = false
 }
 </script>
@@ -429,12 +433,16 @@ try {
 <template>
   <div class="applications">
     <section class="applications__banner">
-      <h1 class="applications__banner-title">Applications</h1>
+      <h1 class="applications__banner-title">
+        Applications
+      </h1>
     </section>
 
     <div class="applications__breadcrumb">
       <el-breadcrumb separator=">">
-        <el-breadcrumb-item :to="{ path: '/desktop' }">Home</el-breadcrumb-item>
+        <el-breadcrumb-item :to="{ path: '/desktop' }">
+          Home
+        </el-breadcrumb-item>
         <el-breadcrumb-item>Applications</el-breadcrumb-item>
       </el-breadcrumb>
     </div>
@@ -456,14 +464,32 @@ try {
             class="applications__grouping"
             :teleported="false"
           >
-            <el-option v-for="grouping in groupings" :key="grouping" :label="grouping" :value="grouping" />
+            <el-option
+              v-for="grouping in groupings"
+              :key="grouping"
+              :label="grouping"
+              :value="grouping"
+            />
           </el-select>
         </div>
       </div>
 
-      <div v-if="loading" class="applications__state">Loading...</div>
-      <div v-else-if="filteredCategories.length === 0" class="applications__state">No applications found</div>
-      <div v-else class="applications__grid">
+      <div
+        v-if="loading"
+        class="applications__state"
+      >
+        Loading...
+      </div>
+      <div
+        v-else-if="filteredCategories.length === 0"
+        class="applications__state"
+      >
+        No applications found
+      </div>
+      <div
+        v-else
+        class="applications__grid"
+      >
         <article
           v-for="category in filteredCategories"
           :key="category.id"
@@ -471,11 +497,21 @@ try {
           :style="{ borderTopColor: category.color }"
         >
           <header class="applications__card-header">
-            <div class="applications__card-icon" :style="{ color: category.color }">
-              <IconCustom :name="category.icon" :size="38" />
+            <div
+              class="applications__card-icon"
+              :style="{ color: category.color }"
+            >
+              <IconCustom
+                :name="category.icon"
+                :size="38"
+              />
             </div>
-            <h2 class="applications__card-name">{{ category.name }}</h2>
-            <p class="applications__card-desc">{{ category.description }}</p>
+            <h2 class="applications__card-name">
+              {{ category.name }}
+            </h2>
+            <p class="applications__card-desc">
+              {{ category.description }}
+            </p>
             <button
               type="button"
               class="applications__card-link"
@@ -498,7 +534,11 @@ try {
                 <span class="applications__app-name">{{ app.name }}</span>
                 <span class="applications__app-type">{{ app.subtitle }}</span>
               </span>
-              <IconCustom name="chevron-right" :size="14" class="applications__app-arrow" />
+              <IconCustom
+                name="chevron-right"
+                :size="14"
+                class="applications__app-arrow"
+              />
             </button>
           </div>
 

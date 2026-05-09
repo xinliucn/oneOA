@@ -46,7 +46,10 @@
           <div class="mobile__loading-title">
             Loading...
           </div>
-          <div class="mobile__loading-track" aria-hidden="true">
+          <div
+            class="mobile__loading-track"
+            aria-hidden="true"
+          >
             <span class="mobile__loading-bar" />
           </div>
         </div>

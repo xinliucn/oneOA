@@ -1,8 +1,14 @@
 <template>
   <div class="meeting-widget">
-    <div class="meeting-widget__date">{{ formattedDate }}</div>
-    <div class="meeting-widget__title">{{ meetingTitle }}</div>
-    <div class="meeting-widget__time">{{ meetingTime }}</div>
+    <div class="meeting-widget__date">
+      {{ formattedDate }}
+    </div>
+    <div class="meeting-widget__title">
+      {{ meetingTitle }}
+    </div>
+    <div class="meeting-widget__time">
+      {{ meetingTime }}
+    </div>
   </div>
 </template>
 

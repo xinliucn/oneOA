@@ -4,14 +4,21 @@
       <!-- Logo and Title -->
       <div class="login-header">
         <div class="login-logo">
-          <img src="../assets/images/image002.jpg" alt="logo">
+          <img
+            src="../assets/images/image002.jpg"
+            alt="logo"
+          >
         </div>
-        <div class="subtitle">{{ t('auth.subtitle') }}</div>
+        <div class="subtitle">
+          {{ t('auth.subtitle') }}
+        </div>
       </div>
 
       <div class="loading-section">
-        <div class="loading-spinner"></div>
-        <div class="loading-text">{{ loadingText }}</div>
+        <div class="loading-spinner" />
+        <div class="loading-text">
+          {{ loadingText }}
+        </div>
       </div>
     </div>
   </div>
@@ -19,7 +26,7 @@
 
 <script setup lang="ts">
 definePageMeta({
-  layout: false
+  layout: false,
 })
 
 const { checkAuth, login } = useAuth()
@@ -34,11 +41,13 @@ const loginInit = async () => {
     if (isLoggedIn) {
       loadingState.value = 'success'
       await navigateTo(getDeviceRoute())
-    } else {
+    }
+    else {
       loadingState.value = 'redirecting'
       await login()
     }
-  } catch (error) {
+  }
+  catch (error) {
     console.error('Login initialization failed:', error)
     loadingState.value = 'failed'
   }

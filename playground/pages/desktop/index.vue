@@ -1,42 +1,60 @@
 <template>
-    <div class="desktop">
-        <div class="desktop__banner" :style="{ backgroundImage: `url(${desktopBanner})` }">
-            <div class="desktop__banner-left">
-                <div class="desktop__date">{{ formattedDate }}</div>
-                <div class="desktop__time">{{ formattedTime }}</div>
-                <div class="desktop__greeting">
-                    {{ greetingText }}
-                </div>
-                <div class="desktop__search-bar">
-                    <IconCustom name="search" :size="18" class="desktop__search-icon" />
-                    <input type="text" class="desktop__search-input" :placeholder="t('home.searchPlaceholder')" />
-                    <button class="desktop__ai-btn">AI <span>★</span></button>
-                </div>
-            </div>
+  <div class="desktop">
+    <div
+      class="desktop__banner"
+      :style="{ backgroundImage: `url(${desktopBanner})` }"
+    >
+      <div class="desktop__banner-left">
+        <div class="desktop__date">
+          {{ formattedDate }}
         </div>
-
-        <div class="desktop__content">
-            <FavouritesGrid />
-            <DesktopApplications />
-            <div class="desktop__bottom-row">
-                <GroupNews />
-                <TasksList />
-            </div>
+        <div class="desktop__time">
+          {{ formattedTime }}
         </div>
-
-        <footer class="desktop__footer">
-            {{ t('home.footerCopyright', { year: currentYear }) }}
-        </footer>
+        <div class="desktop__greeting">
+          {{ greetingText }}
+        </div>
+        <div class="desktop__search-bar">
+          <IconCustom
+            name="search"
+            :size="18"
+            class="desktop__search-icon"
+          />
+          <input
+            type="text"
+            class="desktop__search-input"
+            :placeholder="t('home.searchPlaceholder')"
+          >
+          <button class="desktop__ai-btn">
+            AI <span>★</span>
+          </button>
+        </div>
+      </div>
     </div>
+
+    <div class="desktop__content">
+      <FavouritesGrid />
+      <DesktopApplications />
+      <div class="desktop__bottom-row">
+        <GroupNews />
+        <TasksList />
+      </div>
+    </div>
+
+    <footer class="desktop__footer">
+      {{ t('home.footerCopyright', { year: currentYear }) }}
+    </footer>
+  </div>
 </template>
 
 <script setup lang="ts">
-definePageMeta({
-    layout: 'desktop',
-    middleware: 'auth'
-})
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 import desktopBanner from '~/assets/images/Group 120.png'
+
+definePageMeta({
+  layout: 'desktop',
+  middleware: 'auth',
+})
 
 const { user } = useAuth()
 const { locale, t } = useAppI18n()
@@ -46,26 +64,35 @@ const currentTime = ref(new Date())
 let timer: ReturnType<typeof setInterval> | null = null
 
 const formattedDate = computed(() => {
-    return new Intl.DateTimeFormat(locale.value, {
-        weekday: 'long',
-        month: 'long',
-        day: 'numeric',
-        year: 'numeric'
-    }).format(currentTime.value)
+  return new Intl.DateTimeFormat(locale.value, {
+    weekday: 'long',
+    month: 'long',
+    day: 'numeric',
+    year: 'numeric',
+  }).format(currentTime.value)
 })
 
 const formattedTime = computed(() => {
-    const d = currentTime.value
-    return `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`
+  const d = currentTime.value
+  return `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`
 })
 
 const greetingText = computed(() => {
-    const displayName = userName.value || t('common.guest')
-    return t('home.greeting', { name: displayName })
+  const displayName = userName.value || t('common.guest')
+  return t('home.greeting', { name: displayName })
 })
 
-onMounted(() => { timer = setInterval(() => { currentTime.value = new Date() }, 1000) })
-onUnmounted(() => { if (timer) clearInterval(timer) })
+onMounted(() => {
+  timer = setInterval(() => {
+    currentTime.value = new Date()
+  }, 1000)
+})
+
+onUnmounted(() => {
+  if (timer) {
+    clearInterval(timer)
+  }
+})
 </script>
 
 <style>

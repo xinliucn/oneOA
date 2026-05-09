@@ -77,7 +77,10 @@
                 :key="`${step.name}-${step.date}`"
                 class="notification-approval__timeline-item"
               >
-                <div class="notification-approval__timeline-avatar" :class="getApprovalStepClass(step.status)">
+                <div
+                  class="notification-approval__timeline-avatar"
+                  :class="getApprovalStepClass(step.status)"
+                >
                   <IconCustom
                     name="personnel"
                     :size="14"
@@ -112,7 +115,7 @@
                 :size="14"
                 color="#5A78A5"
               />
-              {{ approvalAttachments[0].name }}
+              {{ firstApprovalAttachment?.name }}
             </span>
             <span
               v-if="approvalAttachments.length > 1"
@@ -318,7 +321,7 @@ const headerTitle = computed(() => {
   return localText('mobile.notifications.title', {
     'zh-CN': '通知',
     'zh-TW': '通知',
-    en: 'Notifications',
+    'en': 'Notifications',
   })
 })
 
@@ -326,7 +329,7 @@ const loadingText = computed(() => {
   return localText('mobile.notifications.detail.loading', {
     'zh-CN': '加载中...',
     'zh-TW': '載入中...',
-    en: 'Loading...',
+    'en': 'Loading...',
   })
 })
 
@@ -334,7 +337,7 @@ const emptyText = computed(() => {
   return localText('mobile.notifications.detail.empty', {
     'zh-CN': '未找到通知内容',
     'zh-TW': '找不到通知內容',
-    en: 'Notification not found',
+    'en': 'Notification not found',
   })
 })
 
@@ -342,7 +345,7 @@ const emptyContentText = computed(() => {
   return localText('mobile.notifications.detail.emptyContent', {
     'zh-CN': '暂无详细内容',
     'zh-TW': '暫無詳細內容',
-    en: 'No detail available',
+    'en': 'No detail available',
   })
 })
 
@@ -350,7 +353,7 @@ const linkText = computed(() => {
   return localText('mobile.notifications.detail.openLink', {
     'zh-CN': '打开原始链接',
     'zh-TW': '開啟原始連結',
-    en: 'Open Original Link',
+    'en': 'Open Original Link',
   })
 })
 
@@ -376,6 +379,10 @@ const visibleApprovalTimeline = computed(() => {
 
 const approvalAttachments = computed(() => {
   return approvalData.value.attachments || []
+})
+
+const firstApprovalAttachment = computed(() => {
+  return approvalAttachments.value[0]
 })
 
 const approvalFields = computed(() => {
@@ -434,9 +441,11 @@ const loadNotification = async () => {
     if (detail?.item) {
       notification.value = detail.item
     }
-  } catch (error) {
+  }
+  catch (error) {
     console.error('Load mobile notification detail failed:', error)
-  } finally {
+  }
+  finally {
     loading.value = false
   }
 }

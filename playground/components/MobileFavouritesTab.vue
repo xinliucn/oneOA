@@ -9,7 +9,11 @@
         class="mobile-favourites__search-row"
       >
         <label class="mobile-favourites__search">
-          <IconCustom name="search" :size="16" class="mobile-favourites__search-icon" />
+          <IconCustom
+            name="search"
+            :size="16"
+            class="mobile-favourites__search-icon"
+          />
           <input
             ref="searchInputRef"
             v-model.trim="searchQuery"
@@ -31,7 +35,9 @@
         v-else
         class="mobile-favourites__title-row"
       >
-        <h2 class="mobile-favourites__title">{{ t('favourites.title') }}</h2>
+        <h2 class="mobile-favourites__title">
+          {{ t('favourites.title') }}
+        </h2>
         <div class="mobile-favourites__actions">
           <template v-if="isEditMode">
             <button
@@ -40,7 +46,10 @@
               :class="{ 'is-active': isSearchVisible }"
               @click="toggleSearch"
             >
-              <IconCustom name="search" :size="20" />
+              <IconCustom
+                name="search"
+                :size="20"
+              />
             </button>
             <button
               type="button"
@@ -51,18 +60,32 @@
               {{ favouriteSaving ? copy.saving : copy.done }}
             </button>
           </template>
-          <button v-else type="button" class="mobile-favourites__action-text" @click="openEditMode">
+          <button
+            v-else
+            type="button"
+            class="mobile-favourites__action-text"
+            @click="openEditMode"
+          >
             {{ t('favourites.edit') }}
           </button>
         </div>
       </div>
     </div>
 
-    <div v-if="!isEditMode" class="mobile-favourites__content mobile-favourites__content--grid">
-      <div v-if="favouriteLoading" class="mobile-favourites__empty">
+    <div
+      v-if="!isEditMode"
+      class="mobile-favourites__content mobile-favourites__content--grid"
+    >
+      <div
+        v-if="favouriteLoading"
+        class="mobile-favourites__empty"
+      >
         Loading...
       </div>
-      <div v-if="visibleFavourites.length" class="mobile-favourites__grid">
+      <div
+        v-if="visibleFavourites.length"
+        class="mobile-favourites__grid"
+      >
         <button
           v-for="app in visibleFavourites"
           :key="app.id"
@@ -70,18 +93,35 @@
           class="favourite-card"
           @click="handleFavouriteClick(app)"
         >
-          <IconCustom :name="app.icon" :size="28" class="favourite-card__icon" />
-          <div class="favourite-card__label">{{ app.label }}</div>
+          <IconCustom
+            :name="app.icon"
+            :size="28"
+            class="favourite-card__icon"
+          />
+          <div class="favourite-card__label">
+            {{ app.label }}
+          </div>
         </button>
       </div>
-      <div v-else-if="!favouriteLoading" class="mobile-favourites__empty">
+      <div
+        v-else-if="!favouriteLoading"
+        class="mobile-favourites__empty"
+      >
         {{ copy.empty }}
       </div>
     </div>
 
-    <div v-else class="mobile-favourites__content mobile-favourites__content--list">
-      <div v-if="selectedEditableFavourites.length" class="favourite-list-section">
-        <div class="favourite-list-section__title">{{ copy.myFavourites }}</div>
+    <div
+      v-else
+      class="mobile-favourites__content mobile-favourites__content--list"
+    >
+      <div
+        v-if="selectedEditableFavourites.length"
+        class="favourite-list-section"
+      >
+        <div class="favourite-list-section__title">
+          {{ copy.myFavourites }}
+        </div>
         <button
           v-for="item in selectedEditableFavourites"
           :key="item.itemId"
@@ -89,7 +129,10 @@
           class="favourite-list-item is-selected"
           @click="handleEditItemClick(item)"
         >
-          <span class="favourite-list-item__check" aria-hidden="true">
+          <span
+            class="favourite-list-item__check"
+            aria-hidden="true"
+          >
             <span class="favourite-list-item__tick" />
           </span>
           <span class="favourite-list-item__body">
@@ -100,7 +143,9 @@
       </div>
 
       <div class="favourite-list-section">
-        <div class="favourite-list-section__title">{{ copy.allItems }}</div>
+        <div class="favourite-list-section__title">
+          {{ copy.allItems }}
+        </div>
         <button
           v-for="item in unselectedEditableFavourites"
           :key="item.itemId"
@@ -112,7 +157,10 @@
           }"
           @click="handleEditItemClick(item)"
         >
-          <span class="favourite-list-item__check" aria-hidden="true" />
+          <span
+            class="favourite-list-item__check"
+            aria-hidden="true"
+          />
           <span class="favourite-list-item__body">
             <span class="favourite-list-item__title">{{ item.label }}</span>
             <span class="favourite-list-item__subtitle">{{ item.subtitle }}</span>
@@ -126,10 +174,16 @@
         </button>
       </div>
 
-      <div v-if="catalogLoading" class="mobile-favourites__empty mobile-favourites__empty--compact">
+      <div
+        v-if="catalogLoading"
+        class="mobile-favourites__empty mobile-favourites__empty--compact"
+      >
         Loading...
       </div>
-      <div v-else-if="!selectedEditableFavourites.length && !unselectedEditableFavourites.length" class="mobile-favourites__empty mobile-favourites__empty--compact">
+      <div
+        v-else-if="!selectedEditableFavourites.length && !unselectedEditableFavourites.length"
+        class="mobile-favourites__empty mobile-favourites__empty--compact"
+      >
         {{ copy.searchEmpty }}
       </div>
     </div>
@@ -165,7 +219,7 @@ const {
 } = useFavourite()
 
 const copyMap = {
-  en: {
+  'en': {
     allItems: 'All Items',
     cancel: 'Cancel',
     done: 'Done',
@@ -213,7 +267,7 @@ const copy = computed(() => {
   return copyMap[locale.value as keyof typeof copyMap] || copyMap.en
 })
 
-const normalizeString = (value?: unknown) => {
+const normalizeString = (value?: any) => {
   if (typeof value === 'string') {
     return value.trim()
   }
@@ -225,7 +279,7 @@ const normalizeString = (value?: unknown) => {
   return ''
 }
 
-const getFirstString = (...values: unknown[]) => {
+const getFirstString = (...values: any[]) => {
   for (const value of values) {
     const normalizedValue = normalizeString(value)
     if (normalizedValue) {
@@ -338,26 +392,28 @@ const apiFavouriteItems = computed<FavouriteItem[]>(() => {
 })
 
 const catalogFavouriteItems = computed<FavouriteItem[]>(() => {
-  return catalogItems.value
-    .map((item) => {
-      const itemId = getCatalogItemId(item)
-      if (itemId === null) {
-        return null
-      }
+  const items: FavouriteItem[] = []
 
-      const type = getCatalogItemType(item)
+  for (const item of catalogItems.value) {
+    const itemId = getCatalogItemId(item)
+    if (itemId === null) {
+      continue
+    }
 
-      return {
-        id: `catalog-${itemId}`,
-        itemId,
-        label: getCatalogItemName(item),
-        subtitle: type,
-        icon: getCatalogIcon(item),
-        kind: type.toLowerCase() === 'business' ? 'intranet' : 'application',
-        url: getCatalogItemUrl(item),
-      } satisfies FavouriteItem
+    const type = getCatalogItemType(item)
+
+    items.push({
+      id: `catalog-${itemId}`,
+      itemId,
+      label: getCatalogItemName(item),
+      subtitle: type,
+      icon: getCatalogIcon(item),
+      kind: type.toLowerCase() === 'business' ? 'intranet' : 'application',
+      url: getCatalogItemUrl(item),
     })
-    .filter((item): item is FavouriteItem => Boolean(item))
+  }
+
+  return items
 })
 
 const editableSource = computed(() => {
@@ -416,10 +472,6 @@ const unselectedEditableFavourites = computed(() => {
   return filteredEditableFavourites.value.filter(item => !selectedSet.has(item.itemId))
 })
 
-const isDraftSelected = (itemId: number) => {
-  return draftSelectedItemIds.value.includes(itemId)
-}
-
 const openEditMode = () => {
   draftSelectedItemIds.value = [...selectedItemIds.value].slice(0, maxSelected)
   searchQuery.value = ''
@@ -434,7 +486,8 @@ const completeEditing = async () => {
     searchQuery.value = ''
     isSearchVisible.value = false
     isEditMode.value = false
-  } catch (error) {
+  }
+  catch (error) {
     console.error('Save favourites failed:', error)
   }
 }
@@ -492,10 +545,12 @@ const fetchCatalogItems = async () => {
   try {
     catalogItems.value = await requestApplicationCatalogData()
     catalogLoaded.value = true
-  } catch (error) {
+  }
+  catch (error) {
     console.error('Fetch application catalog failed:', error)
     catalogItems.value = []
-  } finally {
+  }
+  finally {
     catalogLoading.value = false
   }
 }
@@ -506,7 +561,8 @@ onMounted(async () => {
       bootstrapFavourite(),
       fetchCatalogItems(),
     ])
-  } catch (error) {
+  }
+  catch (error) {
     console.error('Get mobile favourites failed:', error)
   }
 })

@@ -1,40 +1,77 @@
 <template>
-    <div class="news_page">
-        <div class="news_tab">
-            <div class="news_header">
-                <h1>News</h1>
-                <IconCustom name="filterIcon" :size="28" color="#A60A3A" class="filter_icon" />
-            </div>
-            <div class="mobile-todo__filters">
-                <button v-for="newTable in newFilters" :key="newTable.value"
-                    :class="['filter-btn', { active: activeFilter === newTable.value }]"
-                    @click="activeFilter = newTable.value">
-                    {{ newTable.label }}
-                </button>
-            </div>
-        </div>
-
-        <div class="news_list">
-            <div v-if="loading" class="news_state">Loading news...</div>
-            <div v-else-if="error" class="news_state news_state--error">Failed to load news.</div>
-            <div v-else-if="filteredNewsList.length === 0" class="news_state">No news found.</div>
-
-            <template v-else>
-                <div v-for="item in filteredNewsList" :key="item.id" class="news_content">
-                    <div class="news_content__image">
-                        <img :src="item.image" :alt="item.title">
-                        <div v-if="item.category" class="news_content__tag">
-                            {{ item.category }}
-                        </div>
-                    </div>
-                    <div class="news_content__body">
-                        <div class="news_content__title">{{ item.title }}</div>
-                        <div class="news_content__date">{{ formatNewsDate(item.date, locale) }}</div>
-                    </div>
-                </div>
-            </template>
-        </div>
+  <div class="news_page">
+    <div class="news_tab">
+      <div class="news_header">
+        <h1>News</h1>
+        <IconCustom
+          name="filterIcon"
+          :size="28"
+          color="#A60A3A"
+          class="filter_icon"
+        />
+      </div>
+      <div class="mobile-todo__filters">
+        <button
+          v-for="newTable in newFilters"
+          :key="newTable.value"
+          :class="['filter-btn', { active: activeFilter === newTable.value }]"
+          @click="activeFilter = newTable.value"
+        >
+          {{ newTable.label }}
+        </button>
+      </div>
     </div>
+
+    <div class="news_list">
+      <div
+        v-if="loading"
+        class="news_state"
+      >
+        Loading news...
+      </div>
+      <div
+        v-else-if="error"
+        class="news_state news_state--error"
+      >
+        Failed to load news.
+      </div>
+      <div
+        v-else-if="filteredNewsList.length === 0"
+        class="news_state"
+      >
+        No news found.
+      </div>
+
+      <template v-else>
+        <div
+          v-for="item in filteredNewsList"
+          :key="item.id"
+          class="news_content"
+        >
+          <div class="news_content__image">
+            <img
+              :src="item.image"
+              :alt="item.title"
+            >
+            <div
+              v-if="item.category"
+              class="news_content__tag"
+            >
+              {{ item.category }}
+            </div>
+          </div>
+          <div class="news_content__body">
+            <div class="news_content__title">
+              {{ item.title }}
+            </div>
+            <div class="news_content__date">
+              {{ formatNewsDate(item.date, locale) }}
+            </div>
+          </div>
+        </div>
+      </template>
+    </div>
+  </div>
 </template>
 
 <script setup lang="ts">
@@ -44,29 +81,29 @@ const { locale } = useAppI18n()
 const { newsList, loading, error, fetchNewsList } = useNewsList()
 
 definePageMeta({
-    layout: 'mobile',
-    middleware: 'auth'
+  layout: 'mobile',
+  middleware: 'auth',
 })
 
 const activeFilter = ref('all')
 
 const newFilters = [
-    { label: 'All', value: 'all' },
-    { label: 'Group News', value: 'Group News' },
-    { label: 'Internal Publish', value: 'Internal Publish' },
-    { label: 'Promotion', value: 'Promotion' },
+  { label: 'All', value: 'all' },
+  { label: 'Group News', value: 'Group News' },
+  { label: 'Internal Publish', value: 'Internal Publish' },
+  { label: 'Promotion', value: 'Promotion' },
 ]
 
 const filteredNewsList = computed(() => {
-    if (activeFilter.value === 'all') {
-        return newsList.value
-    }
+  if (activeFilter.value === 'all') {
+    return newsList.value
+  }
 
-    return newsList.value.filter((item) => item.category === activeFilter.value)
+  return newsList.value.filter(item => item.category === activeFilter.value)
 })
 
 onMounted(async () => {
-    await fetchNewsList()
+  await fetchNewsList()
 })
 </script>
 

@@ -127,7 +127,7 @@ export const useApprovals = () => {
   const bootstrapped = useState<boolean>('approvals:bootstrapped', () => false)
 
   const getApprovalById = (id: string) => {
-    return approvals.value.find((item) => item.id === id || item.code === id) || null
+    return approvals.value.find(item => item.id === id || item.code === id) || null
   }
 
   const refreshFromServer = async () => {
@@ -144,12 +144,14 @@ export const useApprovals = () => {
       })
 
       approvals.value = Array.isArray(response)
-        ? response.map((item) => mapWorkflowToApproval(item))
+        ? response.map(item => mapWorkflowToApproval(item))
         : []
-    } catch (error) {
+    }
+    catch (error) {
       console.error('Fetch approvals from workflow list failed:', error)
       approvals.value = []
-    } finally {
+    }
+    finally {
       loading.value = false
       syncing.value = false
     }
@@ -184,7 +186,7 @@ export const useApprovals = () => {
     target.processStatus = processStatusMap[action]
     target.latestComment = comment.trim()
 
-    const processStatusField = target.fields.find((field) => field.label === 'Process Status')
+    const processStatusField = target.fields.find(field => field.label === 'Process Status')
     if (processStatusField) {
       processStatusField.value = target.processStatus
     }

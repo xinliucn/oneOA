@@ -1,5 +1,3 @@
-import type { ApprovalAction, ApprovalItem, ApprovalStatus } from '~/types/approval'
-
 interface MyApprovedWorkflowItem {
   createTime?: string
   creatorDepartmentName?: string
@@ -16,25 +14,12 @@ interface MyApprovedWorkflowItem {
   }
 }
 
-const actionStatusMap: Record<ApprovalAction, ApprovalStatus> = {
-  Approve: 'Approved',
-  Reject: 'Rejected',
-  Return: 'Pending',
-}
-
-const actionLabelMap: Record<ApprovalAction, string> = {
-  Approve: 'Approved',
-  Reject: 'Rejected',
-  Return: 'Returned',
-}
-
 export const useMyApproved = () => {
-  const approvals = useState<any[]>('my-approved:list', () => [])
+  const approvals = useState<MyApprovedWorkflowItem[]>('my-approved:list', () => [])
   const loading = useState<boolean>('my-approved:loading', () => false)
-  const bootstrapped = useState<boolean>('my-approved:bootstrapped', () => false)
 
   const getApprovalById = (id: string) => {
-    return approvals.value.find((item) => item.id === id || item.code === id) || null
+    return approvals.value.find(item => item.requestId === id || item.requestmark === id) || null
   }
 
   const refreshFromServer = async () => {
@@ -46,51 +31,53 @@ export const useMyApproved = () => {
       })
 
       approvals.value = response
-    } catch (error) {
+    }
+    catch (error) {
       console.error('Fetch my approved workflow list failed:', error)
       approvals.value = []
-    } finally {
+    }
+    finally {
       loading.value = false
     }
   }
 
-//   const bootstrap = async () => {
-//     if (bootstrapped.value) {
-//       return
-//     }
+  //   const bootstrap = async () => {
+  //     if (bootstrapped.value) {
+  //       return
+  //     }
 
-//     await refreshFromServer()
-//     bootstrapped.value = true
-//   }
+  //     await refreshFromServer()
+  //     bootstrapped.value = true
+  //   }
 
-//   const ensureApproval = async (id: string) => {
-//     if (!getApprovalById(id)) {
-//       await bootstrap()
-//     }
+  //   const ensureApproval = async (id: string) => {
+  //     if (!getApprovalById(id)) {
+  //       await bootstrap()
+  //     }
 
-//     return getApprovalById(id)
-//   }
+  //     return getApprovalById(id)
+  //   }
 
-//   const submitApprovalAction = async (id: string, action: ApprovalAction, comment = '') => {
-//     const approval = getApprovalById(id)
+  //   const submitApprovalAction = async (id: string, action: ApprovalAction, comment = '') => {
+  //     const approval = getApprovalById(id)
 
-//     if (!approval) {
-//       return null
-//     }
+  //     if (!approval) {
+  //       return null
+  //     }
 
-//     approval.status = actionStatusMap[action]
-//     approval.processStatus = actionLabelMap[action]
-//     approval.latestComment = comment.trim()
-//     approval.approvers.push({
-//       name: 'You',
-//       action: actionLabelMap[action],
-//       date: new Date().toLocaleString('zh-CN', { hour12: false }),
-//       role: 'Mobile action',
-//     })
+  //     approval.status = actionStatusMap[action]
+  //     approval.processStatus = actionLabelMap[action]
+  //     approval.latestComment = comment.trim()
+  //     approval.approvers.push({
+  //       name: 'You',
+  //       action: actionLabelMap[action],
+  //       date: new Date().toLocaleString('zh-CN', { hour12: false }),
+  //       role: 'Mobile action',
+  //     })
 
-//     approvals.value = [...approvals.value]
-//     return approval
-//   }
+  //     approvals.value = [...approvals.value]
+  //     return approval
+  //   }
 
   return {
     approvals,

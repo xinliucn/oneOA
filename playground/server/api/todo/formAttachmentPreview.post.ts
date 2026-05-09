@@ -41,7 +41,7 @@ const normalizeAttachmentUrl = (url: string, apiBase: string) => {
 
 export default defineEventHandler(async (event) => {
   const config = useRuntimeConfig()
-  const body = await readBody<Record<string, unknown>>(event).catch(() => ({})) as Record<string, unknown>
+  const body = await readBody<Record<string, any>>(event).catch(() => ({})) as Record<string, any>
   const fileName = String(body.fileName || 'Attachment')
   const sourceUrl = String(body.url || '')
 
@@ -74,8 +74,8 @@ export default defineEventHandler(async (event) => {
       contentType,
     }
   }
-  catch (error: unknown) {
-    const errorRecord = error && typeof error === 'object' ? error as Record<string, unknown> : {}
+  catch (error: any) {
+    const errorRecord = error && typeof error === 'object' ? error as Record<string, any> : {}
     const statusCode = Number(errorRecord.statusCode || errorRecord.status) || 500
     const statusMessage = typeof errorRecord.statusMessage === 'string'
       ? errorRecord.statusMessage

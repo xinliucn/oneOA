@@ -16,17 +16,18 @@ export default defineEventHandler(async (event) => {
       headers: {
         'Content-Type': 'application/json',
         // 传递原始请求的 headers
-        'Cookie': getHeader(event, 'cookie') || ''
+        'Cookie': getHeader(event, 'cookie') || '',
       },
-      body: query
+      body: query,
     })
 
     return response
-  } catch (error: any) {
+  }
+  catch (error: any) {
     console.error('CMS GraphQL proxy error:', error)
     throw createError({
       statusCode: error.statusCode || 500,
-      message: error.message || 'CMS GraphQL 请求失败'
+      message: error.message || 'CMS GraphQL 请求失败',
     })
   }
 })

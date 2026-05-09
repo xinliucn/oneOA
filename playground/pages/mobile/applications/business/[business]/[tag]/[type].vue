@@ -179,7 +179,7 @@ const normalizeString = (value?: string | null) => {
   return typeof value === 'string' ? value.trim() : ''
 }
 
-const decodeRouteParam = (value: unknown) => {
+const decodeRouteParam = (value: any) => {
   const rawValue = Array.isArray(value) ? value[0] : value
   const normalized = normalizeString(typeof rawValue === 'string' ? rawValue : '')
 
@@ -189,19 +189,20 @@ const decodeRouteParam = (value: unknown) => {
 
   try {
     return decodeURIComponent(normalized)
-  } catch {
+  }
+  catch {
     return normalized
   }
 }
 
 const splitMultiValue = (value?: string | null) => {
   return normalizeString(value)
-    .split(/[\/,]/)
+    .split(/[/,]/)
     .map(item => item.trim())
     .filter(Boolean)
 }
 
-const uniq = <T>(items: T[]) => {
+function uniq<T>(items: T[]) {
   return Array.from(new Set(items))
 }
 

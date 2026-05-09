@@ -6,7 +6,7 @@ export interface LocaleDefinition {
 }
 
 export interface TranslationMessages {
-  [localeCode: string]: Record<string, any>
+  [localeCode: string]: Record<string, unknown>
 }
 
 export interface ModuleOptions {
@@ -21,8 +21,12 @@ export interface ModuleOptions {
 const defaultLocales: LocaleDefinition[] = [
   { code: 'zh-CN', label: '简体' },
   { code: 'zh-TW', label: '繁體' },
-  { code: 'en', label: 'ENG' }
+  { code: 'en', label: 'ENG' },
 ]
+
+const isRecord = (value: unknown): value is Record<string, unknown> => {
+  return !!value && typeof value === 'object' && !Array.isArray(value)
+}
 
 const normalizeLocales = (locales?: LocaleDefinition[]) => {
   const source = locales?.length ? locales : defaultLocales
@@ -53,20 +57,21 @@ export default defineNuxtModule<ModuleOptions>({
     storageKey: 'superapp-locale',
     cookieKey: 'superapp-locale',
     locales: defaultLocales,
-    messages: {}
+    messages: {},
   },
   setup(options, nuxt) {
     const resolver = createResolver(import.meta.url)
-    const publicRuntimeConfig = nuxt.options.runtimeConfig.public as Record<string, any>
+    const publicRuntimeConfig = nuxt.options.runtimeConfig.public as Record<string, unknown>
+    const currentI18nConfig = publicRuntimeConfig.superAppI18n
 
     publicRuntimeConfig.superAppI18n = {
-      ...(publicRuntimeConfig.superAppI18n || {}),
+      ...(isRecord(currentI18nConfig) ? currentI18nConfig : {}),
       defaultLocale: options.defaultLocale,
       fallbackLocale: options.fallbackLocale,
       storageKey: options.storageKey,
       cookieKey: options.cookieKey,
       locales: normalizeLocales(options.locales),
-      messages: options.messages || {}
+      messages: options.messages || {},
     }
 
     addPlugin(resolver.resolve('./runtime/plugin'))

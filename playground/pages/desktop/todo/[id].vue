@@ -198,11 +198,11 @@ const timelineItems = computed<TimelineItem[]>(() => {
   const logs = processInfo.value?.workflowRequestLogs
   const items: TimelineItem[] = Array.isArray(logs)
     ? logs.map((log: Record<string, any>, index: number) => ({
-      id: String(log.id || `${log.nodeId || 'log'}-${index}`),
-      nodeName: stripHtml(log.nodeName || log.operatorName || `Step ${index + 1}`),
-      action: stripHtml(log.operateType || 'Processed'),
-      date: formatDateTime(log.operateDate, log.operateTime),
-    }))
+        id: String(log.id || `${log.nodeId || 'log'}-${index}`),
+        nodeName: stripHtml(log.nodeName || log.operatorName || `Step ${index + 1}`),
+        action: stripHtml(log.operateType || 'Processed'),
+        date: formatDateTime(log.operateDate, log.operateTime),
+      }))
     : []
 
   const currentNodeName = stripHtml(processInfo.value?.currentNodeName || toDoFrom.value?.currentNodeName)
@@ -263,7 +263,8 @@ const handleConfirm = async () => {
           requestId: targetRequestId,
         },
       })
-    } else {
+    }
+    else {
       await $fetch(workflowFormActionEndpoint, {
         method: 'POST',
         body: {
@@ -280,11 +281,13 @@ const handleConfirm = async () => {
     selectedAction.value = ''
     actionComment.value = ''
     await navigateTo('/desktop/todo')
-  } catch (error) {
+  }
+  catch (error) {
     const message = error instanceof Error ? error.message : 'Submit failed'
     console.error(message)
     console.error('Failed to submit approval action:', error)
-  } finally {
+  }
+  finally {
     submittingAction.value = false
   }
 }
@@ -309,7 +312,10 @@ watch(
 <template>
   <div class="todo-detail">
     <header class="todo-detail__header">
-      <nav class="todo-detail__breadcrumb" aria-label="Breadcrumb">
+      <nav
+        class="todo-detail__breadcrumb"
+        aria-label="Breadcrumb"
+      >
         <NuxtLink to="/desktop">Home</NuxtLink>
         <span>&gt;</span>
         <NuxtLink to="/desktop/todo">To-Do</NuxtLink>
@@ -322,7 +328,10 @@ watch(
     <main class="todo-detail__content">
       <section class="todo-detail__summary">
         <div class="todo-detail__progress">
-          <div class="todo-detail__status-bar" :style="{ backgroundColor: statusBarColor }">
+          <div
+            class="todo-detail__status-bar"
+            :style="{ backgroundColor: statusBarColor }"
+          >
             {{ statusBarLabel }}
           </div>
           <div class="todo-detail__timeline">
@@ -332,10 +341,20 @@ watch(
               class="todo-detail__timeline-item"
             >
               <div class="todo-detail__timeline-marker">
-                <div class="todo-detail__timeline-avatar" :class="getApproverStatusClass(item.action)">
-                  <IconCustom name="personnel" :size="16" color="#ffffff" />
+                <div
+                  class="todo-detail__timeline-avatar"
+                  :class="getApproverStatusClass(item.action)"
+                >
+                  <IconCustom
+                    name="personnel"
+                    :size="16"
+                    color="#ffffff"
+                  />
                 </div>
-                <div v-if="index < visibleTimelineItems.length - 1" class="todo-detail__timeline-line" />
+                <div
+                  v-if="index < visibleTimelineItems.length - 1"
+                  class="todo-detail__timeline-line"
+                />
               </div>
               <div class="todo-detail__timeline-copy">
                 <strong>{{ item.nodeName }}</strong>
@@ -356,7 +375,11 @@ watch(
         <aside class="todo-detail__meta">
           <div class="todo-detail__submitter">
             <div class="todo-detail__submitter-avatar">
-              <IconCustom name="personnel" :size="18" color="#ffffff" />
+              <IconCustom
+                name="personnel"
+                :size="18"
+                color="#ffffff"
+              />
             </div>
             <div>
               <span>Submitted by:</span>
@@ -366,13 +389,29 @@ watch(
             <time>{{ approvalSummary.submittedDate }}</time>
           </div>
 
-          <div v-if="attachments.length > 0" class="todo-detail__attachments">
-            <div v-for="attachment in attachments" :key="attachment.id" class="todo-detail__attachment">
+          <div
+            v-if="attachments.length > 0"
+            class="todo-detail__attachments"
+          >
+            <div
+              v-for="attachment in attachments"
+              :key="attachment.id"
+              class="todo-detail__attachment"
+            >
               <span class="todo-detail__attachment-name">
-                <IconCustom name="document" :size="13" color="#3b82f6" />
+                <IconCustom
+                  name="document"
+                  :size="13"
+                  color="#3b82f6"
+                />
                 {{ attachment.name }}
               </span>
-              <a v-if="attachment.url" :href="attachment.url" target="_blank" rel="noreferrer">Download</a>
+              <a
+                v-if="attachment.url"
+                :href="attachment.url"
+                target="_blank"
+                rel="noreferrer"
+              >Download</a>
               <span v-else>Download</span>
             </div>
           </div>
@@ -391,15 +430,31 @@ watch(
       </section>
 
       <section class="todo-detail__action-panel">
-        <textarea v-model="actionComment" placeholder="Add Comments" />
+        <textarea
+          v-model="actionComment"
+          placeholder="Add Comments"
+        />
         <div class="todo-detail__action-row">
           <select v-model="selectedAction">
-            <option value="" disabled>Action</option>
-            <option v-for="option in actionOptions" :key="option" :value="option">
+            <option
+              value=""
+              disabled
+            >
+              Action
+            </option>
+            <option
+              v-for="option in actionOptions"
+              :key="option"
+              :value="option"
+            >
               {{ option }}
             </option>
           </select>
-          <button type="button" :disabled="!selectedAction || submittingAction" @click="handleConfirm">
+          <button
+            type="button"
+            :disabled="!selectedAction || submittingAction"
+            @click="handleConfirm"
+          >
             {{ submittingAction ? 'Submitting...' : 'Submit' }}
           </button>
         </div>

@@ -1,4 +1,60 @@
 // server/api/auth/callback.ts
+import type { H3Event } from 'h3'
+import { forwardSetCookieHeaders, getForwardHeaders } from '../../utils/windmillProxy'
+
+const safeRedirectFallback = '/'
+
+const allowedRedirectHostSuffixes = [
+  'dchbi.app',
+  'dch.com.hk',
+]
+
+const getErrorStatusCode = (error: unknown) => {
+  if (error && typeof error === 'object' && 'statusCode' in error && typeof error.statusCode === 'number') {
+    return error.statusCode
+  }
+
+  return 500
+}
+
+const getErrorMessage = (error: unknown, fallback: string) => {
+  if (error && typeof error === 'object' && 'message' in error && typeof error.message === 'string') {
+    return error.message
+  }
+
+  return fallback
+}
+
+const isAllowedRedirectHost = (hostname: string, requestHost?: string) => {
+  const normalizedHostname = hostname.toLowerCase()
+  const normalizedRequestHost = String(requestHost || '').split(':')[0]?.toLowerCase()
+
+  return normalizedHostname === normalizedRequestHost
+    || allowedRedirectHostSuffixes.some((suffix) => {
+      return normalizedHostname === suffix || normalizedHostname.endsWith(`.${suffix}`)
+    })
+}
+
+const normalizeSafeRedirectLocation = (event: H3Event, location: string | null) => {
+  if (!location) {
+    return null
+  }
+
+  if (location.startsWith('/') && !location.startsWith('//')) {
+    return location
+  }
+
+  try {
+    const requestHost = getRequestHeader(event, 'host')
+    const url = new URL(location)
+
+    return isAllowedRedirectHost(url.hostname, requestHost) ? location : safeRedirectFallback
+  }
+  catch {
+    return safeRedirectFallback
+  }
+}
+
 export default defineEventHandler(async (event) => {
   const config = useRuntimeConfig()
   const apiBase = config.public.apiBase
@@ -14,27 +70,14 @@ export default defineEventHandler(async (event) => {
     const response = await $fetch.raw(windmillCallbackUrl, {
       method: 'GET',
       query: { code, state },
-      redirect: 'manual',  // 不自动跟随重定向
-      headers: {
-        // 传递原始请求的 headers（用于 fingerprint）
-        'User-Agent': getHeader(event, 'user-agent') || '',
-        'X-Real-IP': getHeader(event, 'x-forwarded-for') || getHeader(event, 'x-real-ip') || '',
-        'X-Forwarded-For': getHeader(event, 'x-forwarded-for') || getHeader(event, 'x-real-ip') || '',
-        'Cookie': getHeader(event, 'cookie') || '',
-        
-      }
+      redirect: 'manual', // 不自动跟随重定向
+      headers: getForwardHeaders(event),
     })
 
-    // 获取 Windmill 返回的 Set-Cookie
-    const setCookie = response.headers.get('set-cookie')
-
-    // 设置 Cookie 到浏览器
-    if (setCookie) {
-      setHeader(event, 'Set-Cookie', setCookie)
-    }
+    forwardSetCookieHeaders(event, response)
 
     // 获取重定向地址
-    const location = response.headers.get('location')
+    const location = normalizeSafeRedirectLocation(event, response.headers.get('location'))
 
     // 重定向到前端首页
     if (location) {
@@ -43,11 +86,12 @@ export default defineEventHandler(async (event) => {
 
     // 如果没有重定向，返回响应体
     return response._data
-  } catch (error: any) {
+  }
+  catch (error: unknown) {
     console.error('OAuth callback error:', error)
     throw createError({
-      statusCode: error.statusCode || 500,
-      message: error.message || 'OAuth 回调失败'
+      statusCode: getErrorStatusCode(error),
+      message: getErrorMessage(error, 'OAuth 回调失败'),
     })
   }
 })

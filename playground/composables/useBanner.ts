@@ -53,11 +53,13 @@ export const useBanner = () => {
       }
 
       return []
-    } catch (err: any) {
+    }
+    catch (err: any) {
       console.error('Failed to fetch banners:', err)
       error.value = err
       throw err
-    } finally {
+    }
+    finally {
       loading.value = false
     }
   }
@@ -102,11 +104,13 @@ export const useBanner = () => {
       }
 
       return []
-    } catch (err: any) {
+    }
+    catch (err: any) {
       console.error('Failed to fetch banners from CMS:', err)
       error.value = err
       throw err
-    } finally {
+    }
+    finally {
       loading.value = false
     }
   }
@@ -118,6 +122,6 @@ export const useBanner = () => {
     fetchBanners,
     fetchBannersFromCms,
     refreshBanners,
-    clearBanners
+    clearBanners,
   }
 }

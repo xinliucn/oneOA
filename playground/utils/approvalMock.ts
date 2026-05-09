@@ -66,5 +66,5 @@ export const approvalItems: ApprovalItem[] = [
 ]
 
 export const getApprovalById = (id: string) => {
-  return approvalItems.find((item) => item.id === id || item.code === id) || null
+  return approvalItems.find(item => item.id === id || item.code === id) || null
 }

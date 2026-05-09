@@ -3,7 +3,10 @@
     <DesktopTodoToast />
     <section class="todo-page__content">
       <div class="todo-page__header">
-        <nav class="todo-page__breadcrumb" aria-label="Breadcrumb">
+        <nav
+          class="todo-page__breadcrumb"
+          aria-label="Breadcrumb"
+        >
           <NuxtLink to="/desktop">
             Home
           </NuxtLink>
@@ -12,8 +15,13 @@
         </nav>
 
         <div class="todo-page__tabs">
-          <button v-for="tab in tabs" :key="tab.value" type="button"
-            :class="['todo-page__tab', { 'is-active': activeTab === tab.value }]" @click="activeTab = tab.value">
+          <button
+            v-for="tab in tabs"
+            :key="tab.value"
+            type="button"
+            :class="['todo-page__tab', { 'is-active': activeTab === tab.value }]"
+            @click="activeTab = tab.value"
+          >
             {{ tab.label }}
           </button>
         </div>
@@ -21,12 +29,23 @@
 
       <div class="todo-page__toolbar">
         <label class="todo-page__search">
-          <IconCustom name="search" :size="18" />
-          <input v-model.trim="searchQuery" type="search" :placeholder="searchPlaceholder">
+          <IconCustom
+            name="search"
+            :size="18"
+          />
+          <input
+            v-model.trim="searchQuery"
+            type="search"
+            :placeholder="searchPlaceholder"
+          >
         </label>
 
         <div class="todo-page__filters">
-          <div v-for="filter in filters" :key="filter.key" class="todo-page__filter">
+          <div
+            v-for="filter in filters"
+            :key="filter.key"
+            class="todo-page__filter"
+          >
             <span>{{ filter.label }}</span>
             <div class="todo-page__select-wrap">
               <button
@@ -36,10 +55,17 @@
                 @click="toggleFilter(filter.key)"
               >
                 <span>{{ selectedFilters[filter.key] }}</span>
-                <IconCustom name="chevron-right" :size="18" :rotate="openFilterKey === filter.key ? 270 : 90" />
+                <IconCustom
+                  name="chevron-right"
+                  :size="18"
+                  :rotate="openFilterKey === filter.key ? 270 : 90"
+                />
               </button>
 
-              <div v-if="openFilterKey === filter.key" class="todo-page__select-menu">
+              <div
+                v-if="openFilterKey === filter.key"
+                class="todo-page__select-menu"
+              >
                 <button
                   v-for="option in filter.options"
                   :key="option"
@@ -77,10 +103,16 @@
           </button>
         </div>
 
-        <div v-if="loading && tableRows.length === 0" class="todo-table__state">
+        <div
+          v-if="loading && tableRows.length === 0"
+          class="todo-table__state"
+        >
           Loading {{ activeTabLabel }}...
         </div>
-        <div v-else-if="!loading && tableRows.length === 0" class="todo-table__state">
+        <div
+          v-else-if="!loading && tableRows.length === 0"
+          class="todo-table__state"
+        >
           No records found.
         </div>
 
@@ -91,15 +123,26 @@
             class="todo-table__row todo-table__row--body"
             @click="handleRowClick(item)"
           >
-            <button type="button" class="todo-table__link" @click.stop="handleRowClick(item)">
+            <button
+              type="button"
+              class="todo-table__link"
+              @click.stop="handleRowClick(item)"
+            >
               {{ item.approvalNo }}
             </button>
             <span>{{ item.subject }}</span>
             <span>{{ item.submittedBy }}</span>
-            <button type="button" class="todo-table__link" @click.stop="handleRowClick(item)">
+            <button
+              type="button"
+              class="todo-table__link"
+              @click.stop="handleRowClick(item)"
+            >
               {{ item.platform }}
             </button>
-            <span class="todo-table__status" :class="item.statusClass">
+            <span
+              class="todo-table__status"
+              :class="item.statusClass"
+            >
               {{ item.status }}
             </span>
             <span>{{ item.dateSubmitted }}</span>
@@ -113,25 +156,53 @@
         </span>
 
         <div class="todo-page__actions">
-          <div class="todo-page__pagination" aria-label="Pagination">
-            <button type="button" class="todo-page__page-nav">
-              <IconCustom name="chevron-right" :size="16" :rotate="180" />
+          <div
+            class="todo-page__pagination"
+            aria-label="Pagination"
+          >
+            <button
+              type="button"
+              class="todo-page__page-nav"
+            >
+              <IconCustom
+                name="chevron-right"
+                :size="16"
+                :rotate="180"
+              />
             </button>
-            <button type="button" class="todo-page__page is-active">
+            <button
+              type="button"
+              class="todo-page__page is-active"
+            >
               1
             </button>
-            <button type="button" class="todo-page__page">
+            <button
+              type="button"
+              class="todo-page__page"
+            >
               2
             </button>
-            <button type="button" class="todo-page__page">
+            <button
+              type="button"
+              class="todo-page__page"
+            >
               3
             </button>
-            <button type="button" class="todo-page__page-nav">
-              <IconCustom name="chevron-right" :size="16" />
+            <button
+              type="button"
+              class="todo-page__page-nav"
+            >
+              <IconCustom
+                name="chevron-right"
+                :size="16"
+              />
             </button>
           </div>
 
-          <button type="button" class="todo-page__export">
+          <button
+            type="button"
+            class="todo-page__export"
+          >
             Export to Excel
           </button>
         </div>
@@ -163,11 +234,11 @@ type TableRow = {
   status: string
   statusClass: string
   dateSubmitted: string
-  raw: unknown
+  raw: any
 }
 
 const { list, loading, fetchByView } = useToDoData()
-const toDoFrom = useState<unknown>('mobile:todo-form', () => null)
+const toDoFrom = useState<any>('mobile:todo-form', () => null)
 
 const tabs = [
   { label: 'My Approvals', value: 'approvals' },
@@ -209,7 +280,7 @@ const selectFilter = (key: FilterKey, option: string) => {
   openFilterKey.value = null
 }
 
-const isRecord = (value: unknown): value is TodoRecord => {
+const isRecord = (value: any): value is TodoRecord => {
   return !!value && typeof value === 'object' && !Array.isArray(value)
 }
 

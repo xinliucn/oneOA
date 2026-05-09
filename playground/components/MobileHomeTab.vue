@@ -1,8 +1,13 @@
 <template>
-  <div class="mobile-home" :class="{ 'is-favourites-editing': isFavouritesEditOpen }">
+  <div
+    class="mobile-home"
+    :class="{ 'is-favourites-editing': isFavouritesEditOpen }"
+  >
     <template v-if="!isFavouritesEditOpen">
-      <section class="home-hero"
-        :style="{ backgroundImage: `linear-gradient(90deg, rgba(0, 0, 0, 0.62), rgba(0, 0, 0, 0.12)), url(${heroImage})` }">
+      <section
+        class="home-hero"
+        :style="{ backgroundImage: `linear-gradient(90deg, rgba(0, 0, 0, 0.62), rgba(0, 0, 0, 0.12)), url(${heroImage})` }"
+      >
         <div class="home-hero__greeting">
           <span>{{ greetingLabel }}</span>
           <strong>{{ displayName }}</strong>
@@ -14,35 +19,76 @@
       </section>
       <section class="home-section">
         <div class="home-shortcuts">
-          <button type="button" class="home-shortcut-card" @click="openSearch">
-            <IconCustom name="search" :size="24" color="#b20f4b" />
+          <button
+            type="button"
+            class="home-shortcut-card"
+            @click="openSearch"
+          >
+            <IconCustom
+              name="search"
+              :size="24"
+              color="#b20f4b"
+            />
             <span>Search</span>
           </button>
 
-          <button type="button" class="home-shortcut-card" @click="openNotifications">
-            <IconCustom name="bell" :size="24" color="#b20f4b" />
+          <button
+            type="button"
+            class="home-shortcut-card"
+            @click="openNotifications"
+          >
+            <IconCustom
+              name="bell"
+              :size="24"
+              color="#b20f4b"
+            />
             <span>Notifications</span>
           </button>
         </div>
       </section>
       <section class="home-section">
         <div class="home-section__header">
-          <div class="home-section__tabs" role="tablist" aria-label="Favourite views">
-            <button type="button" class="home-section__tab" :class="{ 'is-active': favouriteView === 'favourites' }"
-              role="tab" :aria-selected="favouriteView === 'favourites'" @click="favouriteView = 'favourites'">
+          <div
+            class="home-section__tabs"
+            role="tablist"
+            aria-label="Favourite views"
+          >
+            <button
+              type="button"
+              class="home-section__tab"
+              :class="{ 'is-active': favouriteView === 'favourites' }"
+              role="tab"
+              :aria-selected="favouriteView === 'favourites'"
+              @click="favouriteView = 'favourites'"
+            >
               Favourites
             </button>
-            <button type="button" class="home-section__tab" :class="{ 'is-active': favouriteView === 'recents' }"
-              role="tab" :aria-selected="favouriteView === 'recents'" @click="favouriteView = 'recents'">
+            <button
+              type="button"
+              class="home-section__tab"
+              :class="{ 'is-active': favouriteView === 'recents' }"
+              role="tab"
+              :aria-selected="favouriteView === 'recents'"
+              @click="favouriteView = 'recents'"
+            >
               Recents
             </button>
           </div>
-          <button type="button" :disabled="favouriteLoading" @click="openFavouritesEdit">
+          <button
+            type="button"
+            :disabled="favouriteLoading"
+            @click="openFavouritesEdit"
+          >
             {{ t('favourites.edit') }}
           </button>
         </div>
         <div class="favourites-grid">
-          <div v-if="favouriteView === 'favourites' && favouriteLoading" class="home-empty-state">Loading...</div>
+          <div
+            v-if="favouriteView === 'favourites' && favouriteLoading"
+            class="home-empty-state"
+          >
+            Loading...
+          </div>
           <template v-else-if="visibleFavouriteItems.length">
             <button
               v-for="item in visibleFavouriteItems"
@@ -51,23 +97,46 @@
               class="favourite-item"
               @click="handleShortcutClick(item)"
             >
-              <IconCustom :name="item.icon" :size="39" color="#A60A3A" />
+              <IconCustom
+                :name="item.icon"
+                :size="39"
+                color="#A60A3A"
+              />
               <span>{{ item.label }}</span>
             </button>
           </template>
-          <div v-else class="home-empty-state">{{ visibleShortcutEmptyCopy }}</div>
+          <div
+            v-else
+            class="home-empty-state"
+          >
+            {{ visibleShortcutEmptyCopy }}
+          </div>
         </div>
       </section>
 
       <section class="home-section">
         <div class="home-section__header">
           <h2>Applications</h2>
-          <button type="button" @click="openApplicationsPage">View all</button>
+          <button
+            type="button"
+            @click="openApplicationsPage"
+          >
+            View all
+          </button>
         </div>
         <div class="applications-grid">
-          <button v-for="item in applicationItems" :key="item.title" type="button" class="application-card"
-            @click="openBusinessDetail(item.entry)">
-            <IconCustom :name="item.icon" :size="39" :color="item.color" />
+          <button
+            v-for="item in applicationItems"
+            :key="item.title"
+            type="button"
+            class="application-card"
+            @click="openBusinessDetail(item.entry)"
+          >
+            <IconCustom
+              :name="item.icon"
+              :size="39"
+              :color="item.color"
+            />
             <strong>{{ item.title }}</strong>
             <span>{{ item.description }}</span>
           </button>
@@ -77,11 +146,24 @@
       <section class="home-section home-section--news">
         <div class="home-section__header">
           <h2>Group News</h2>
-          <button type="button" @click="navigateTo('/mobile/news')">View all</button>
+          <button
+            type="button"
+            @click="navigateTo('/mobile/news')"
+          >
+            View all
+          </button>
         </div>
         <div class="news-strip">
-          <article v-for="item in newsItems" :key="item.title" class="news-card" @click="openNewsItem(item)">
-            <img :src="item.image" :alt="item.title">
+          <article
+            v-for="item in newsItems"
+            :key="item.title"
+            class="news-card"
+            @click="openNewsItem(item)"
+          >
+            <img
+              :src="item.image"
+              :alt="item.title"
+            >
             <div class="news-card__body">
               <h3>{{ item.title }}</h3>
               <time>{{ item.date }}</time>
@@ -91,27 +173,51 @@
       </section>
     </template>
 
-    <section v-else class="home-favourites-page">
+    <section
+      v-else
+      class="home-favourites-page"
+    >
       <div class="home-favourites-page__header">
-        <div v-if="isFavouritesSearchOpen" class="home-favourites-page__search-row">
+        <div
+          v-if="isFavouritesSearchOpen"
+          class="home-favourites-page__search-row"
+        >
           <label class="home-favourites-page__search">
-            <IconCustom name="search" :size="16" class="home-favourites-page__search-icon" />
+            <IconCustom
+              name="search"
+              :size="16"
+              class="home-favourites-page__search-icon"
+            />
             <input
               v-model.trim="favouritesSearchQuery"
               type="text"
               :placeholder="copy.searchPlaceholder"
             >
           </label>
-          <button type="button" class="home-favourites-page__action-text" @click="closeFavouritesSearch">
+          <button
+            type="button"
+            class="home-favourites-page__action-text"
+            @click="closeFavouritesSearch"
+          >
             {{ copy.cancel }}
           </button>
         </div>
 
-        <div v-else class="home-favourites-page__title-row">
+        <div
+          v-else
+          class="home-favourites-page__title-row"
+        >
           <h1>{{ t('favourites.title') }}</h1>
           <div class="home-favourites-page__actions">
-            <button type="button" class="home-favourites-page__icon-btn" @click="openFavouritesSearch">
-              <IconCustom name="search" :size="18" />
+            <button
+              type="button"
+              class="home-favourites-page__icon-btn"
+              @click="openFavouritesSearch"
+            >
+              <IconCustom
+                name="search"
+                :size="18"
+              />
             </button>
             <button
               type="button"
@@ -127,7 +233,9 @@
 
       <div class="home-favourites-page__list">
         <div class="home-favourites-section">
-          <div class="home-favourites-section__title">{{ copy.myFavourites }}</div>
+          <div class="home-favourites-section__title">
+            {{ copy.myFavourites }}
+          </div>
           <button
             v-for="item in selectedEditableFavourites"
             :key="item.itemId"
@@ -135,7 +243,10 @@
             class="home-favourites-row is-selected"
             @click="toggleDraftFavourite(item.itemId)"
           >
-            <span class="home-favourites-row__check" aria-hidden="true">
+            <span
+              class="home-favourites-row__check"
+              aria-hidden="true"
+            >
               <span />
             </span>
             <span class="home-favourites-row__body">
@@ -143,13 +254,18 @@
               <span class="home-favourites-row__subtitle">{{ item.subtitle }}</span>
             </span>
           </button>
-          <div v-if="!selectedEditableFavourites.length" class="home-favourites-empty-row">
+          <div
+            v-if="!selectedEditableFavourites.length"
+            class="home-favourites-empty-row"
+          >
             {{ copy.selectAtLeastOne }}
           </div>
         </div>
 
         <div class="home-favourites-section">
-          <div class="home-favourites-section__title">{{ copy.allItems }}</div>
+          <div class="home-favourites-section__title">
+            {{ copy.allItems }}
+          </div>
           <button
             v-for="item in unselectedEditableFavourites"
             :key="item.itemId"
@@ -158,7 +274,10 @@
             :class="{ 'is-disabled': isMaxSelected }"
             @click="toggleDraftFavourite(item.itemId)"
           >
-            <span class="home-favourites-row__check" aria-hidden="true" />
+            <span
+              class="home-favourites-row__check"
+              aria-hidden="true"
+            />
             <span class="home-favourites-row__body">
               <span class="home-favourites-row__title">{{ item.label }}</span>
               <span class="home-favourites-row__subtitle">{{ item.subtitle }}</span>
@@ -168,12 +287,16 @@
               name="chevron-right"
               :size="16"
               class="home-favourites-row__arrow"
-            >
-            </IconCustom>
+            />
           </button>
         </div>
 
-        <div v-if="catalogLoading" class="home-favourites-page__empty">Loading...</div>
+        <div
+          v-if="catalogLoading"
+          class="home-favourites-page__empty"
+        >
+          Loading...
+        </div>
         <div
           v-else-if="!selectedEditableFavourites.length && !unselectedEditableFavourites.length"
           class="home-favourites-page__empty"
@@ -261,7 +384,7 @@ let timer: ReturnType<typeof setInterval> | null = null
 const maxSelected = 8
 
 const copyMap = {
-  en: {
+  'en': {
     allItems: 'All Items',
     cancel: 'Cancel',
     done: 'Done',
@@ -337,7 +460,7 @@ const greetingLabel = computed(() => {
 const regionOrder = ['HK', 'CN', 'SEA']
 const detailRouteTypes = ['Data', 'Form']
 
-const normalizeString = (value?: unknown) => {
+const normalizeString = (value?: any) => {
   if (typeof value === 'string') {
     return value.trim()
   }
@@ -349,7 +472,7 @@ const normalizeString = (value?: unknown) => {
   return ''
 }
 
-const getFirstString = (...values: unknown[]) => {
+const getFirstString = (...values: any[]) => {
   for (const value of values) {
     const normalizedValue = normalizeString(value)
     if (normalizedValue) {
@@ -451,7 +574,7 @@ const getCatalogIcon = (item?: ApplicationCatalogItem) => {
 
 const splitMultiValue = (value?: string | null) => {
   return normalizeString(value)
-    .split(/[\/,]/)
+    .split(/[/,]/)
     .map(item => item.trim())
     .filter(Boolean)
 }
@@ -484,26 +607,28 @@ const apiFavouriteSource = computed<FavouriteItem[]>(() => {
 })
 
 const catalogFavouriteSource = computed<FavouriteItem[]>(() => {
-  return catalogItems.value
-    .map((item) => {
-      const itemId = getCatalogItemId(item)
-      if (itemId === null) {
-        return null
-      }
+  const items: FavouriteItem[] = []
 
-      const type = getCatalogItemType(item)
+  for (const item of catalogItems.value) {
+    const itemId = getCatalogItemId(item)
+    if (itemId === null) {
+      continue
+    }
 
-      return {
-        id: `catalog-${itemId}`,
-        itemId,
-        label: getCatalogItemName(item),
-        subtitle: type,
-        icon: getCatalogIcon(item),
-        kind: type.toLowerCase() === 'business' ? 'intranet' : 'application',
-        url: getCatalogItemUrl(item),
-      } satisfies FavouriteItem
+    const type = getCatalogItemType(item)
+
+    items.push({
+      id: `catalog-${itemId}`,
+      itemId,
+      label: getCatalogItemName(item),
+      subtitle: type,
+      icon: getCatalogIcon(item),
+      kind: type.toLowerCase() === 'business' ? 'intranet' : 'application',
+      url: getCatalogItemUrl(item),
     })
-    .filter((item): item is FavouriteItem => Boolean(item))
+  }
+
+  return items
 })
 
 const editableSource = computed(() => {
@@ -705,10 +830,6 @@ const newsItems = [
   },
 ]
 
-const activateTab = (value: number) => {
-  activeTab.value = value
-}
-
 const openApplicationsPage = async () => {
   activeTab.value = 3
   await navigateTo('/mobile')
@@ -778,10 +899,12 @@ const fetchCatalogItems = async () => {
   try {
     catalogItems.value = await requestApplicationCatalogData()
     catalogLoaded.value = true
-  } catch (error) {
+  }
+  catch (error) {
     console.error('Fetch application catalog failed:', error)
     catalogItems.value = []
-  } finally {
+  }
+  finally {
     catalogLoading.value = false
   }
 }
@@ -827,7 +950,8 @@ const completeFavouritesEdit = async () => {
     await saveFavourite(draftFavouriteItemIds.value)
     await getFavourite()
     closeFavouritesEdit()
-  } catch (error) {
+  }
+  catch (error) {
     console.error('Save favourites failed:', error)
   }
 }
@@ -852,7 +976,7 @@ const handleShortcutClick = async (item: ShortcutItem) => {
   }
 }
 
-const openNewsItem = async (item: { title: string; date: string }) => {
+const openNewsItem = async (item: { title: string, date: string }) => {
   recordRecentItem({
     id: `news:${item.title}`,
     type: 'news',

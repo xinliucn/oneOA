@@ -86,11 +86,11 @@ import { computed, ref, watch } from 'vue'
 import type { TodoView } from '~/composables/useToDoData'
 
 const { list, loading, fetchByView } = useToDoData()
-const toDoFrom = useState<unknown>('mobile:todo-form', () => null)
+const toDoFrom = useState<any>('mobile:todo-form', () => null)
 const { t } = useAppI18n()
 const { addRecentItem } = useRecentItems('desktop')
 
-type TodoRecord = Record<string, unknown>
+type TodoRecord = Record<string, any>
 
 type DisplayTask = {
   id: string
@@ -101,7 +101,7 @@ type DisplayTask = {
   submitter: string
   workflowName: string
   date: string
-  raw: unknown
+  raw: any
 }
 
 type DesktopTodoView = TodoView | 'watchlist'
@@ -119,7 +119,7 @@ const activeTabLabel = computed(() => {
   return tabs.value.find(tab => tab.value === activeTab.value)?.label || ''
 })
 
-const isRecord = (value: unknown): value is TodoRecord => {
+const isRecord = (value: any): value is TodoRecord => {
   return !!value && typeof value === 'object' && !Array.isArray(value)
 }
 

@@ -129,11 +129,12 @@ const getStatus = (item: CompanyDocumentDetailResponseItem): CompanyDocumentStat
 
 const getDocumentCodeAndVersion = (numberVersion?: string) => {
   const value = numberVersion || ''
-  const match = value.match(/^(.*?)(\[[^\]]+\])$/)
+  const bracketStart = value.lastIndexOf('[')
+  const hasVersionSuffix = bracketStart > -1 && value.endsWith(']')
 
   return {
-    code: match?.[1] || value,
-    version: match?.[2] || '',
+    code: hasVersionSuffix ? value.slice(0, bracketStart) : value,
+    version: hasVersionSuffix ? value.slice(bracketStart) : '',
   }
 }
 
@@ -141,7 +142,7 @@ const formatSummaryDate = (date?: string) => {
   return date?.split(' ')[0] || ''
 }
 
-const fetchCompanyDocumentDetail = $fetch as typeof $fetch<unknown>
+const fetchCompanyDocumentDetail = $fetch as typeof $fetch<any>
 
 const { data: companyDocumentDetailResponse, pending } = await useAsyncData(
   'company-document-detail',

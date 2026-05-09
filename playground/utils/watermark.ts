@@ -75,7 +75,7 @@ export const createWatermark = (text: string) => {
 
   observer.observe(document.body, {
     childList: true,
-    subtree: false
+    subtree: false,
   })
 }
 

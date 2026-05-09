@@ -4,16 +4,16 @@ export default defineEventHandler(async (event) => {
   const config = useRuntimeConfig()
   const raw = config.mockEnabled
   const response = {
-    "success": true,
-    "vapidPublicKey": "",
-    "data": {
-      "email": null,
-      "channel": "apns",
-      "success": true,
-      "user_id": "test-user-001",
-      "platform": "web"
+    success: true,
+    vapidPublicKey: '',
+    data: {
+      email: null,
+      channel: 'apns',
+      success: true,
+      user_id: 'test-user-001',
+      platform: 'web',
     },
-    "message": "订阅已注册"
+    message: '订阅已注册',
   }
   if (raw) {
     return {
@@ -30,13 +30,13 @@ export default defineEventHandler(async (event) => {
       body,
     })
 
-
     return {
       success: true,
       data: response,
       message: '订阅已注册',
     }
-  } catch (error: any) {
+  }
+  catch (error: any) {
     console.error('Subscribe notification API error:', error)
 
     // 统一转换成前端可消费的 HTTP 错误
