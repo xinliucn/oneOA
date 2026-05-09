@@ -57,7 +57,7 @@
 </template>
 
 <script setup lang="ts">
-import heroImage from '~/assets/images/desktop-banner.jpg'
+import heroImage from '~/assets/images/Rectangle 194.png'
 
 definePageMeta({
   layout: 'desktop',
@@ -160,15 +160,17 @@ const handleCardClick = async (card: typeof cards[number]) => {
 
 .department-intranets__grid {
   display: grid;
-  grid-template-columns: repeat(2, 154px);
+  grid-template-columns: repeat(2, 230px);
   gap: 12px;
+  align-items: start;
 }
 
 .department-intranets-card {
+  width: 230px;
+  height: 248px;
   overflow: hidden;
-  min-height: 156px;
   border: 0;
-  border-radius: 6px;
+  border-radius: 12px 12px 6px 6px;
   padding: 0;
   background: #ffffff;
   box-shadow: 0 6px 14px rgba(0, 0, 0, 0.14);
@@ -177,7 +179,8 @@ const handleCardClick = async (card: typeof cards[number]) => {
 }
 
 .department-intranets-card__image-wrap {
-  height: 91px;
+  width: 230px;
+  height: 120px;
   overflow: hidden;
   background: #eef2f7;
 }
@@ -220,18 +223,20 @@ const handleCardClick = async (card: typeof cards[number]) => {
 }
 
 .department-intranets-card__body {
-  min-height: 65px;
+  height: 128px;
   display: flex;
-  align-items: center;
-  padding: 10px 14px;
+  align-items: flex-start;
+  padding: 25px 14px 14px;
 }
 
 .department-intranets-card__body h2 {
   margin: 0;
   color: #000000;
-  font-size: 10px;
-  line-height: 1.35;
+  font-family: "Source Sans Pro", sans-serif;
+  font-size: 12px;
+  line-height: 130%;
   font-weight: 700;
+  letter-spacing: 0;
 }
 
 .department-intranets__copyright {

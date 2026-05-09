@@ -1,17 +1,11 @@
 <template>
   <div class="desktop-news">
-    <section
-      class="desktop-news__hero"
-      :style="{ backgroundImage: `url(${heroImage})` }"
-    >
+    <section class="desktop-news__hero" :style="{ backgroundImage: `url(${heroImage})` }">
       <h1>News</h1>
     </section>
 
     <section class="desktop-news__body">
-      <nav
-        class="desktop-news__breadcrumb"
-        aria-label="Breadcrumb"
-      >
+      <nav class="desktop-news__breadcrumb" aria-label="Breadcrumb">
         <NuxtLink to="/desktop">
           Home
         </NuxtLink>
@@ -20,17 +14,10 @@
       </nav>
 
       <div class="desktop-news__toolbar">
-        <div
-          class="desktop-news__filters"
-          aria-label="News categories"
-        >
-          <button
-            v-for="category in categories"
-            :key="category"
-            type="button"
+        <div class="desktop-news__filters" aria-label="News categories">
+          <button v-for="category in categories" :key="category" type="button"
             :class="['desktop-news__filter', { 'is-active': activeCategory === category }]"
-            @click="activeCategory = category"
-          >
+            @click="activeCategory = category">
             {{ category }}
           </button>
         </div>
@@ -44,15 +31,8 @@
       </div>
 
       <div class="desktop-news__cards">
-        <article
-          v-for="item in newsItems"
-          :key="item.id"
-          class="desktop-news-card"
-        >
-          <img
-            :src="item.image"
-            :alt="item.title"
-          >
+        <article v-for="item in newsItems" :key="item.id" class="desktop-news-card">
+          <img :src="item.image" :alt="item.title">
           <div class="desktop-news-card__content">
             <h2>{{ item.title }}</h2>
             <time>{{ item.date }}</time>
@@ -148,11 +128,9 @@ const newsItems = [
 .desktop-news__body {
   flex: 1;
   min-height: 0;
-  padding: 18px 84px 0;
 }
 
 .desktop-news__breadcrumb {
-  width: 662px;
   display: flex;
   align-items: center;
   gap: 5px;
@@ -164,6 +142,9 @@ const newsItems = [
   font-weight: 400;
   line-height: 100%;
   letter-spacing: 0;
+  height: 65px;
+  background: #F9F9F9;
+  padding: 0 120px;
 }
 
 .desktop-news__breadcrumb a {
@@ -196,12 +177,12 @@ const newsItems = [
 }
 
 .desktop-news__toolbar {
-  width: 662px;
   display: flex;
   align-items: flex-end;
   justify-content: space-between;
   gap: 24px;
   margin: 42px 0 20px;
+  padding: 0 120px;
 }
 
 .desktop-news__filters {
@@ -211,15 +192,23 @@ const newsItems = [
 }
 
 .desktop-news__filter {
-  min-height: 22px;
+  min-height: 32px;
   border: 1px solid #d9d9d9;
   border-radius: 999px;
   padding: 0 10px;
   background: #ffffff;
   color: #555555;
-  font-size: 11px;
   line-height: 1;
   cursor: pointer;
+  font-family: Source Sans Pro;
+  font-weight: 400;
+  font-style: Regular;
+  font-size: 16px;
+  leading-trim: NONE;
+  line-height: 100%;
+  letter-spacing: 0%;
+  vertical-align: middle;
+
 }
 
 .desktop-news__filter.is-active {
@@ -235,6 +224,19 @@ const newsItems = [
   color: #555555;
   font-size: 8px;
   line-height: 1.2;
+
+  span {
+    font-family: Source Sans Pro;
+    font-weight: 600;
+    font-style: SemiBold;
+    font-size: 12px;
+    leading-trim: NONE;
+    line-height: 100%;
+    letter-spacing: 0%;
+    vertical-align: middle;
+    color: #616161;
+
+  }
 }
 
 .desktop-news__sort select {
@@ -248,76 +250,105 @@ const newsItems = [
     linear-gradient(45deg, transparent 50%, #6f6f6f 50%) calc(100% - 17px) 10px / 7px 7px no-repeat,
     linear-gradient(135deg, #6f6f6f 50%, transparent 50%) calc(100% - 12px) 10px / 7px 7px no-repeat,
     #ffffff;
-  color: #666666;
-  font-size: 10px;
+  color: #616161;
+  font-family: Source Sans Pro;
+  font-weight: 400;
+  font-style: Regular;
+  font-size: 16px;
+  leading-trim: NONE;
+  line-height: 100%;
+  letter-spacing: 0%;
+
 }
 
 .desktop-news__cards {
   display: grid;
-  grid-template-columns: repeat(4, 158px);
-  gap: 10px;
+  grid-template-columns: repeat(4, 230px);
+  gap: 12px;
+  justify-content: start;
+  padding: 0 120px;
 }
 
 .desktop-news-card {
-  width: 158px;
-  height: 172px;
+  width: 230px;
+  height: 247px;
   overflow: hidden;
-  border-radius: 6px;
+  border-radius: 8px;
   background: #ffffff;
-  box-shadow: 0 7px 16px rgba(0, 0, 0, 0.16);
+  box-shadow: 0 5px 14px rgba(0, 0, 0, 0.12);
 }
 
 .desktop-news-card img {
   display: block;
   width: 100%;
-  height: 86px;
+  height: 124px;
   object-fit: cover;
 }
 
 .desktop-news-card__content {
-  height: 86px;
   display: flex;
   flex-direction: column;
-  justify-content: space-between;
-  padding: 12px 13px 8px;
+  height: 123px;
+  padding: 14px 18px 0;
 }
 
 .desktop-news-card h2 {
   margin: 0;
+  height: 60px;
+  width: 194px;
   color: #000000;
-  font-size: 11px;
-  line-height: 1.24;
-  font-weight: 700;
   display: -webkit-box;
   overflow: hidden;
   -webkit-box-orient: vertical;
   -webkit-line-clamp: 3;
   line-clamp: 3;
+  font-family: Source Sans Pro;
+  font-weight: 600;
+  font-style: SemiBold;
+  font-size: 16px;
+  leading-trim: NONE;
+  line-height: 100%;
+  letter-spacing: 0%;
+  vertical-align: middle;
 }
 
 .desktop-news-card time {
-  color: #999999;
-  font-size: 8px;
-  line-height: 1.2;
+  display: flex;
+  align-items: center;
+  min-height: 35px;
+  margin: 14px -18px 0;
+  padding: 0 18px;
+  border-top: 1px solid #e0e0e0;
+  color: #9aa1a8;
+  font-family: Source Sans Pro;
+  font-size: 10px;
+  line-height: 1;
 }
 
 .desktop-news__view {
   display: flex;
   justify-content: flex-end;
-  width: 662px;
-  margin-top: 17px;
+  width: calc((230px * 4) + (12px * 3));
+  margin: 20px 0 0 120px;
 }
 
 .desktop-news__view button {
-  min-width: 102px;
-  height: 28px;
+  min-width: 148px;
+  height: 40px;
   border: 0;
   border-radius: 5px;
   background: #f8dbe6;
   color: #a60a3a;
-  font-size: 11px;
-  font-weight: 700;
   cursor: pointer;
+  font-family: Source Sans Pro;
+  font-weight: 600;
+  font-style: SemiBold;
+  font-size: 16px;
+  leading-trim: NONE;
+  line-height: 100%;
+  letter-spacing: 0%;
+  text-align: center;
+  vertical-align: middle;
 }
 
 .desktop-news__copyright {

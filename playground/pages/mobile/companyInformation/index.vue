@@ -114,7 +114,7 @@ const contentBlocks = computed(() => {
     {
       heading: 'Vision, mission and values',
       paragraphs: [
-        'During our more than 70 years of history, Dah Chong Hong has been guided by the strong purpose to serve our principles and customers to the best of our ability. Our customer-centric spirit is embedded in our vision and mission, and drives us to continually look for new and better ways to connect our customers with the brands we represent, delivering value, quality and exceptional service.',
+        'During our more than 70 years of history, Dah Chong Hong has been guided by the strong purpose to serve our principles and customers to best of our ability. Our customer-centric spirit is embodied in our vision and mission, and drives us to continually look for new and better ways to connect our customers with the brands we represent, delivering value, quality and exceptional service.',
       ],
     },
     {
@@ -132,8 +132,8 @@ const contentBlocks = computed(() => {
     {
       heading: 'Our Values',
       paragraphs: [
-        'Our values are the foundation of our business and help create and maintain a strong performance culture. They guide our interactions, daily decisions and our long term strategies. If our values match yours, you will find DCH a rewarding, inspirational place to work.',
-        'We have five core values: Partner, Results, Integrity, Dynamism and Engagement. Each of these values helps us to achieve great things, individually and collectively. Together, they create a competitive advantage and have been the core of our long-term success.',
+        'Our values are the foundation of our business and help create and maintain a strong performance culture. They guide our interactions, daily decisions and our long term strategies. If our values match yours, you’ll find DCH a rewarding, inspirational place to work.',
+        'We have five core values. They are: Partnership, Results, Integrity, Dynamism, Engagement. Each of these values help us to achieve great things, individually and collectively. Together, they create a competitive advantage and have been the core of our long-term success.',
       ],
     },
   ]

@@ -169,6 +169,10 @@ export const appMessages = {
       todo: {
         title: '待办',
         placeholder: '待办事项内容区域'
+      },
+      comingSoon: {
+        status: '即将开放',
+        action: '返回首页'
       }
     }
   },
@@ -336,6 +340,10 @@ export const appMessages = {
       todo: {
         title: '待辦',
         placeholder: '待辦事項內容區域'
+      },
+      comingSoon: {
+        status: '即將開放',
+        action: '返回首頁'
       }
     }
   },
@@ -503,6 +511,10 @@ export const appMessages = {
       todo: {
         title: 'To-Do',
         placeholder: 'To-do content area'
+      },
+      comingSoon: {
+        status: 'Coming Soon',
+        action: 'Back to Home'
       }
     }
   }

@@ -1,0 +1,593 @@
+<template>
+  <div class="company-docs">
+    <section class="company-docs__hero" :style="{ backgroundImage: `url(${heroImage})` }">
+      <h1>Company Documents</h1>
+    </section>
+
+    <main class="company-docs__body">
+      <nav class="company-docs__breadcrumb" aria-label="Breadcrumb">
+        <NuxtLink to="/desktop">
+          Home
+        </NuxtLink>
+        <span>&gt;</span>
+        <span>Company Documents</span>
+      </nav>
+
+      <div class="company-docs__toolbar">
+        <label class="company-docs__search">
+          <IconCustom name="search" :size="14" />
+          <input v-model.trim="searchQuery" type="search" placeholder="Search Company Documents">
+        </label>
+
+        <div class="company-docs__filters" aria-label="Document status">
+          <button v-for="filter in filters" :key="filter" type="button"
+            :class="['company-docs__filter', { 'is-active': activeFilter === filter }]" @click="activeFilter = filter">
+            {{ filter }}
+          </button>
+        </div>
+      </div>
+
+      <div class="company-docs-table">
+        <div class="company-docs-table__row company-docs-table__row--head">
+          <button type="button">
+            Folder Title
+          </button>
+          <button type="button">
+            Folder Description
+          </button>
+          <button type="button">
+            No of Articles
+          </button>
+        </div>
+
+        <div v-if="loading" class="company-docs-table__state">
+          Loading...
+        </div>
+        <div v-else-if="error" class="company-docs-table__state company-docs-table__state--error">
+          Failed to load company documents.
+        </div>
+        <div v-else-if="paginatedFolders.length === 0" class="company-docs-table__state">
+          No company documents found.
+        </div>
+        <template v-else>
+          <div v-for="folder in paginatedFolders" :key="folder.slug" class="company-docs-table__row">
+            <NuxtLink
+              class="company-docs-table__link"
+              :to="{
+                path: `/desktop/company-documents/${encodeURIComponent(folder.slug)}`,
+                query: {
+                  folderbaseid: folder.folderbaseid,
+                  title: folder.title,
+                },
+              }"
+            >
+              {{ folder.title }}
+            </NuxtLink>
+            <span>{{ folder.description }}</span>
+            <span>{{ folder.articles }}</span>
+          </div>
+        </template>
+      </div>
+
+      <div class="company-docs__footer-row">
+        <span class="company-docs__record-count">
+          {{ recordCountLabel }}
+        </span>
+
+        <div class="company-docs__pagination" aria-label="Pagination">
+          <button type="button" class="company-docs__page-nav" :disabled="currentPage === 1" @click="goToPage(currentPage - 1)">
+            <IconCustom name="chevron-right" :size="16" :rotate="180" />
+          </button>
+          <button
+            v-for="page in visiblePages"
+            :key="page"
+            type="button"
+            class="company-docs__page"
+            :class="{ 'is-active': currentPage === page }"
+            @click="goToPage(page)"
+          >
+            {{ page }}
+          </button>
+          <button type="button" class="company-docs__page-nav" :disabled="currentPage === totalPages" @click="goToPage(currentPage + 1)">
+            <IconCustom name="chevron-right" :size="16" />
+          </button>
+        </div>
+      </div>
+    </main>
+
+    <footer class="company-docs__copyright">
+      Copyright © 2026 Dah Chong Hong Holdings Limited. All rights reserved.
+    </footer>
+  </div>
+</template>
+
+<script setup lang="ts">
+import heroImage from '~/assets/images/Rectangle 2.png'
+
+definePageMeta({
+  layout: 'desktop',
+  middleware: 'auth',
+})
+
+type CompanyDocumentStatus = 'Acknowledged' | 'Not Acknowledged'
+
+interface CompanyDocumentGroupResponseItem {
+  id?: string | number
+  osid?: string | number
+  count?: string | number
+  FolderTitle?: string
+  FolderDescription?: string
+  status?: string
+  readstatus?: string
+  readstatus_display?: string
+  acknowledgedate?: string
+  acknowledgedate_display?: string
+  acknowledgedCount?: string | number
+  notAcknowledgedCount?: string | number
+}
+
+interface CompanyDocumentFolder {
+  slug: string
+  folderbaseid: string
+  title: string
+  description: string
+  articles: number
+  acknowledgedCount: number
+  notAcknowledgedCount: number
+  status?: CompanyDocumentStatus
+}
+
+const filters = ['All', 'Acknowledged', 'Not Yet Acknowledged']
+const activeFilter = ref('All')
+const searchQuery = ref('')
+const loading = ref(true)
+const error = ref<Error | null>(null)
+const currentPage = ref(1)
+const pageSize = 15
+const companyDocumentResponse = ref<unknown>(null)
+
+const normalizeCompanyDocumentResponse = (response: any): CompanyDocumentGroupResponseItem[] => {
+  if (Array.isArray(response)) {
+    return response
+  }
+
+  if (Array.isArray(response?.data)) {
+    return response.data
+  }
+
+  if (Array.isArray(response?.data?.data)) {
+    return response.data.data
+  }
+
+  return []
+}
+
+const getNumber = (value: unknown) => {
+  const numberValue = Number(value)
+  return Number.isFinite(numberValue) ? numberValue : 0
+}
+
+const getStatus = (item: CompanyDocumentGroupResponseItem): CompanyDocumentStatus | undefined => {
+  const rawStatus = item.status || item.readstatus || item.readstatus_display || ''
+
+  if (rawStatus === 'Acknowledged' || rawStatus === '已签署') {
+    return 'Acknowledged'
+  }
+
+  if (rawStatus === 'Not Acknowledged' || rawStatus === '未签署') {
+    return 'Not Acknowledged'
+  }
+
+  if (item.acknowledgedate || item.acknowledgedate_display) {
+    return 'Acknowledged'
+  }
+}
+
+const folders = computed<CompanyDocumentFolder[]>(() => {
+  return normalizeCompanyDocumentResponse(companyDocumentResponse.value).map((item) => {
+    const title = item.FolderTitle || ''
+    const slug = String(item.id || item.osid || title)
+
+    return {
+      slug,
+      folderbaseid: String(item.osid || item.id || title),
+      title,
+      description: item.FolderDescription || title,
+      articles: getNumber(item.count),
+      acknowledgedCount: getNumber(item.acknowledgedCount),
+      notAcknowledgedCount: getNumber(item.notAcknowledgedCount),
+      status: getStatus(item),
+    }
+  })
+})
+
+const filteredFolders = computed(() => {
+  const keyword = searchQuery.value.trim().toLowerCase()
+  const matchesKeyword = (folder: CompanyDocumentFolder) => {
+    if (!keyword) {
+      return true
+    }
+
+    return [folder.title, folder.description].some(value => value.toLowerCase().includes(keyword))
+  }
+
+  return folders.value.filter((folder) => {
+    if (!matchesKeyword(folder)) {
+      return false
+    }
+
+    if (activeFilter.value === 'Acknowledged') {
+      return folder.status === 'Acknowledged' || folder.acknowledgedCount > 0
+    }
+
+    if (activeFilter.value === 'Not Yet Acknowledged') {
+      return folder.status === 'Not Acknowledged' || folder.notAcknowledgedCount > 0
+    }
+
+    return true
+  })
+})
+
+const totalRecords = computed(() => filteredFolders.value.length)
+const totalPages = computed(() => Math.max(1, Math.ceil(totalRecords.value / pageSize)))
+
+const paginatedFolders = computed(() => {
+  const startIndex = (currentPage.value - 1) * pageSize
+
+  return filteredFolders.value.slice(startIndex, startIndex + pageSize)
+})
+
+const visiblePages = computed(() => {
+  const visibleCount = Math.min(3, totalPages.value)
+  const maxStart = Math.max(1, totalPages.value - visibleCount + 1)
+  const start = Math.min(Math.max(1, currentPage.value - 1), maxStart)
+
+  return Array.from({ length: visibleCount }, (_, index) => start + index)
+})
+
+const recordCountLabel = computed(() => {
+  if (totalRecords.value === 0) {
+    return '0 records'
+  }
+
+  const startRecord = (currentPage.value - 1) * pageSize + 1
+  const endRecord = Math.min(currentPage.value * pageSize, totalRecords.value)
+
+  return `${startRecord} to ${endRecord} of ${totalRecords.value} records`
+})
+
+const goToPage = (page: number) => {
+  currentPage.value = Math.min(Math.max(page, 1), totalPages.value)
+}
+
+const fetchCompanyDocuments = async () => {
+  loading.value = true
+  error.value = null
+
+  try {
+    companyDocumentResponse.value = await $fetch('/api/ecologyOa/companyDocument', {
+      method: 'POST',
+      body: {
+        page: 1,
+        pageSize: 100,
+      },
+    })
+  } catch (caughtError) {
+    error.value = caughtError instanceof Error ? caughtError : new Error('Fetch company documents failed')
+    companyDocumentResponse.value = null
+  } finally {
+    loading.value = false
+  }
+}
+
+watch([activeFilter, searchQuery], () => {
+  currentPage.value = 1
+})
+
+watch(totalPages, (nextTotalPages) => {
+  if (currentPage.value > nextTotalPages) {
+    currentPage.value = nextTotalPages
+  }
+})
+
+onMounted(() => {
+  fetchCompanyDocuments()
+})
+</script>
+
+<style scoped>
+.company-docs {
+  min-height: 100%;
+  display: flex;
+  flex-direction: column;
+  background: #ffffff;
+}
+
+.company-docs__hero {
+  min-height: 320px;
+  display: flex;
+  align-items: center;
+  padding: 0 110px;
+  background-size: cover;
+  background-position: center;
+}
+
+.company-docs__hero h1 {
+  margin: 0;
+  color: #ffffff;
+  font-size: 34px;
+  line-height: 1.2;
+  font-weight: 700;
+}
+
+.company-docs__body {
+  flex: 1;
+  padding: 0 110px 62px;
+}
+
+.company-docs__breadcrumb {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  margin: 0 -110px 58px;
+  padding: 22px 110px;
+  border-bottom: 1px solid #d9d9d9;
+  color: #a60a3a;
+  font-family: "Source Sans Pro", sans-serif;
+  font-size: 16px;
+  font-weight: 400;
+  line-height: 100%;
+  letter-spacing: 0;
+  background: #F9F9F9;
+}
+
+.company-docs__breadcrumb a {
+  color: inherit;
+  font-family: "Source Sans Pro", sans-serif;
+  font-weight: 400;
+  font-style: normal;
+  font-size: 16px;
+  line-height: 100%;
+  letter-spacing: 0%;
+  vertical-align: middle;
+  text-decoration: underline;
+  text-decoration-style: solid;
+  text-decoration-thickness: 0%;
+  text-underline-offset: 0%;
+  text-decoration-skip-ink: auto;
+}
+
+.company-docs__breadcrumb span {
+  font-family: "Source Sans Pro", sans-serif;
+  font-size: 16px;
+  font-weight: 400;
+  line-height: 100%;
+  letter-spacing: 0;
+  vertical-align: middle;
+}
+
+.company-docs__breadcrumb span:last-child {
+  font-weight: 700;
+}
+
+.company-docs__toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  margin-bottom: 52px;
+}
+
+.company-docs__search {
+  width: 324px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 10px;
+  border-radius: 5px;
+  background: #f5f5f5;
+  color: #777777;
+}
+
+.company-docs__search input {
+  flex: 1;
+  min-width: 0;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  color: #333333;
+  height: 100%;
+}
+
+.company-docs__search input::placeholder {
+  color: #A3AAB2;
+  font-family: Source Sans Pro;
+  font-weight: 400;
+  font-style: Regular;
+  font-size: 16px;
+  leading-trim: NONE;
+  line-height: 100%;
+  letter-spacing: 0%;
+
+}
+
+.company-docs__filters {
+  display: flex;
+  gap: 7px;
+}
+
+.company-docs__filter {
+  min-height: 32px;
+  border: 1px solid #d9d9d9;
+  border-radius: 999px;
+  padding: 0 12px;
+  background: #ffffff;
+  color: #616161;
+  line-height: 1;
+  cursor: pointer;
+  font-family: Source Sans Pro;
+  font-weight: 400;
+  font-style: Regular;
+  font-size: 16px;
+  leading-trim: NONE;
+  line-height: 100%;
+  letter-spacing: 0%;
+  vertical-align: middle;
+
+}
+
+.company-docs__filter.is-active {
+  border-color: #a60a3a;
+  background: #a60a3a;
+  color: #ffffff;
+}
+
+.company-docs-table {
+  width: 100%;
+  font-family: "Source Sans Pro", sans-serif;
+}
+
+.company-docs-table__row {
+  display: grid;
+  grid-template-columns: 1.25fr 1.25fr 0.55fr;
+  align-items: center;
+  min-height: 40px;
+  padding: 0 24px;
+  column-gap: 18px;
+  color: #000000;
+  font-size: 12px;
+  line-height: 100%;
+  font-weight: 400;
+  letter-spacing: 0;
+}
+
+.company-docs-table__row:nth-child(odd):not(.company-docs-table__row--head) {
+  background: #f7f7f7;
+  border-radius: 8px;
+}
+
+.company-docs-table__row--head {
+  min-height: 34px;
+  padding-bottom: 8px;
+  font-weight: 700;
+  border-bottom: 1px solid #d9d9d9;
+}
+
+.company-docs-table__row--head button {
+  justify-self: start;
+  border: 0;
+  padding: 0;
+  background: transparent;
+  color: #000000;
+  font: inherit;
+}
+
+.company-docs-table__row--head button::after {
+  content: "↕";
+  margin-left: 4px;
+  color: #000000;
+  font-size: 13px;
+}
+
+.company-docs-table__state {
+  min-height: 120px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #666666;
+  font-family: "Source Sans Pro", sans-serif;
+  font-size: 12px;
+  line-height: 100%;
+}
+
+.company-docs-table__state--error {
+  color: #a60a3a;
+}
+
+.company-docs-table__link {
+  color: #a60a3a;
+  font-family: "Source Sans Pro", sans-serif;
+  font-size: 12px;
+  font-weight: 400;
+  line-height: 100%;
+  letter-spacing: 0;
+  vertical-align: middle;
+  text-decoration: underline;
+  text-decoration-style: solid;
+  text-decoration-thickness: 0;
+  text-underline-offset: 2px;
+  text-decoration-skip-ink: auto;
+}
+
+.company-docs-table__row > span {
+  color: #000000;
+  font-family: "Source Sans Pro", sans-serif;
+  font-size: 12px;
+  font-weight: 400;
+  line-height: 100%;
+  letter-spacing: 0;
+  vertical-align: middle;
+}
+
+.company-docs__footer-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  margin-top: 30px;
+}
+
+.company-docs__record-count {
+  color: #555555;
+  font-family: "Source Sans Pro", sans-serif;
+  font-size: 12px;
+  line-height: 100%;
+}
+
+.company-docs__pagination {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.company-docs__page,
+.company-docs__page-nav {
+  width: 39px;
+  height: 39px;
+  border: 0;
+  border-radius: 8px;
+  background: #ffffff;
+  color: #666666;
+  font-family: "Source Sans Pro", sans-serif;
+  font-size: 16px;
+  line-height: 100%;
+}
+
+.company-docs__page-nav {
+  background: #f8dbe6;
+  color: #a60a3a;
+}
+
+.company-docs__page:disabled,
+.company-docs__page-nav:disabled {
+  cursor: not-allowed;
+  opacity: 0.45;
+}
+
+.company-docs__page.is-active {
+  background: #a60a3a;
+  color: #ffffff;
+}
+
+.company-docs__copyright {
+  min-height: 62px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #a60a3a;
+  color: #ffffff;
+  font-size: 10px;
+  line-height: 1.2;
+}
+</style>

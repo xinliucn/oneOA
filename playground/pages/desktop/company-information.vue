@@ -1,17 +1,11 @@
 <template>
   <div class="company-info">
-    <section
-      class="company-info__hero"
-      :style="{ backgroundImage: `url(${heroImage})` }"
-    >
+    <section class="company-info__hero" :style="{ backgroundImage: `url(${heroImage})` }">
       <h1>Company Information</h1>
     </section>
 
     <main class="company-info__body">
-      <nav
-        class="company-info__breadcrumb"
-        aria-label="Breadcrumb"
-      >
+      <nav class="company-info__breadcrumb" aria-label="Breadcrumb">
         <NuxtLink to="/desktop">
           Home
         </NuxtLink>
@@ -20,26 +14,13 @@
       </nav>
 
       <section class="company-info__article">
-        <div
-          v-for="section in sections"
-          :key="section.title"
-          class="company-info__section"
-        >
+        <div v-for="section in sections" :key="section.title" class="company-info__section">
           <h2>{{ section.title }}</h2>
           <p>{{ section.content }}</p>
         </div>
 
         <figure class="company-info__values">
-          <img
-            :src="valuesImage"
-            alt="Dah Chong Hong team"
-          >
-          <figcaption>
-            <span>Partnership</span>
-            <span>Integrity</span>
-            <span>Excellence</span>
-            <span>Engagement</span>
-          </figcaption>
+          <img :src="valuesImage" alt="Dah Chong Hong team">
         </figure>
       </section>
     </main>
@@ -52,7 +33,7 @@
 
 <script setup lang="ts">
 import heroImage from '~/assets/images/desktop-banner.jpg'
-import valuesImage from '~/assets/images/news/news1.png'
+import valuesImage from '~/assets/images/applications/image (1) 1.png'
 
 definePageMeta({
   layout: 'desktop',
@@ -62,7 +43,7 @@ definePageMeta({
 const sections = [
   {
     title: 'Vision, mission and values',
-    content: 'During our more than 70 years of history, Dah Chong Hong has been guided by the strong purpose to serve our principals and customers to best of our ability. Our customer-centric spirit is embodied in our vision and mission, and drives us to continually look for new and better ways to connect our customers with the brands we represent, delivering value, quality and exceptional service.',
+    content: 'During our more than 70 years of history, Dah Chong Hong has been guided by the strong purpose to serve our principles and customers to best of our ability. Our customer-centric spirit is embodied in our vision and mission, and drives us to continually look for new and better ways to connect our customers with the brands we represent, delivering value, quality and exceptional service.',
   },
   {
     title: 'Our Vision',
@@ -74,7 +55,7 @@ const sections = [
   },
   {
     title: 'Our Values',
-    content: 'Our values are the foundation of our business and help create and maintain a strong performance culture. They guide our interactions, daily decisions and our long-term strategies. If our values match yours, you’ll find DCH a rewarding, inspirational place to work.',
+    content: 'Our values are the foundation of our business and help create and maintain a strong performance culture. They guide our interactions, daily decisions and our long term strategies. If our values match yours, you’ll find DCH a rewarding, inspirational place to work.',
   },
   {
     title: '',
@@ -92,7 +73,7 @@ const sections = [
 }
 
 .company-info__hero {
-  min-height: 186px;
+  min-height: 320px;
   display: flex;
   align-items: center;
   padding: 0 118px;
@@ -126,6 +107,7 @@ const sections = [
   font-weight: 400;
   line-height: 100%;
   letter-spacing: 0;
+  background: #F9F9F9;
 }
 
 .company-info__breadcrumb a {
@@ -168,9 +150,14 @@ const sections = [
 .company-info__section h2 {
   margin: 0 0 6px;
   color: #000000;
-  font-size: 15px;
-  line-height: 1.25;
-  font-weight: 700;
+  font-family: Source Sans Pro;
+  font-weight: 600;
+  font-style: SemiBold;
+  font-size: 24px;
+  leading-trim: NONE;
+  line-height: 24px;
+  letter-spacing: 0%;
+
 }
 
 .company-info__section h2:empty {
@@ -180,8 +167,14 @@ const sections = [
 .company-info__section p {
   margin: 0;
   color: #000000;
-  font-size: 10px;
-  line-height: 1.45;
+  font-family: Source Sans Pro;
+  font-weight: 400;
+  font-style: Regular;
+  font-size: 16px;
+  leading-trim: NONE;
+  line-height: 24px;
+  letter-spacing: 0%;
+
 }
 
 .company-info__values {
@@ -212,7 +205,7 @@ const sections = [
   inset: 0;
   z-index: 1;
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(5, 1fr);
   align-items: center;
   color: #ffffff;
   font-size: 10px;
