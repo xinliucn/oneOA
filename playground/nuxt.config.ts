@@ -4,7 +4,7 @@ export default defineNuxtConfig({
   modules: ['../src/module', '@element-plus/nuxt'],
   devtools: { enabled: true },
   // 优化 CSS 加载
-  css: [],
+  css: ['~/assets/css/desktop-critical.css'],
   runtimeConfig: {
     mockEnabled: true,
     vapidPrivateKey: process.env.NUXT_VAPID_PRIVATE_KEY || '',

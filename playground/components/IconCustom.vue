@@ -9,7 +9,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, type Component } from 'vue'
 import GlobeIcon from './icons/svg/GlobeIcon.vue'
 import SearchIcon from './icons/svg/SearchIcon.vue'
 import BellIcon from './icons/svg/BellIcon.vue'
@@ -42,6 +42,7 @@ import FilterIcon from './icons/svg/FilterIcon.vue'
 import StarIcon from './icons/svg/StarIcon.vue'
 import ClockIcon from './icons/svg/ColckIcon.vue'
 import DownArrowIcon from './icons/svg/DownArrowIcon.vue'
+import RightArrowIcon from './icons/svg/RightArrowIcon.vue'
 
 const props = withDefaults(
   defineProps<{
@@ -56,44 +57,47 @@ const props = withDefaults(
     size: 20,
     color: 'currentColor',
     rotate: 0,
-    spin: false
-  }
+    spin: false,
+  },
 )
 
 // 图标映射表
-const iconMap: Record<string, any> = {
-  globe: GlobeIcon,
-  search: SearchIcon,
-  bell: BellIcon,
-  document: DocumentIcon,
+const iconMap: Record<string, Component> = {
+  'globe': GlobeIcon,
+  'search': SearchIcon,
+  'bell': BellIcon,
+  'document': DocumentIcon,
   'glc-portal': GlcPortalIcon,
   'cca-mobile-apply': CcaMobileApplyIcon,
   'cca-approval-view': CcaApprovalViewIcon,
   'cca-contract-list': CcaContractListIcon,
-  analytics: AnalyticsIcon,
+  'analytics': AnalyticsIcon,
   'settings-list': SettingsListIcon,
   'files-grid': FilesGridIcon,
   'notifications-bag': NotificationsBagIcon,
   'digital-technology': DigitalTechnologyIcon,
   'finance-bars': FinanceBarsIcon,
   'legal-compliance': LegalComplianceIcon,
-  info: InfoIcon,
-  download: DownloadIcon,
-  apps: AppsIcon,
-  building: BuildingIcon,
-  dashboard: DashboardIcon,
-  education: EducationIcon,
-  shop: ShopIcon,
-  menu: MenuIcon,
-  share: ShareIcon,
+  'info': InfoIcon,
+  'download': DownloadIcon,
+  'apps': AppsIcon,
+  'building': BuildingIcon,
+  'dashboard': DashboardIcon,
+  'education': EducationIcon,
+  'shop': ShopIcon,
+  'menu': MenuIcon,
+  'share': ShareIcon,
   'chevron-right': ChevronRightIcon,
-  todo: TodoIcon,
-  personnel: PersonnelIcon,
-  home: HomeIcon,
-  filterIcon: FilterIcon,
-  starIcon: StarIcon,
-  clockIcon:ClockIcon,
-  downArrowIcon:DownArrowIcon
+  'todo': TodoIcon,
+  'personnel': PersonnelIcon,
+  'home': HomeIcon,
+  'filterIcon': FilterIcon,
+  'starIcon': StarIcon,
+  'clockIcon': ClockIcon,
+  'downArrowIcon': DownArrowIcon,
+  'rightArrowIcon': RightArrowIcon,
+  'right-arrow': RightArrowIcon,
+  'arrow-right': RightArrowIcon,
 }
 
 // 动态获取图标组件
@@ -107,7 +111,7 @@ const style = computed(() => ({
   animation: props.spin ? 'icon-spin 1s linear infinite' : 'none',
   display: 'inline-flex',
   alignItems: 'center',
-  justifyContent: 'center'
+  justifyContent: 'center',
 }))
 </script>
 

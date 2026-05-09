@@ -147,6 +147,7 @@ type SelectedBusinessSummary = {
 const { t } = useAppI18n()
 const { catalog, getApplicationCatalogData } = useApplicationCatalog()
 const { openGuardedUrl } = useNetworkGuard()
+const { addRecentItem } = useRecentItems()
 const primaryTabs: PrimaryTab[] = [
   { key: 'application', label: t('mobile.applications.tabs.byApplication') },
   { key: 'business', label: t('mobile.applications.tabs.byBusiness') },
@@ -207,6 +208,15 @@ const handleAppClick = async (app: CatalogEntry) => {
   if (!url) {
     return
   }
+
+  addRecentItem({
+    id: `application:${app.mainTable?.id || url}`,
+    type: 'application',
+    label: app.mainTable?.name_en || app.name || 'Application',
+    subtitle: app.mainTable?.type || app.type || 'Application',
+    icon: 'apps',
+    url,
+  })
 
   await openGuardedUrl(url, '_blank')
 }
@@ -277,6 +287,7 @@ const handleBizClick = async (biz: CatalogEntry['mainTable']) => {
   const businessName = normalizeString(biz?.business || biz?.name_en)
   const displayName = getBusinessDisplayName(biz?.name_en)
   const routeParams = getBusinessRouteParams(biz)
+  const targetPath = `/mobile/applications/business/${encodeURIComponent(routeParams.business)}/${encodeURIComponent(routeParams.tag)}/${encodeURIComponent(routeParams.type)}`
 
   selectedBusiness.value = {
     id: businessName,
@@ -289,9 +300,16 @@ const handleBizClick = async (biz: CatalogEntry['mainTable']) => {
     intranetUrl: biz?.homepage_url || biz?.mobileurl || 'https://intranet.dch.com.hk/',
   }
 
-  return navigateTo(
-    `/mobile/applications/business/${encodeURIComponent(routeParams.business)}/${encodeURIComponent(routeParams.tag)}/${encodeURIComponent(routeParams.type)}`,
-  )
+  addRecentItem({
+    id: `business:${businessName || biz?.id || displayName}`,
+    type: 'business',
+    label: displayName,
+    subtitle: getBusinessDescription({ mainTable: biz } as CatalogEntry),
+    icon: getBusinessFallbackIcon(biz?.name_en),
+    path: targetPath,
+  })
+
+  return navigateTo(targetPath)
 }
 
 const getBusinessFallbackIcon = (name?: string) => {

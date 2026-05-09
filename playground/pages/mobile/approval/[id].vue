@@ -94,29 +94,30 @@
       </section>
     </main>
 
-    <footer class="mobile-approval__footer">
-      <textarea v-model="actionComment" class="mobile-approval__comment" placeholder="Add a comment..." />
-      <div class="mobile-approval__actions">
+    <footer v-if="actionMode !== 'viewOnly'" class="mobile-approval__footer">
+      <textarea
+        v-if="actionMode === 'approveReject'"
+        v-model="actionComment"
+        class="mobile-approval__comment"
+        :placeholder="t('mobile.approval.actions.commentPlaceholder')"
+      />
+      <div v-if="actionMode === 'approveReject'" class="mobile-approval__actions mobile-approval__actions--approval">
         <button type="button" class="mobile-approval__action mobile-approval__action--approve"
           :class="{ active: selectedAction === 'Approve' }" @click="selectAction('Approve')">
-          Approve
+          {{ t('mobile.approval.actions.approve') }}
         </button>
         <button type="button" class="mobile-approval__action mobile-approval__action--reject"
           :class="{ active: selectedAction === 'Reject' }" @click="selectAction('Reject')">
-          Reject
-        </button>
-        <button type="button" class="mobile-approval__action mobile-approval__action--more"
-          :class="{ active: selectedAction === 'Return' }" @click="selectAction('Return')">
-          ...
+          {{ t('mobile.approval.actions.reject') }}
         </button>
       </div>
       <button
         type="button"
         class="mobile-approval__confirm"
-        :disabled="!selectedAction || submittingAction"
+        :disabled="isConfirmDisabled"
         @click="handleConfirm"
       >
-        {{ submittingAction ? 'Submitting...' : submitButtonName }}
+        {{ submittingAction ? t('mobile.approval.actions.submitting') : confirmButtonLabel }}
       </button>
     </footer>
   </div>
@@ -136,6 +137,7 @@ const { form, getFormData } = useApplicationCatalog()
 const { formAttachments, getFormAttachments } = useToDoData()
 const toDoFrom: any = useState('mobile:todo-form', () => null)
 const { showToast } = useMobileToast()
+const { t } = useAppI18n()
 
 definePageMeta({
   layout: false,
@@ -145,6 +147,7 @@ definePageMeta({
 const route = useRoute()
 const approvalId = computed(() => String(route.params.id || ''))
 const requestId = computed(() => String(route.query.requestId || toDoFrom.value?.requestId || ''))
+const todoView = computed(() => String(route.query.todoView || toDoFrom.value?.todoView || 'approvals'))
 const isNotificationSource = computed(() => route.query.source === 'notification')
 const isAttachmentRoute = computed(() => route.path.includes('/attachments'))
 const showAllApprovers = ref(false)
@@ -349,10 +352,81 @@ const visibleTimelineItems = computed(() => {
 const submitButtonName = computed(() => {
   const label = stripHtml(processInfo.value?.submitButtonName)
   if (!label || label === '提交') {
-    return 'Submit'
+    return t('mobile.approval.actions.submit')
   }
 
   return label
+})
+
+const toBoolean = (value: unknown) => {
+  if (typeof value === 'boolean') {
+    return value
+  }
+
+  if (typeof value === 'string') {
+    return ['true', '1', 'yes'].includes(value.trim().toLowerCase())
+  }
+
+  if (typeof value === 'number') {
+    return value === 1
+  }
+
+  return false
+}
+
+const formParams = computed(() => form.value?.formInfo?.params ?? {})
+const hasEditableFields = computed(() => workflowFields.value.some(field => field.edit))
+const hasSubmitParams = computed(() => Object.keys(form.value?.submitParams ?? {}).length > 0)
+const currentNodeLabel = computed(() => {
+  return stripHtml(
+    processInfo.value?.currentNodeName
+    || toDoFrom.value?.currentNodeName
+    || approvalSummary.value.processStatus,
+  )
+})
+const isApprovalLikeRequestNode = computed(() => {
+  const label = [
+    currentNodeLabel.value,
+    stripHtml(processInfo.value?.submitButtonName),
+    stripHtml(processInfo.value?.rejectButtonName),
+  ].join(' ').toLowerCase()
+
+  return /approval|approve|review|批准|審批|审批|審核|审核|復核|复核/.test(label)
+})
+const canRejectFromForm = computed(() => {
+  return toBoolean(formParams.value.canSubmitToRejectNode)
+    || Boolean(stripHtml(processInfo.value?.rejectButtonName))
+})
+const actionMode = computed<'approveReject' | 'submit' | 'viewOnly'>(() => {
+  if (todoView.value === 'approvals') {
+    return 'approveReject'
+  }
+
+  if (todoView.value === 'tasks') {
+    return 'submit'
+  }
+
+  if (todoView.value === 'requests') {
+    if (canRejectFromForm.value && isApprovalLikeRequestNode.value) {
+      return 'approveReject'
+    }
+
+    if (hasEditableFields.value || hasSubmitParams.value || Boolean(stripHtml(processInfo.value?.submitButtonName))) {
+      return 'submit'
+    }
+
+    return 'viewOnly'
+  }
+
+  return 'viewOnly'
+})
+
+const confirmButtonLabel = computed(() => {
+  return submitButtonName.value || t('mobile.approval.actions.submit')
+})
+
+const isConfirmDisabled = computed(() => {
+  return submittingAction.value || (actionMode.value === 'approveReject' && !selectedAction.value)
 })
 
 const backLabel = computed(() => isNotificationSource.value ? 'Notifications' : '')
@@ -363,7 +437,15 @@ const headerTitle = computed(() => {
     return reference ? `${reference} - Notification` : 'Notification'
   }
 
-  return 'My Approvals'
+  if (todoView.value === 'requests') {
+    return t('tasks.tabs.requests')
+  }
+
+  if (todoView.value === 'tasks') {
+    return t('tasks.tabs.tasks')
+  }
+
+  return t('tasks.tabs.approval')
 })
 
 const handleBack = () => navigateTo(isNotificationSource.value ? '/mobile/notifications' : '/mobile')
@@ -419,10 +501,6 @@ const getActionToastMessage = (action: ApprovalAction, referenceNumber: string) 
     return `${referenceNumber} Rejected!`
   }
 
-  if (action === 'Return') {
-    return `${referenceNumber} Returned!`
-  }
-
   return `${referenceNumber} Approved!`
 }
 
@@ -430,11 +508,11 @@ const workflowFormActionEndpoint = '/api/todo/workflowFormAction' as string
 const rejectRequestEndpoint = '/api/todo/rejectRequest' as string
 
 const handleConfirm = async () => {
-  if (!selectedAction.value || submittingAction.value) {
+  if (isConfirmDisabled.value) {
     return
   }
 
-  const action = selectedAction.value
+  const action = actionMode.value === 'approveReject' ? selectedAction.value : ''
   const comment = actionComment.value
   const submitParams = form.value?.submitParams ?? {}
   const currentRequestId = String(submitParams.requestid ?? requestId.value ?? approvalId.value)
@@ -443,7 +521,7 @@ const handleConfirm = async () => {
   submittingAction.value = true
 
   try {
-    if (action === 'Reject') {
+    if (actionMode.value === 'approveReject' && action === 'Reject') {
       await $fetch(rejectRequestEndpoint, {
         method: 'POST',
         body: {
@@ -455,7 +533,7 @@ const handleConfirm = async () => {
         method: 'POST',
         body: {
           ...submitParams,
-          action,
+          ...(actionMode.value === 'approveReject' ? { action } : {}),
           remark: comment,
           requestid: currentRequestId,
           requestId: currentRequestId,
@@ -463,7 +541,13 @@ const handleConfirm = async () => {
       })
     }
 
-    showToast(getActionToastMessage(action, referenceNumber), action === 'Reject' ? 'reject' : 'success', 5000)
+    showToast(
+      actionMode.value === 'approveReject' && action
+        ? getActionToastMessage(action, referenceNumber)
+        : `${referenceNumber} ${t('mobile.approval.actions.submitted')}!`,
+      actionMode.value === 'approveReject' && action === 'Reject' ? 'reject' : 'success',
+      5000,
+    )
     selectedAction.value = ''
     actionComment.value = ''
     mobileActiveTab.value = 2
@@ -823,6 +907,10 @@ watch(
   grid-template-columns: 1fr 1fr 40px;
   gap: 8px;
   margin-bottom: 10px;
+}
+
+.mobile-approval__actions--approval {
+  grid-template-columns: 1fr 1fr;
 }
 
 .mobile-approval__action {

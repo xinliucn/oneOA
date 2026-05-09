@@ -185,6 +185,7 @@ type TodoOption = {
 type LocaleMessages = Record<string, string>
 
 const { locale, t } = useAppI18n()
+const { addRecentItem } = useRecentItems()
 const dropdownRef = ref<HTMLElement | null>(null)
 const filterTriggerRef = ref<HTMLElement | null>(null)
 const filterPanelRef = ref<HTMLElement | null>(null)
@@ -292,6 +293,10 @@ const getTaskTitleCodeFields = (task: any) => {
 
 const getTaskReference = (task: any) => {
   return String(task?.requestmark || task?.requestId || task?.id || '').trim()
+}
+
+const getTaskTitle = (task: any) => {
+  return String(task?.title || task?.requestName || task?.workflowBaseInfo?.workflowName || getTaskReference(task) || 'To-Do').trim()
 }
 
 const categoryFilterPresets = computed(() => {
@@ -436,17 +441,30 @@ const filteredTasks = computed(() => {
 })
 
 const handleTaskClick = (selectedViewValue: string, task: ApprovalItem) => {
-  toDoFrom.value = task
+  toDoFrom.value = {
+    ...task,
+    todoView: selectedViewValue,
+  }
   const targetId = getTaskReference(task)
 
   if (!targetId) {
     return
   }
 
+  addRecentItem({
+    id: `todo:${targetId}`,
+    type: 'todo',
+    label: getTaskTitle(task),
+    subtitle: selectedView.value.label,
+    icon: 'todo',
+    path: `/mobile/approval/${encodeURIComponent(targetId)}`,
+  })
+
   return navigateTo({
     path: `/mobile/approval/${encodeURIComponent(targetId)}`,
     query: {
       requestId: task.requestId,
+      todoView: selectedViewValue,
     },
   })
 }
@@ -801,7 +819,11 @@ onBeforeUnmount(() => {
 
 .mobile-todo__list {
   flex: 1;
+  min-height: 0;
+  padding-bottom: calc(96px + env(safe-area-inset-bottom, 0px));
+  scroll-padding-bottom: calc(96px + env(safe-area-inset-bottom, 0px));
   overflow-y: auto;
+  overscroll-behavior: contain;
   -ms-overflow-style: none;
   /* IE and Edge */
   scrollbar-width: none;

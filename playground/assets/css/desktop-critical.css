@@ -1,0 +1,104 @@
+.desktop-layout {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  height: 100vh;
+  overflow: hidden;
+  background: #FFFFFF;
+}
+
+.desktop__header {
+  display: flex;
+  flex: 0 0 64px;
+  align-items: center;
+  justify-content: space-between;
+  height: 64px;
+  margin: 0 80px 0 16px;
+  background: #FFFFFF;
+  z-index: 100;
+}
+
+.desktop__logo {
+  display: inline-flex;
+  flex: 0 0 200px;
+  align-items: center;
+  justify-content: flex-start;
+  width: 200px;
+  height: 40px;
+  border: 0;
+  padding: 0;
+  background: transparent;
+  cursor: pointer;
+  overflow: hidden;
+}
+
+.desktop__logo img {
+  display: block;
+  width: 200px;
+  max-width: 100%;
+  height: 40px;
+  max-height: 100%;
+  object-fit: contain;
+}
+
+.desktop_header_actions {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  height: 40px;
+}
+
+.desktop_header_actions .action-btn,
+.desktop_header_actions .locale-dropdown__trigger--desktop {
+  width: 40px;
+  min-width: 40px;
+  height: 40px;
+  min-height: 40px;
+  border-radius: 50%;
+}
+
+.avatar-dropdown {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  overflow: hidden;
+  border-radius: 50%;
+  cursor: pointer;
+}
+
+.avatar-dropdown img,
+.desktop__avatar-img {
+  display: block;
+  width: 40px;
+  height: 40px;
+  object-fit: cover;
+  border-radius: 50%;
+}
+
+.desktop_layout_content {
+  display: flex;
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.desktop__sidebar {
+  flex: 0 0 216px;
+  width: 216px;
+  min-width: 216px;
+  height: 100%;
+  overflow-y: auto;
+  background-color: #F5F5F5;
+}
+
+.desktop__main {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow-x: hidden;
+  overflow-y: auto;
+  background: #FFFFFF;
+}

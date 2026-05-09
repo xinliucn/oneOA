@@ -155,16 +155,24 @@ onUnmounted(() => { if (timer) clearInterval(timer) })
 }
 
 .desktop__content {
-    padding: 0;
+    width: 100%;
+    box-sizing: border-box;
     display: flex;
     flex-direction: column;
+    padding: 0 120px;
 }
 
 .desktop__bottom-row {
+    width: 100%;
     display: grid;
-    grid-template-columns: 3fr 2fr;
-    gap: 0;
-    padding: 120px;
+    grid-template-columns: 458px 504px;
+    justify-content: start;
+    gap: 78px;
+    padding: 22px 0 58px;
+}
+
+.desktop__bottom-row > * {
+    min-width: 0;
 }
 
 .desktop__footer {

@@ -3,6 +3,20 @@ definePageMeta({ layout: 'desktop' })
 
 const route = useRoute()
 const id = route.params.id as string
+const notificationRequestId = computed(() => String(route.query.requestId || route.query.requestid || ''))
+
+if (notificationRequestId.value) {
+  await navigateTo({
+    path: `/desktop/todo/${encodeURIComponent(id)}`,
+    query: {
+      requestId: notificationRequestId.value,
+      source: route.query.source || 'notification',
+      notificationId: route.query.notificationId,
+    },
+  }, {
+    replace: true,
+  })
+}
 
 const showAllApprovers = ref(false)
 
@@ -54,6 +68,7 @@ const statusColor = computed(() => statusColorMap[notification.value.status] || 
     <div class="notification-detail__breadcrumb">
       <el-breadcrumb separator=">">
         <el-breadcrumb-item :to="{ path: '/desktop' }">Home</el-breadcrumb-item>
+        <el-breadcrumb-item :to="{ path: '/desktop/todo' }">To-Do</el-breadcrumb-item>
         <el-breadcrumb-item>{{ id }}</el-breadcrumb-item>
       </el-breadcrumb>
       <h2 class="notification-detail__title">{{ notification.title }}</h2>
@@ -221,34 +236,82 @@ const statusColor = computed(() => statusColorMap[notification.value.status] || 
 }
 
 .notification-detail__breadcrumb {
-  margin: 12px 32px;
-  border-bottom: 1px solid #f0f0f0;
-  font-size: 14px;
+  margin: 0;
+  padding: 22px 82px 24px;
+  border-bottom: 1px solid #d9d9d9;
+  background: #f5f5f5;
+  color: #a60a3a;
+  font-family: "Source Sans Pro", sans-serif;
+  font-size: 16px;
+  font-weight: 400;
+  line-height: 100%;
+  letter-spacing: 0;
 }
 
 :deep(.el-breadcrumb) {
-  font-size: 14px !important;
+  display: flex;
+  align-items: center;
+  font-family: "Source Sans Pro", sans-serif;
+  font-size: 16px !important;
+  font-weight: 400;
+  line-height: 100%;
 }
 
 :deep(.notification-detail__breadcrumb .el-breadcrumb__item span) {
-  font-size: 14px !important;
+  font-size: 16px !important;
+  font-weight: 400;
+  line-height: 100%;
+  color: #a60a3a;
 }
 
 :deep(.notification-detail__breadcrumb .el-breadcrumb__separator) {
-  font-size: 14px !important;
-  color: #1f1f1f;
-  margin: 0 8px;
+  font-size: 16px !important;
+  font-weight: 400;
+  line-height: 100%;
+  color: #a60a3a;
+  margin: 0 5px;
 }
 
 :deep(.notification-detail__breadcrumb .el-breadcrumb__item:first-child .el-breadcrumb__inner.is-link) {
-  color: #a50034 !important;
-  font-weight: 500;
+  color: #a60a3a !important;
+  font-family: "Source Sans Pro", sans-serif;
+  font-weight: 400;
+  font-style: normal;
+  font-size: 16px;
+  line-height: 100%;
+  letter-spacing: 0%;
+  vertical-align: middle;
   text-decoration: underline;
+  text-decoration-style: solid;
+  text-decoration-thickness: 0%;
+  text-underline-offset: 0%;
+  text-decoration-skip-ink: auto;
+}
+
+:deep(.notification-detail__breadcrumb .el-breadcrumb__inner.is-link) {
+  color: #a60a3a !important;
+  font-family: "Source Sans Pro", sans-serif;
+  font-weight: 400;
+  font-style: normal;
+  font-size: 16px;
+  line-height: 100%;
+  letter-spacing: 0%;
+  vertical-align: middle;
+  text-decoration: underline;
+  text-decoration-style: solid;
+  text-decoration-thickness: 0%;
+  text-underline-offset: 0%;
+  text-decoration-skip-ink: auto;
 }
 
 :deep(.notification-detail__breadcrumb .el-breadcrumb__item:last-child .el-breadcrumb__inner) {
-  color: #a50034 !important;
+  color: #a60a3a !important;
+  font-family: "Source Sans Pro", sans-serif;
+  font-size: 16px;
   font-weight: 700;
+  line-height: 100%;
+  letter-spacing: 0;
+  vertical-align: middle;
 }
 
 .notification-detail__content {
@@ -264,7 +327,10 @@ const statusColor = computed(() => statusColorMap[notification.value.status] || 
 .notification-detail__title {
   font-size: 22px;
   font-weight: 600;
-  margin: 24px 0 24px 0;
+  margin: 28px 0 0;
+  color: #000000;
+  font-family: "Source Sans Pro", sans-serif;
+  line-height: 110%;
 }
 
 .notification-detail__status-bar {

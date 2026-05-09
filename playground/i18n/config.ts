@@ -70,6 +70,17 @@ export const appMessages = {
           loading: '加载中...',
           empty: '暂无消息'
         }
+      },
+      approval: {
+        actions: {
+          approve: '批准',
+          reject: '拒绝',
+          return: '退回',
+          submit: '提交',
+          submitting: '提交中...',
+          submitted: '已提交',
+          commentPlaceholder: '添加备注...'
+        }
       }
     },
     home: {
@@ -226,6 +237,17 @@ export const appMessages = {
           loading: '載入中...',
           empty: '暫無消息'
         }
+      },
+      approval: {
+        actions: {
+          approve: '批准',
+          reject: '拒絕',
+          return: '退回',
+          submit: '提交',
+          submitting: '提交中...',
+          submitted: '已提交',
+          commentPlaceholder: '新增備註...'
+        }
       }
     },
     home: {
@@ -381,6 +403,17 @@ export const appMessages = {
           loadingScreen: 'Loading {view}...',
           loading: 'Loading...',
           empty: 'No items'
+        }
+      },
+      approval: {
+        actions: {
+          approve: 'Approve',
+          reject: 'Reject',
+          return: 'Return',
+          submit: 'Submit',
+          submitting: 'Submitting...',
+          submitted: 'Submitted',
+          commentPlaceholder: 'Add a comment...'
         }
       }
     },

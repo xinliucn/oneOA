@@ -222,6 +222,15 @@ const filteredNotifications = computed(() => {
 
 const isExternalLink = (link: string) => /^https?:\/\//i.test(link)
 
+const isApiLink = (link: string) => {
+  try {
+    const parsed = new URL(link, 'https://superapp.local')
+    return parsed.pathname.startsWith('/api/')
+  } catch {
+    return link.startsWith('/api/')
+  }
+}
+
 const getPayloadString = (payload: Record<string, any> | null | undefined, keys: string[]) => {
   if (!payload) {
     return ''
@@ -274,42 +283,43 @@ const handleSelect = async (item: NotificationItem) => {
 
   const isMobileRoute = route.path.startsWith('/mobile')
 
-  if (isMobileRoute) {
-    const requestId = getNotificationRequestId(item)
+  const requestId = getNotificationRequestId(item)
 
-    if (requestId) {
-      const reference = getNotificationReference(item, requestId)
-      toDoFrom.value = {
-        requestId,
-        requestmark: reference,
-        requestName: item.title,
-        status: item.category || 'Pending',
-        creatorName: item.source,
-        createTime: item.createdAt,
-        receiveTime: item.createdAt,
-        workflowBaseInfo: {
-          workflowName: item.summary,
-        },
-      }
-
-      emit('close')
-
-      await navigateTo({
-        path: `/mobile/approval/${encodeURIComponent(reference)}`,
-        query: {
-          requestId,
-          source: 'notification',
-          notificationId: item.id,
-        },
-      })
-      return
+  if (requestId) {
+    const reference = getNotificationReference(item, requestId)
+    toDoFrom.value = {
+      requestId,
+      requestmark: reference,
+      requestName: item.title,
+      status: item.category || 'Pending',
+      creatorName: item.source,
+      createTime: item.createdAt,
+      receiveTime: item.createdAt,
+      workflowBaseInfo: {
+        workflowName: item.summary,
+      },
     }
+
+    emit('close')
+
+    await navigateTo({
+      path: isMobileRoute
+        ? `/mobile/approval/${encodeURIComponent(reference)}`
+        : `/desktop/todo/${encodeURIComponent(reference)}`,
+      query: {
+        requestId,
+        source: 'notification',
+        notificationId: item.id,
+      },
+    })
+    return
   }
 
   const fallback = isMobileRoute
     ? `/mobile/notifications/${encodeURIComponent(item.id)}`
     : `/desktop/notification/${encodeURIComponent(item.id)}`
-  const target = item.link?.trim() || fallback
+  const itemLink = item.link?.trim() || ''
+  const target = itemLink && !isApiLink(itemLink) ? itemLink : fallback
 
   emit('close')
 

@@ -17,6 +17,8 @@
           <img
             src="~/assets/images/dchLogo.png"
             alt="SuperApp Logo"
+            width="160"
+            height="32"
           >
         </button>
       </div>
@@ -36,7 +38,20 @@
       </div>
     </header>
     <main class="mobile__main">
-      <slot />
+      <div
+        v-if="!isLayoutReady"
+        class="mobile__main-loading"
+      >
+        <div class="mobile__loading-content">
+          <div class="mobile__loading-title">
+            Loading...
+          </div>
+          <div class="mobile__loading-track" aria-hidden="true">
+            <span class="mobile__loading-bar" />
+          </div>
+        </div>
+      </div>
+      <slot v-else />
     </main>
     <footer class="mobile__footer">
       <div class="tab-bar">
@@ -61,9 +76,11 @@
         </div>
       </div>
     </footer>
-    <MobileToast />
-    <MobileIOSNotificationPermissionPrompt />
-    <MobileSidebar v-model="isSidebarOpen" />
+    <template v-if="isLayoutReady">
+      <MobileToast />
+      <MobileIOSNotificationPermissionPrompt />
+      <MobileSidebar v-model="isSidebarOpen" />
+    </template>
   </div>
 </template>
 
@@ -80,6 +97,7 @@ const { t } = useAppI18n()
 const route = useRoute()
 const activeTab = useState('mobile:activeTab', () => 1)
 const isSidebarOpen = useState('mobile:isSidebarOpen', () => false)
+const isLayoutReady = ref(false)
 const displayName = computed(() => user.value?.name || user.value?.displayName || user.value?.username || 'Profile')
 const profileInitials = computed(() => {
   const source = displayName.value.trim()
@@ -164,8 +182,32 @@ watch(
   { immediate: true },
 )
 
+const waitForAnimationFrame = () => {
+  return new Promise<void>((resolve) => {
+    requestAnimationFrame(() => resolve())
+  })
+}
+
+const waitForMobileReady = async () => {
+  await nextTick()
+  await waitForAnimationFrame()
+  await waitForAnimationFrame()
+
+  if (document.fonts?.ready) {
+    await Promise.race([
+      document.fonts.ready,
+      new Promise(resolve => setTimeout(resolve, 300)),
+    ])
+  }
+
+  await new Promise(resolve => setTimeout(resolve, 120))
+  isLayoutReady.value = true
+}
+
 // 在组件挂载后创建水印
-onMounted(() => {
+onMounted(async () => {
+  await waitForMobileReady()
+
   if (user.value) {
     createUserWatermark(user.value)
   }
@@ -180,8 +222,10 @@ onBeforeUnmount(() => {
 <style scoped>
 .mobile {
     height: 100vh;
+    height: 100dvh;
     display: flex;
     flex-direction: column;
+    overflow: hidden;
 }
 
 .mobile__header {
@@ -248,7 +292,66 @@ onBeforeUnmount(() => {
 
 .mobile__main {
     flex: 1;
+    min-height: 0;
     overflow: hidden;
+}
+
+.mobile__main-loading {
+    width: 100%;
+    height: 100%;
+    min-height: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #FFFFFF;
+}
+
+.mobile__loading-content {
+    width: 220px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    transform: translateY(-20px);
+}
+
+.mobile__loading-title {
+    margin-bottom: 22px;
+    color: #000000;
+    font-size: 14px;
+    font-weight: 700;
+    line-height: 1;
+}
+
+.mobile__loading-track {
+    width: 180px;
+    height: 5px;
+    overflow: hidden;
+    border-radius: 999px;
+    background: #E3E3E3;
+}
+
+.mobile__loading-bar {
+    display: block;
+    width: 58px;
+    height: 100%;
+    border-radius: inherit;
+    background: #A60A3A;
+    animation: mobile-loading-slide 1.1s ease-in-out infinite;
+}
+
+@keyframes mobile-loading-slide {
+    0% {
+        transform: translateX(-58px);
+    }
+
+    45%,
+    55% {
+        transform: translateX(0);
+    }
+
+    100% {
+        transform: translateX(180px);
+    }
 }
 
 :deep(.notification-bell-popover--mobile) {
@@ -298,8 +401,9 @@ onBeforeUnmount(() => {
 .mobile__footer {
     background-color: #ffffff;
     border-top: 0;
-    padding: 8px 0 6px;
+    padding: 8px 0 calc(6px + env(safe-area-inset-bottom, 0px));
     box-shadow: 0 -6px 18px rgba(0, 0, 0, 0.04);
+    flex-shrink: 0;
 }
 
 .tab-bar {

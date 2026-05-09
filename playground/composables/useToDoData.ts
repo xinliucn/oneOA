@@ -152,7 +152,7 @@ const buildTodoListPayload = (view: TodoView, query: TodoQuery) => {
         return {
             pageNo: getPageNo(query),
             pageSize: 100,
-            conditions: {},
+            conditions: {nodetype: '2' },
             otherParams: { ismonitor: '1' },
         }
     }
