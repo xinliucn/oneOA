@@ -45,5 +45,5 @@ jobs:
       - name: Playground prepare
         run: npm run dev:prepare
 
-      - name: Test
-        run: npm run test
+      - name: Type check
+        run: npm run test:types

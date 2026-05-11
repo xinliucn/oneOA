@@ -18,6 +18,8 @@ type RuntimeConfigWithProxy = {
   }
 }
 
+const proxyLogPrefix = '[windmill-proxy]'
+
 const getErrorStatusCode = (error: unknown) => {
   if (error && typeof error === 'object' && 'statusCode' in error && typeof error.statusCode === 'number') {
     return error.statusCode
@@ -32,6 +34,25 @@ const getErrorMessage = (error: unknown, fallback: string) => {
   }
 
   return fallback
+}
+
+const formatProxyErrorMessage = (fallback: string, error?: unknown) => {
+  const detail = error ? getErrorMessage(error, fallback) : fallback
+  return `${proxyLogPrefix} ${detail}`
+}
+
+export const getWindmillApiBase = () => {
+  const config = useRuntimeConfig() as unknown as RuntimeConfigWithProxy
+  const apiBase = String(config.public.apiBase || '').trim()
+
+  if (!apiBase) {
+    throw createError({
+      statusCode: 500,
+      message: formatProxyErrorMessage('configuration error: public.apiBase is required'),
+    })
+  }
+
+  return apiBase.replace(/\/+$/, '')
 }
 
 const normalizeTrustedProxyIps = (value: string | string[] | undefined) => {
@@ -109,8 +130,7 @@ export const proxyWindmill = async <T>(
   path: string,
   options: ProxyWindmillOptions = {},
 ): Promise<T> => {
-  const config = useRuntimeConfig() as unknown as RuntimeConfigWithProxy
-  const apiBase = config.public.apiBase
+  const apiBase = getWindmillApiBase()
 
   type HttpMethod = 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH' | 'HEAD' | 'OPTIONS' | 'TRACE' | 'CONNECT'
 
@@ -135,7 +155,7 @@ export const proxyWindmill = async <T>(
   catch (error: unknown) {
     throw createError({
       statusCode: getErrorStatusCode(error),
-      message: getErrorMessage(error, options.errorMessage || 'Windmill proxy request failed'),
+      message: formatProxyErrorMessage(options.errorMessage || 'request failed', error),
     })
   }
 }

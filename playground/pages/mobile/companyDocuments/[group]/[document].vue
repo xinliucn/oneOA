@@ -1,4 +1,5 @@
 <template>
+  <!-- eslint-disable vue/no-v-html -->
   <NuxtPage v-if="isPreviewRoute" />
 
   <div
@@ -58,11 +59,15 @@
         </div>
       </div>
 
+      <!-- Sanitized controlled OA/CMS HTML before rendering. -->
+      <!-- eslint-disable-next-line vue/no-v-html -->
       <div
         class="mobile-company-document-detail__paragraphs"
         v-html="documentDetail.contentHtml"
       />
 
+      <!-- Sanitized controlled OA/CMS HTML before rendering. -->
+      <!-- eslint-disable-next-line vue/no-v-html -->
       <div
         v-if="documentDetail.footerHtml"
         class="mobile-company-document-detail__footer"
@@ -117,6 +122,8 @@
 </template>
 
 <script setup lang="ts">
+import { sanitizeControlledHtml } from '~/utils/sanitizeHtml'
+
 interface CompanyDocumentDetailResponseItem {
   mainTable?: {
     id?: string | number
@@ -273,8 +280,8 @@ const documentDetail = computed<CompanyDocumentDetail | null>(() => {
     createdBy: mainTable.createdby || '-',
     createdDate: mainTable.createddate || '-',
     publishedDate: mainTable.RequestPublishDate || '-',
-    contentHtml: mainTable.content_display || getFallbackContentHtml(),
-    footerHtml: mainTable.footer_display || '',
+    contentHtml: sanitizeControlledHtml(mainTable.content_display || getFallbackContentHtml()),
+    footerHtml: sanitizeControlledHtml(mainTable.footer_display || ''),
   }
 })
 

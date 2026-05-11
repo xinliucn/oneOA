@@ -5,6 +5,57 @@ export interface User {
   displayName?: string
 }
 
+interface AuthUserPayload {
+  name?: string
+  email?: string
+  username?: string
+  displayName?: string
+  token_verified?: boolean
+}
+
+interface AuthUserResponse {
+  code?: number
+  user?: AuthUserPayload
+  data?: AuthUserPayload | { user?: AuthUserPayload }
+  authenticated?: boolean
+  token_valid?: boolean
+}
+
+const isRecord = (value: unknown): value is Record<string, unknown> => {
+  return !!value && typeof value === 'object' && !Array.isArray(value)
+}
+
+const getErrorStatusCode = (error: unknown) => {
+  if (isRecord(error)) {
+    const statusCode = error.statusCode ?? error.status
+    if (typeof statusCode === 'number') {
+      return statusCode
+    }
+  }
+
+  return undefined
+}
+
+const isAuthUserPayload = (value: unknown): value is AuthUserPayload => {
+  return isRecord(value)
+}
+
+const resolveAuthUser = (response: AuthUserResponse): AuthUserPayload | null => {
+  if (isAuthUserPayload(response.user)) {
+    return response.user
+  }
+
+  if (isRecord(response.data) && isAuthUserPayload(response.data.user)) {
+    return response.data.user
+  }
+
+  if (isAuthUserPayload(response.data)) {
+    return response.data
+  }
+
+  return isAuthUserPayload(response) ? response : null
+}
+
 const identifyAuthUser = (user: User) => {
   if (!import.meta.client) {
     return
@@ -59,12 +110,12 @@ export const useAuth = () => {
         return true
       }
 
-      const response = await $fetch<any>('/api/auth/user')
-      const responseUser = response?.user || response?.data?.user || response?.data || response
+      const response = await $fetch<AuthUserResponse>('/api/auth/user')
+      const responseUser = resolveAuthUser(response)
       const authenticated = Boolean(
-        response?.authenticated
-        || response?.token_valid
-        || response?.code === 1
+        response.authenticated
+        || response.token_valid
+        || response.code === 1
         || responseUser?.token_verified,
       )
 
@@ -96,13 +147,13 @@ export const useAuth = () => {
       lastCheckTime.value = 0
       return false
     }
-    catch (error: any) {
+    catch (error: unknown) {
       console.error('Check auth failed:', error)
       user.value = null
       isLoggedIn.value = false
       lastCheckTime.value = 0
 
-      if (error?.statusCode === 403 || error?.status === 403) {
+      if (getErrorStatusCode(error) === 403) {
         await clearLocalData()
         if (import.meta.client) await navigateTo('/')
       }

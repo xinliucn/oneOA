@@ -1,4 +1,5 @@
 <template>
+  <!-- eslint-disable vue/no-v-html -->
   <div class="company-document-view">
     <header class="company-document-view__header">
       <nav
@@ -100,11 +101,15 @@
       </section>
 
       <section class="company-document-view__policy">
+        <!-- Sanitized controlled OA/CMS HTML before rendering. -->
+        <!-- eslint-disable-next-line vue/no-v-html -->
         <div
           class="company-document-view__paragraphs"
           v-html="documentDetail.contentHtml"
         />
 
+        <!-- Sanitized controlled OA/CMS HTML before rendering. -->
+        <!-- eslint-disable-next-line vue/no-v-html -->
         <div
           v-if="documentDetail.footerHtml"
           class="company-document-view__paragraphs"
@@ -149,6 +154,8 @@
 </template>
 
 <script setup lang="ts">
+import { sanitizeControlledHtml } from '~/utils/sanitizeHtml'
+
 type CompanyDocumentStatus = 'Acknowledged' | 'Not Acknowledged'
 
 interface CompanyDocumentDetailResponseItem {
@@ -316,8 +323,8 @@ const documentDetail = computed<CompanyDocumentDetail | null>(() => {
     createdDate: createdDateTime.date || '-',
     createdTime: createdDateTime.time || '',
     publishedDateTime: mainTable.RequestPublishDate || mainTable.createddate || '-',
-    contentHtml: mainTable.content_display || getFallbackContentHtml(),
-    footerHtml: mainTable.footer_display || '',
+    contentHtml: sanitizeControlledHtml(mainTable.content_display || getFallbackContentHtml()),
+    footerHtml: sanitizeControlledHtml(mainTable.footer_display || ''),
     status: getStatus(selectedDocument.value),
   }
 })

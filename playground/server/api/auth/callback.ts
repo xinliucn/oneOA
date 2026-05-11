@@ -1,13 +1,14 @@
 // server/api/auth/callback.ts
 import type { H3Event } from 'h3'
-import { forwardSetCookieHeaders, getForwardHeaders } from '../../utils/windmillProxy'
+import { forwardSetCookieHeaders, getForwardHeaders, getWindmillApiBase } from '../../utils/windmillProxy'
 
 const safeRedirectFallback = '/'
 
-const allowedRedirectHostSuffixes = [
-  'dchbi.app',
-  'dch.com.hk',
-]
+type RuntimeConfigWithRedirects = {
+  public: {
+    allowedRedirectHostSuffixes?: string | string[]
+  }
+}
 
 const getErrorStatusCode = (error: unknown) => {
   if (error && typeof error === 'object' && 'statusCode' in error && typeof error.statusCode === 'number') {
@@ -25,9 +26,26 @@ const getErrorMessage = (error: unknown, fallback: string) => {
   return fallback
 }
 
+const normalizeAllowedRedirectHostSuffixes = (value: string | string[] | undefined) => {
+  if (Array.isArray(value)) {
+    return value.map(item => item.trim().toLowerCase()).filter(Boolean)
+  }
+
+  return String(value || '')
+    .split(',')
+    .map(item => item.trim().toLowerCase())
+    .filter(Boolean)
+}
+
+const getAllowedRedirectHostSuffixes = () => {
+  const config = useRuntimeConfig() as unknown as RuntimeConfigWithRedirects
+  return normalizeAllowedRedirectHostSuffixes(config.public.allowedRedirectHostSuffixes)
+}
+
 const isAllowedRedirectHost = (hostname: string, requestHost?: string) => {
   const normalizedHostname = hostname.toLowerCase()
   const normalizedRequestHost = String(requestHost || '').split(':')[0]?.toLowerCase()
+  const allowedRedirectHostSuffixes = getAllowedRedirectHostSuffixes()
 
   return normalizedHostname === normalizedRequestHost
     || allowedRedirectHostSuffixes.some((suffix) => {
@@ -56,8 +74,7 @@ const normalizeSafeRedirectLocation = (event: H3Event, location: string | null) 
 }
 
 export default defineEventHandler(async (event) => {
-  const config = useRuntimeConfig()
-  const apiBase = config.public.apiBase
+  const apiBase = getWindmillApiBase()
 
   // 获取 URL 参数 (code, state)
   const query = getQuery(event)

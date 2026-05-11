@@ -21,21 +21,46 @@
         </div>
       </div>
     </div>
+    <MobileFirstLaunchGuide
+      v-if="shouldShowFirstLaunchGuide"
+      @complete="handleFirstLaunchGuideComplete"
+    />
   </div>
 </template>
 
 <script setup lang="ts">
+import MobileFirstLaunchGuide from '~/components/MobileFirstLaunchGuide.vue'
+
 definePageMeta({
   layout: false,
 })
 
 const { checkAuth, login } = useAuth()
-const { getDeviceRoute } = useDevice()
+const { getDeviceRoute, isMobile } = useDevice()
 const { t } = useAppI18n()
+const route = useRoute()
 const loadingState = ref<'checking' | 'success' | 'redirecting' | 'failed'>('checking')
+const shouldShowFirstLaunchGuide = ref(false)
+const hasStartedLogin = ref(false)
 const loadingText = computed(() => t(`auth.loading.${loadingState.value}`))
+const firstLaunchGuideStorageKey = 'mobile:first-launch-guide:v1:completed'
+
+const shouldOpenFirstLaunchGuide = () => {
+  if (!import.meta.client) {
+    return false
+  }
+
+  return route.query.firstLaunchGuide === '1'
+    || (isMobile() && window.localStorage.getItem(firstLaunchGuideStorageKey) !== '1')
+}
 
 const loginInit = async () => {
+  if (hasStartedLogin.value) {
+    return
+  }
+
+  hasStartedLogin.value = true
+
   try {
     const isLoggedIn = await checkAuth()
     if (isLoggedIn) {
@@ -53,7 +78,17 @@ const loginInit = async () => {
   }
 }
 
+const handleFirstLaunchGuideComplete = async () => {
+  shouldShowFirstLaunchGuide.value = false
+  await loginInit()
+}
+
 onMounted(async () => {
+  if (shouldOpenFirstLaunchGuide()) {
+    shouldShowFirstLaunchGuide.value = true
+    return
+  }
+
   await loginInit()
 })
 </script>
