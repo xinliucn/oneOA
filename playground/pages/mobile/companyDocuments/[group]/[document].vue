@@ -81,35 +81,19 @@
             type="checkbox"
             class="mobile-company-document-detail__checkbox"
           >
-          <span>我已閱讀並願意遵守本政策內容。</span>
-        </label>
-
-        <label class="mobile-company-document-detail__checkbox-row">
-          <input
-            v-model="accepted"
-            type="checkbox"
-            class="mobile-company-document-detail__checkbox"
-          >
-          <span>我已阅读并愿意遵守本政策内容。</span>
-        </label>
-
-        <label class="mobile-company-document-detail__checkbox-row">
-          <input
-            v-model="accepted"
-            type="checkbox"
-            class="mobile-company-document-detail__checkbox"
-          >
-          <span>I have read and agreed with the policy content.</span>
+          <span>{{ acknowledgementText }}</span>
         </label>
       </div>
 
-      <button
+      <!-- <button
         type="button"
         class="mobile-company-document-detail__accept"
+        :disabled="!accepted"
         @click="handleAccept"
       >
-        Accept
-      </button>
+        <span>Accept</span>
+        <span class="mobile-company-document-detail__accept-icon">✓</span>
+      </button> -->
     </main>
   </div>
 
@@ -183,8 +167,23 @@ const groupTitle = computed(() => String(route.query.groupTitle || 'Company Docu
 const selectedDocumentDetail = useState<CompanyDocumentDetailResponseItem | null>('company-document:selected-detail', () => null)
 const selectedDocumentPreview = useState<CompanyDocumentPreviewResponse | null>('company-document:selected-preview', () => null)
 const accepted = ref(false)
+const { locale } = useAppI18n()
 const fixedPreviewFileName = 'testpdf.pdf'
 const fixedPreviewServerRelativeUrl = '%2Fsites%2FDCHGroupLegalCompliancePublicSite%2FTemplates%2FShared%20Documents%2FKey%20Functions%20-%2002.%20Contract%20Templates%20%26%20Digital%20Playbooks%2F%E5%86%85%E5%9C%B0%E7%89%A9%E6%B5%81%2F01.%20Digital%20Playbooks%2F02.%20Non%E2%80%91Disclosure%20Agreement%20Playbook%2Ftestpdf.pdf'
+
+type PolicyLocale = 'zh-CN' | 'zh-TW' | 'en'
+
+const policyAcknowledgementCopy = {
+  'zh-CN': '我已阅读并愿意遵守本政策内容。',
+  'zh-TW': '我已閱讀並願意遵守本政策內容。',
+  'en': 'I have read and agreed with the policy content.',
+} satisfies Record<PolicyLocale, string>
+
+const getPolicyLocale = (localeCode: string): PolicyLocale => {
+  if (localeCode === 'en') return 'en'
+  if (localeCode === 'zh-TW') return 'zh-TW'
+  return 'zh-CN'
+}
 
 const normalizeCompanyDocumentDetailResponse = (response: any): CompanyDocumentDetailResponseItem[] => {
   if (Array.isArray(response)) {
@@ -217,10 +216,52 @@ const getDocumentCodeAndVersion = (numberVersion?: string) => {
 
 const getFallbackContentHtml = () => {
   return [
-    '<p>请你在同意之前，仔细阅读本政策。点击“同意”按钮，代表你愿意遵守本政策内容。</p>',
+    '<p>請你在同意之前，仔細閱讀本政策。點擊「同意」按鈕，代表你願意遵守本政策內容。</p>',
     '<p>请你在同意之前，仔细阅读本政策。点击“同意”按钮，代表你愿意遵守本政策内容。</p>',
     '<p>Please read this policy carefully before clicking the "Accept" button. Your acceptance to this policy means you agree to comply with the policy content.</p>',
   ].join('')
+}
+
+const paragraphBlockPattern = /<p\b[^>]*>[\s\S]*?<\/p>/gi
+const htmlBlockPattern = /<(div|li)\b[^>]*>[\s\S]*?<\/\1>/gi
+const traditionalOnlyPattern = /[讀願遵這點擊鈕會體請細擊]/u
+const simplifiedOnlyPattern = /[读愿遵这点击钮会体请细击]/u
+const latinLetterPattern = /[A-Za-z]/u
+const chineseCharacterPattern = /[\u3400-\u9FFF]/u
+
+const stripHtml = (value: string) => {
+  return value.replace(/<[^>]*>/g, '').replace(/&nbsp;/g, ' ').trim()
+}
+
+const getHtmlBlockLocale = (block: string): PolicyLocale | null => {
+  const text = stripHtml(block)
+
+  if (!text) return null
+  if (latinLetterPattern.test(text) && !chineseCharacterPattern.test(text)) return 'en'
+  if (traditionalOnlyPattern.test(text)) return 'zh-TW'
+  if (simplifiedOnlyPattern.test(text)) return 'zh-CN'
+
+  return null
+}
+
+const splitHtmlBlocks = (html: string) => {
+  const paragraphBlocks = html.match(paragraphBlockPattern)
+  if (paragraphBlocks?.length) {
+    return paragraphBlocks
+  }
+
+  const blocks = html.match(htmlBlockPattern)
+  return blocks?.length ? blocks : [html]
+}
+
+const localizePolicyHtml = (html: string, targetLocale: PolicyLocale) => {
+  const blocks = splitHtmlBlocks(html)
+  const localizedBlocks = blocks.filter((block) => {
+    const blockLocale = getHtmlBlockLocale(block)
+    return !blockLocale || blockLocale === targetLocale
+  })
+
+  return localizedBlocks.length ? localizedBlocks.join('') : html
 }
 
 const getMainTableFileName = (mainTable: NonNullable<CompanyDocumentDetailResponseItem['mainTable']>, fallbackTitle: string) => {
@@ -270,6 +311,7 @@ const documentDetail = computed<CompanyDocumentDetail | null>(() => {
   const title = mainTable.RequestName || String(route.query.title || code)
   const serverRelativeUrl = getMainTableServerRelativeUrl(mainTable)
   const fileName = getMainTableFileName(mainTable, serverRelativeUrl.split('/').pop() || `${title}.pdf`)
+  const policyLocale = getPolicyLocale(locale.value)
 
   return {
     title,
@@ -280,8 +322,8 @@ const documentDetail = computed<CompanyDocumentDetail | null>(() => {
     createdBy: mainTable.createdby || '-',
     createdDate: mainTable.createddate || '-',
     publishedDate: mainTable.RequestPublishDate || '-',
-    contentHtml: sanitizeControlledHtml(mainTable.content_display || getFallbackContentHtml()),
-    footerHtml: sanitizeControlledHtml(mainTable.footer_display || ''),
+    contentHtml: sanitizeControlledHtml(localizePolicyHtml(mainTable.content_display || getFallbackContentHtml(), policyLocale)),
+    footerHtml: sanitizeControlledHtml(localizePolicyHtml(mainTable.footer_display || '', policyLocale)),
   }
 })
 
@@ -324,6 +366,10 @@ watch(
 
 const previewFileName = computed(() => {
   return scopedDocumentPreview.value?.fileName || companyDocumentPreviewResponse.value?.fileName || documentDetail.value?.fileName || 'Preview file'
+})
+
+const acknowledgementText = computed(() => {
+  return policyAcknowledgementCopy[getPolicyLocale(locale.value)]
 })
 
 const handleBack = () => {
@@ -381,19 +427,20 @@ const handleAccept = () => {
 .mobile-company-document-detail__content {
   flex: 1;
   overflow-y: auto;
-  padding: 14px 16px 24px;
+  padding: 16px 16px 40px;
 }
 
 .mobile-company-document-detail__code {
   margin-bottom: 8px;
   color: #464646;
   font-size: 13px;
+  line-height: 1.3;
 }
 
 .mobile-company-document-detail__title {
   margin: 0 0 16px;
   font-size: 20px;
-  line-height: 1.25;
+  line-height: 1.28;
   font-weight: 700;
   color: #171717;
 }
@@ -410,6 +457,7 @@ const handleAccept = () => {
   border-radius: 999px;
   color: #666666;
   font-size: 13px;
+  line-height: 1.3;
   max-width: 100%;
 }
 
@@ -423,8 +471,8 @@ const handleAccept = () => {
 .mobile-company-document-detail__meta {
   display: flex;
   flex-direction: column;
-  gap: 16px;
-  margin-bottom: 20px;
+  gap: 14px;
+  margin-bottom: 18px;
 }
 
 .mobile-company-document-detail__meta-item {
@@ -434,28 +482,37 @@ const handleAccept = () => {
 }
 
 .mobile-company-document-detail__meta-label {
-  font-size: 13px;
+  font-size: 14px;
+  line-height: 1.35;
   font-weight: 700;
   color: #252525;
 }
 
 .mobile-company-document-detail__meta-value {
-  font-size: 13px;
+  font-size: 14px;
+  line-height: 1.45;
   color: #262626;
 }
 
 .mobile-company-document-detail__paragraphs {
-  margin-bottom: 20px;
-  font-size: 13px;
-  line-height: 1.45;
+  margin-bottom: 18px;
+  font-size: 15px;
+  line-height: 1.58;
   color: #252525;
 }
 
 .mobile-company-document-detail__footer {
   margin-bottom: 16px;
-  font-size: 13px;
-  line-height: 1.45;
+  font-size: 15px;
+  line-height: 1.58;
   color: #252525;
+}
+
+.mobile-company-document-detail__paragraphs :deep(*),
+.mobile-company-document-detail__footer :deep(*) {
+  font-size: inherit !important;
+  line-height: inherit !important;
+  color: inherit;
 }
 
 .mobile-company-document-detail__paragraphs :deep(p),
@@ -465,15 +522,29 @@ const handleAccept = () => {
 
 .mobile-company-document-detail__paragraphs :deep(p + p),
 .mobile-company-document-detail__footer :deep(p + p) {
-  margin-top: 14px;
+  margin-top: 12px;
+}
+
+.mobile-company-document-detail__checkboxes {
+  margin-top: 22px;
 }
 
 .mobile-company-document-detail__checkbox-row {
   display: flex;
   align-items: flex-start;
   gap: 10px;
-  margin-bottom: 14px;
-  font-size: 13px;
+  width: fit-content;
+  max-width: 100%;
+  margin: 0 auto 18px;
+  font-size: 14px;
+  line-height: 1.45;
+  color: #252525;
+}
+
+.mobile-company-document-detail__acknowledgement-text {
+  margin: 0 0 16px;
+  text-align: center;
+  font-size: 14px;
   line-height: 1.45;
   color: #252525;
 }
@@ -487,17 +558,31 @@ const handleAccept = () => {
 }
 
 .mobile-company-document-detail__accept {
-  width: 100%;
-  max-width: 140px;
-  height: 40px;
-  margin: 18px auto 0;
-  display: block;
+  width: 134px;
+  height: 42px;
+  margin: 20px auto 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
   border: 0;
-  border-radius: 999px;
+  border-radius: 6px;
   background: #a60a3a;
   color: #ffffff;
-  font-size: 15px;
+  font-size: 14px;
   font-weight: 700;
+  box-shadow: 0 5px 10px rgba(166, 10, 58, 0.22);
+}
+
+.mobile-company-document-detail__accept:disabled {
+  background: #f2f2f2;
+  color: #b4b4b4;
+  box-shadow: none;
+}
+
+.mobile-company-document-detail__accept-icon {
+  font-size: 14px;
+  line-height: 1;
 }
 
 .mobile-company-document-detail__empty {

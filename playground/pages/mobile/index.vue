@@ -1,49 +1,35 @@
 <template>
   <div class="mobile-page">
-    <!-- Home Tab -->
     <div
-      v-if="activeTab === 1"
       class="tab-content"
     >
-      <MobileHomeTab />
-    </div>
-
-    <!-- To-Do Tab -->
-    <div
-      v-else-if="activeTab === 2"
-      class="tab-content"
-    >
-      <MobileTodoTab />
-    </div>
-
-    <!-- Applications Tab -->
-    <div
-      v-else-if="activeTab === 3"
-      class="tab-content"
-    >
-      <MobileApplicationsTab />
-    </div>
-
-    <!-- Profile Tab -->
-    <div
-      v-else-if="activeTab === 4"
-      class="tab-content"
-    >
-      <MobileProfileTab />
+      <component :is="activeComponent" />
     </div>
   </div>
 </template>
 
-<script setup>
-import { inject } from 'vue'
+<script setup lang="ts">
+import type { Component, Ref } from 'vue'
+import { computed, inject } from 'vue'
+import MobileApplicationsTab from '~/components/MobileApplicationsTab.vue'
+import MobileHomeTab from '~/components/MobileHomeTab.vue'
+import MobileProfileTab from '~/components/MobileProfileTab.vue'
+import MobileTodoTab from '~/components/MobileTodoTab.vue'
 
 definePageMeta({
   layout: 'mobile',
   middleware: 'auth',
 })
 
-// Inject activeTab from layout
-const activeTab = inject('activeTab')
+const tabComponents = {
+  1: MobileHomeTab,
+  2: MobileTodoTab,
+  3: MobileApplicationsTab,
+  4: MobileProfileTab,
+} satisfies Record<number, Component>
+
+const activeTab = inject<Ref<number>>('activeTab')
+const activeComponent = computed(() => tabComponents[activeTab?.value || 1] || MobileHomeTab)
 </script>
 
 <style scoped>

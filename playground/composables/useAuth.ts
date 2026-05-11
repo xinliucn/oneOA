@@ -1,24 +1,13 @@
-export interface User {
-  name: string
-  email?: string
-  username?: string
-  displayName?: string
-}
+import type { AuthUser, AuthUserResponse } from '../types/auth'
 
-interface AuthUserPayload {
-  name?: string
-  email?: string
-  username?: string
-  displayName?: string
-  token_verified?: boolean
-}
+export type User = AuthUser
 
-interface AuthUserResponse {
-  code?: number
-  user?: AuthUserPayload
-  data?: AuthUserPayload | { user?: AuthUserPayload }
-  authenticated?: boolean
-  token_valid?: boolean
+type AuthErrorType = 'unauthenticated' | 'forbidden' | 'network' | 'invalid-response' | 'unknown'
+
+interface AuthErrorAction {
+  type: AuthErrorType
+  shouldClearLocalData: boolean
+  shouldRedirectHome: boolean
 }
 
 const isRecord = (value: unknown): value is Record<string, unknown> => {
@@ -36,24 +25,57 @@ const getErrorStatusCode = (error: unknown) => {
   return undefined
 }
 
-const isAuthUserPayload = (value: unknown): value is AuthUserPayload => {
+const isValidAuthUserResponse = (value: unknown): value is AuthUserResponse => {
   return isRecord(value)
+    && (value.code === 0 || value.code === 1)
+    && typeof value.authenticated === 'boolean'
+    && (value.user === null || isRecord(value.user))
+    && isRecord(value.token)
+    && typeof value.token.valid === 'boolean'
 }
 
-const resolveAuthUser = (response: AuthUserResponse): AuthUserPayload | null => {
-  if (isAuthUserPayload(response.user)) {
-    return response.user
+const createInvalidAuthResponseError = () => {
+  return Object.assign(new Error('Invalid auth user response'), {
+    authErrorType: 'invalid-response' satisfies AuthErrorType,
+  })
+}
+
+export const normalizeUser = (response: AuthUserResponse): User | null => {
+  return response.authenticated ? response.user : null
+}
+
+export const isAuthenticated = (response: AuthUserResponse): boolean => {
+  return response.authenticated && response.code === 1 && !!response.user && response.token.valid
+}
+
+const classifyAuthError = (error: unknown): AuthErrorType => {
+  if (isRecord(error) && error.authErrorType === 'invalid-response') {
+    return 'invalid-response'
   }
 
-  if (isRecord(response.data) && isAuthUserPayload(response.data.user)) {
-    return response.data.user
+  const statusCode = getErrorStatusCode(error)
+
+  if (statusCode === 401) return 'unauthenticated'
+  if (statusCode === 403) return 'forbidden'
+  if (statusCode === 0 || statusCode === 408 || statusCode === 502 || statusCode === 503 || statusCode === 504) {
+    return 'network'
   }
 
-  if (isAuthUserPayload(response.data)) {
-    return response.data
+  if (isRecord(error) && error.name === 'FetchError' && !statusCode) {
+    return 'network'
   }
 
-  return isAuthUserPayload(response) ? response : null
+  return 'unknown'
+}
+
+const handleAuthError = (error: unknown): AuthErrorAction => {
+  const type = classifyAuthError(error)
+
+  return {
+    type,
+    shouldClearLocalData: type === 'forbidden',
+    shouldRedirectHome: type === 'forbidden',
+  }
 }
 
 const identifyAuthUser = (user: User) => {
@@ -65,12 +87,70 @@ const identifyAuthUser = (user: User) => {
   $identifyLogRocketUser(user)
 }
 
+const initPushAfterAuth = () => {
+  if (!import.meta.client) {
+    return
+  }
+
+  const { init } = usePushSubscription()
+  void init().catch((error) => {
+    console.error('Init push subscription after auth failed:', error)
+  })
+}
+
 export const useAuth = () => {
   const user = useState<User | null>('auth:user', () => null)
   const isLoggedIn = useState<boolean>('auth:isLoggedIn', () => false)
   const lastCheckTime = useState<number>('auth:lastCheckTime', () => 0)
 
   const CACHE_DURATION = 5 * 60 * 1000
+
+  const setAuthState = (authUser: User, checkedAt = Date.now()) => {
+    user.value = authUser
+    isLoggedIn.value = true
+    lastCheckTime.value = checkedAt
+  }
+
+  const resetAuthState = () => {
+    user.value = null
+    isLoggedIn.value = false
+    lastCheckTime.value = 0
+  }
+
+  const clearLocalData = async () => {
+    if (import.meta.client) {
+      const { stopPolling } = useNotification()
+      const { unsubscribe } = usePushSubscription()
+      const db = useNotificationDB()
+
+      stopPolling()
+      await unsubscribe().catch((error) => {
+        console.error('Clear local push subscription failed:', error)
+      })
+      await db.clearAll()
+    }
+  }
+
+  const redirectHome = async () => {
+    if (import.meta.client) {
+      await navigateTo('/')
+    }
+  }
+
+  const afterLoginSuccess = (authUser: User) => {
+    identifyAuthUser(authUser)
+    initPushAfterAuth()
+  }
+
+  const cleanupAfterAuthFailed = async (action: AuthErrorAction) => {
+    if (action.shouldClearLocalData) {
+      await clearLocalData()
+    }
+
+    if (action.shouldRedirectHome) {
+      await redirectHome()
+    }
+  }
 
   const login = async () => {
     try {
@@ -110,69 +190,29 @@ export const useAuth = () => {
         return true
       }
 
-      const response = await $fetch<AuthUserResponse>('/api/auth/user')
-      const responseUser = resolveAuthUser(response)
-      const authenticated = Boolean(
-        response.authenticated
-        || response.token_valid
-        || response.code === 1
-        || responseUser?.token_verified,
-      )
+      const response = await $fetch<unknown>('/api/auth/user')
 
-      if (authenticated && responseUser) {
-        user.value = {
-          name: responseUser.name || responseUser.displayName || responseUser.username || 'User',
-          email: responseUser.email,
-          username: responseUser.username,
-          displayName: responseUser.displayName,
-        }
-        isLoggedIn.value = true
-        lastCheckTime.value = now
+      if (!isValidAuthUserResponse(response)) {
+        throw createInvalidAuthResponseError()
+      }
 
-        identifyAuthUser(user.value)
+      const responseUser = normalizeUser(response)
 
-        // 登录成功后静默恢复推送订阅，但不阻塞主登录流程。
-        if (import.meta.client) {
-          const { init } = usePushSubscription()
-          void init().catch((error) => {
-            console.error('Init push subscription after auth failed:', error)
-          })
-        }
-
+      if (isAuthenticated(response) && responseUser) {
+        setAuthState(responseUser, now)
+        afterLoginSuccess(responseUser)
         return true
       }
 
-      user.value = null
-      isLoggedIn.value = false
-      lastCheckTime.value = 0
+      resetAuthState()
       return false
     }
     catch (error: unknown) {
       console.error('Check auth failed:', error)
-      user.value = null
-      isLoggedIn.value = false
-      lastCheckTime.value = 0
-
-      if (getErrorStatusCode(error) === 403) {
-        await clearLocalData()
-        if (import.meta.client) await navigateTo('/')
-      }
+      resetAuthState()
+      await cleanupAfterAuthFailed(handleAuthError(error))
 
       return false
-    }
-  }
-
-  const clearLocalData = async () => {
-    if (import.meta.client) {
-      const { stopPolling } = useNotification()
-      const { unsubscribe } = usePushSubscription()
-      const db = useNotificationDB()
-
-      stopPolling()
-      await unsubscribe().catch((error) => {
-        console.error('Clear local push subscription failed:', error)
-      })
-      await db.clearAll()
     }
   }
 
@@ -182,9 +222,7 @@ export const useAuth = () => {
         method: 'POST',
       })
 
-      user.value = null
-      isLoggedIn.value = false
-      lastCheckTime.value = 0
+      resetAuthState()
       await clearLocalData()
 
       if (response?.code === 1 && response?.logout_url) {
@@ -197,9 +235,7 @@ export const useAuth = () => {
     }
     catch (error) {
       console.error('Logout failed:', error)
-      user.value = null
-      isLoggedIn.value = false
-      lastCheckTime.value = 0
+      resetAuthState()
       await clearLocalData()
       throw error
     }

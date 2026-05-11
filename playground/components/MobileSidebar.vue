@@ -29,7 +29,7 @@
         <nav class="sidebar__nav">
           <div
             v-for="item in menuItems"
-            :key="item.label"
+            :key="item.key"
             class="sidebar__item"
             @click="onNavigateTo(item)"
           >
@@ -49,12 +49,10 @@
 
 <script setup lang="ts">
 import { computed } from 'vue'
+import { sidebarMenuConfig, type SidebarMenuConfigItem } from '~/constants/sidebarMenu'
 
-type SidebarMenuItem = {
-  icon: string
+type SidebarMenuItem = SidebarMenuConfigItem & {
   label: string
-  path?: string
-  tabIndex?: number
 }
 
 defineProps<{ modelValue: boolean }>()
@@ -63,31 +61,24 @@ const { t } = useAppI18n()
 const activeTab = useState('mobile:activeTab', () => 1)
 
 const menuItems = computed<SidebarMenuItem[]>(() => {
-  return [
-    { icon: 'document', label: t('nav.news'), path: '/mobile/news' },
-    { icon: 'info', label: t('nav.companyInformation'), path: '/mobile/companyInformation' },
-    { icon: 'download', label: t('nav.companyDocuments'), path: '/mobile/companyDocuments' },
-    { icon: 'apps', label: t('nav.applications'), path: '/mobile', tabIndex: 3 },
-    { icon: 'building', label: t('nav.departmentIntranets'), path: '/mobile/departmentIntranets' },
-    { icon: 'dashboard', label: t('nav.dashboards') },
-    { icon: 'todo', label: t('nav.todo'), path: '/mobile', tabIndex: 2 },
-    { icon: 'education', label: t('nav.eLearning') },
-    { icon: 'shop', label: t('nav.eShop') },
-  ]
+  return sidebarMenuConfig.map(item => ({
+    ...item,
+    label: t(item.labelKey),
+  }))
 })
 
 const onNavigateTo = (item: SidebarMenuItem) => {
   emit('update:modelValue', false)
 
-  if (item.tabIndex) {
-    activeTab.value = item.tabIndex
-  }
-
   if (!item.path) {
     return
   }
 
-  navigateTo(item.path)
+  if (typeof item.tabIndex === 'number') {
+    activeTab.value = item.tabIndex
+  }
+
+  return navigateTo(item.path)
 }
 </script>
 

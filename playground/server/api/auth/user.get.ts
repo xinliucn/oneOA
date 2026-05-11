@@ -1,10 +1,99 @@
+import type { AuthToken, AuthUser, AuthUserResponse } from '../../../types/auth'
 import { proxyWindmill } from '../../utils/windmillProxy'
+
+interface LegacyAuthUserPayload {
+  name?: string
+  email?: string
+  username?: string
+  displayName?: string
+  token_verified?: boolean
+  roles?: string[]
+}
+
+interface LegacyAuthUserResponse {
+  code?: number
+  user?: LegacyAuthUserPayload
+  data?: LegacyAuthUserPayload | { user?: LegacyAuthUserPayload }
+  authenticated?: boolean
+  token_valid?: boolean
+  login_at?: number
+  session_id?: string
+  logged_in_for?: number
+  token_expired?: boolean
+  session_rotated?: boolean
+  token_refreshed?: boolean
+  token_expires_at?: number
+  token_expires_in?: number
+}
+
+const isRecord = (value: unknown): value is Record<string, unknown> => {
+  return !!value && typeof value === 'object' && !Array.isArray(value)
+}
+
+const asLegacyAuthUser = (value: unknown): LegacyAuthUserPayload | null => {
+  return isRecord(value) ? value : null
+}
+
+const resolveLegacyUser = (response: LegacyAuthUserResponse): LegacyAuthUserPayload | null => {
+  if (asLegacyAuthUser(response.user)) {
+    return response.user
+  }
+
+  if (isRecord(response.data) && asLegacyAuthUser(response.data.user)) {
+    return response.data.user
+  }
+
+  return asLegacyAuthUser(response.data)
+}
+
+const normalizeAuthUser = (user: LegacyAuthUserPayload): AuthUser => {
+  return {
+    name: user.name || user.displayName || user.username || 'User',
+    email: user.email,
+    username: user.username,
+    displayName: user.displayName,
+    roles: user.roles,
+  }
+}
+
+const normalizeAuthResponse = (rawResponse: unknown): AuthUserResponse => {
+  const response = (isRecord(rawResponse) ? rawResponse : {}) as LegacyAuthUserResponse
+  const legacyUser = resolveLegacyUser(response)
+  const authenticated = Boolean(
+    response.authenticated
+    || response.token_valid
+    || response.code === 1
+    || legacyUser?.token_verified,
+  )
+
+  const token: AuthToken = {
+    valid: authenticated,
+    verified: legacyUser?.token_verified,
+    expired: response.token_expired,
+    expiresAt: response.token_expires_at,
+    expiresIn: response.token_expires_in,
+    refreshed: response.token_refreshed,
+    sessionRotated: response.session_rotated,
+  }
+
+  return {
+    code: authenticated && legacyUser ? 1 : 0,
+    authenticated: authenticated && !!legacyUser,
+    user: authenticated && legacyUser ? normalizeAuthUser(legacyUser) : null,
+    session: {
+      id: response.session_id,
+      loginAt: response.login_at,
+      loggedInFor: response.logged_in_for,
+    },
+    token,
+  }
+}
 
 export default defineEventHandler(async (event) => {
   const config = useRuntimeConfig()
   const raw = config.mockEnabled
   if (raw) {
-    return {
+    return normalizeAuthResponse({
       code: 1,
       user: {
         name: 'Mock User',
@@ -23,14 +112,16 @@ export default defineEventHandler(async (event) => {
       token_refreshed: false,
       token_expires_at: Date.now() + 30 * 60 * 1000,
       token_expires_in: 30 * 60,
-    }
+    })
   }
 
   try {
-    return await proxyWindmill(event, '/api/r/weaver/auth/user', {
+    const response = await proxyWindmill<unknown>(event, '/api/r/weaver/auth/user', {
       method: 'GET',
       errorMessage: '获取用户信息失败',
     })
+
+    return normalizeAuthResponse(response)
   }
   catch (error: unknown) {
     console.error('Get user API error:', error)
