@@ -12,6 +12,6 @@
     "@huggingface/transformers": "^3.0.0",
     "firebase": "^9.23.0",
     "logrocket": "^12.1.0",
-    "nuxt": "^4.2.2"
+    "nuxt": "4"
   }
 }
