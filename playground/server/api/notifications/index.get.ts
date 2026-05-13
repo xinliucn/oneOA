@@ -1,5 +1,5 @@
 import type { H3Event } from 'h3'
-import { normalizeNotificationList } from '../../utils/notification'
+import { normalizeNotificationCheck, normalizeNotificationList } from '../../utils/notification'
 
 const getErrorStatusCode = (error: any) => {
   if (error && typeof error === 'object' && 'statusCode' in error && typeof error.statusCode === 'number') {
@@ -33,6 +33,8 @@ const forwardSetCookieHeaders = (event: H3Event, response: { headers: Headers })
 export default defineEventHandler(async (event) => {
   const config = useRuntimeConfig()
   const raw = config.mockEnabled
+  const query = getQuery(event)
+  const mode = typeof query.mode === 'string' ? query.mode : ''
   const page = 1
   const pageSize = 20
 
@@ -237,6 +239,15 @@ export default defineEventHandler(async (event) => {
       page_size: 20,
       total_unread: 11,
     }
+
+    if (mode === 'check') {
+      const normalizedList = normalizeNotificationList(response, page, pageSize)
+      return normalizeNotificationCheck({
+        unread_count: normalizedList.unreadCount,
+        latest_id: normalizedList.latestId,
+      })
+    }
+
     return normalizeNotificationList(response, page, pageSize)
   }
 
@@ -246,7 +257,13 @@ export default defineEventHandler(async (event) => {
     const referer = getRequestHeader(event, 'referer')
     const forwardedIp = getHeader(event, 'x-forwarded-for') || getHeader(event, 'x-real-ip') || ''
 
-    const response = await $fetch.raw<Record<string, any>>(`${config.public.apiBase}/api/r/notification/list`, {
+    const upstreamQuery = new URLSearchParams()
+    if (mode) {
+      upstreamQuery.set('mode', mode)
+    }
+
+    const queryString = upstreamQuery.toString()
+    const response = await $fetch.raw<Record<string, any>>(`${config.public.apiBase}/api/r/notification/list${queryString ? `?${queryString}` : ''}`, {
       method: 'GET',
       headers: {
         ...(cookieHeader ? { cookie: cookieHeader } : {}),
@@ -258,6 +275,11 @@ export default defineEventHandler(async (event) => {
     })
 
     forwardSetCookieHeaders(event, response)
+
+    if (mode === 'check') {
+      return normalizeNotificationCheck(response._data)
+    }
+
     return normalizeNotificationList(response._data, page, pageSize)
   }
   catch (error: any) {

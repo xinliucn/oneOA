@@ -217,6 +217,7 @@
 
 <script setup lang="ts">
 import type { TodoView } from '~/composables/useToDoData'
+import { formatRequestName } from '~/utils/todo'
 
 definePageMeta({
   layout: 'desktop',
@@ -251,12 +252,12 @@ const activeTabLabel = computed(() => tabs.find(tab => tab.value === activeTab.v
 const filters = computed(() => [
   {
     key: 'filter1',
-    label: `${activeTabLabel.value} Filter 1`,
+    label: `${activeTabLabel.value} Business`,
     options: ['All', 'IT (14)', 'Finance (3)', 'Legal (20)', 'Motor (2)'],
   },
   {
     key: 'filter2',
-    label: `${activeTabLabel.value} Filter 2`,
+    label: `${activeTabLabel.value} Status`,
     options: ['All', 'Pending', 'Approved', 'Rejected'],
   },
 ] as const)
@@ -398,7 +399,7 @@ const allRows = computed<TableRow[]>(() => {
       id: getStringValue(task, 'id') || getStringValue(task, 'requestId') || reference || String(index),
       requestId: getStringValue(task, 'requestId') || getStringValue(task, 'id') || reference,
       approvalNo: reference || '-',
-      subject: getStringValue(task, 'requestName') || getStringValue(task, 'title') || '-',
+      subject: formatRequestName(getStringValue(task, 'requestName') || getStringValue(task, 'title')) || '-',
       submittedBy: getStringValue(task, 'creatorName') || getStringValue(task, 'submittedBy') || '-',
       platform: workflowName || workflowTypeName || getStringValue(task, 'platform') || '-',
       status,

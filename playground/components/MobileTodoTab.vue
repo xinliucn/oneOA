@@ -110,9 +110,9 @@
       <div class="mobile-todo__filter-group">
         <div class="mobile-todo__filter-label">
           {{ text('mobile.todo.filters.category', {
-            'zh-CN': '筛选 1',
-            'zh-TW': '篩選1',
-            "en": 'Filter 1',
+            'zh-CN': '业务',
+            'zh-TW': '業務',
+            "en": 'Business',
           }) }}
         </div>
         <div class="mobile-todo__filter-options">
@@ -132,10 +132,9 @@
       <div class="mobile-todo__filter-group">
         <div class="mobile-todo__filter-label">
           {{ text('mobile.todo.filters.status', {
-            'zh-CN': '筛选 2',
-            'zh-TW': '篩選 2',
-            "en":
-              'Filter 2',
+            'zh-CN': '状态',
+            'zh-TW': '狀態',
+            "en": 'Status',
           }) }}
         </div>
         <div class="mobile-todo__filter-options">
@@ -219,7 +218,13 @@
                 </div>
               </div>
               <div class="todo-item__title">
-                {{ task.requestName }}
+                {{ getTaskDisplayName(task) }}
+              </div>
+              <div
+                v-if="getTaskOrganizationLabel(task)"
+                class="todo-item__title"
+              >
+                {{ getTaskOrganizationLabel(task) }}
               </div>
               <div class="todo-item__subtitle">
                 <span>{{ task.creatorName }}</span>
@@ -250,7 +255,7 @@
                 </div>
               </div>
               <div class="todo-item__title">
-                {{ task.requestName }} <span
+                {{ getTaskDisplayName(task) }} <span
                   class="todo-item__status"
                   :class="`status-pending`"
                 >
@@ -260,10 +265,11 @@
                   {{ task.createTime }}
                 </div>
               </div>
-              <div class="todo-item__title">
-                <span>{{ task.creatorSubcompanyName }}</span>
-                <span>-></span>
-                <span>{{ task.creatorDepartmentName }}</span>
+              <div
+                v-if="getTaskOrganizationLabel(task)"
+                class="todo-item__title"
+              >
+                {{ getTaskOrganizationLabel(task) }}
               </div>
               <div class="todo-item__subtitle">
                 <span>{{ task.creatorName }}</span>
@@ -291,7 +297,13 @@
                 </div>
               </div>
               <div class="todo-item__title">
-                {{ task.requestName }}
+                {{ getTaskDisplayName(task) }}
+              </div>
+              <div
+                v-if="getTaskOrganizationLabel(task)"
+                class="todo-item__title"
+              >
+                {{ getTaskOrganizationLabel(task) }}
               </div>
               <span
                 class="todo-item__status"
@@ -316,6 +328,7 @@
 <script setup lang="ts">
 import { computed, nextTick, ref } from 'vue'
 import type { TodoItem } from '~/composables/useToDoData'
+import { formatRequestName } from '~/utils/todo'
 
 const toDoFrom = useState<TodoItem | null>('mobile:todo-form', () => null)
 
@@ -436,8 +449,19 @@ const getTaskReference = (task: TodoItem) => {
   return String(task?.requestmark || task?.requestId || task?.id || '').trim()
 }
 
+const getTaskDisplayName = (task: TodoItem) => {
+  return formatRequestName(task.requestName || task.title)
+}
+
+const getTaskOrganizationLabel = (task: TodoItem) => {
+  return [task.creatorSubcompanyName, task.creatorDepartmentName]
+    .map(value => String(value || '').trim())
+    .filter(Boolean)
+    .join(' -> ')
+}
+
 const getTaskTitle = (task: TodoItem) => {
-  return String(task?.title || task?.requestName || task?.workflowBaseInfo?.workflowName || getTaskReference(task) || 'To-Do').trim()
+  return String(getTaskDisplayName(task) || task?.workflowBaseInfo?.workflowName || getTaskReference(task) || 'To-Do').trim()
 }
 
 const categoryFilterPresets = computed(() => {

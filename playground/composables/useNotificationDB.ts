@@ -1,11 +1,12 @@
 import type { NotificationItem } from '~/types/notification'
-import { sortNotificationsForDisplay } from '~/utils/notification'
+import { getLatestNotificationId, sortNotificationsForDisplay } from '~/utils/notification'
 
 const DB_NAME = 'superapp_notifications'
 const DB_VERSION = 1
 const STORE_NOTIFICATIONS = 'notifications'
 const STORE_META = 'meta'
 const META_LAST_SYNC_AT = 'last_sync_at'
+const META_LATEST_NOTIFICATION_ID = 'latest_notification_id'
 
 interface MetaRecord {
   key: string
@@ -186,6 +187,19 @@ export const useNotificationDB = () => {
     await setMeta(META_LAST_SYNC_AT, timestamp)
   }
 
+  const getLatestCachedNotificationId = async () => {
+    const metaValue = await getMeta<string>(META_LATEST_NOTIFICATION_ID)
+    if (metaValue) {
+      return String(metaValue)
+    }
+
+    return getLatestNotificationId(await readNotifications())
+  }
+
+  const setLatestCachedNotificationId = async (id: string | number | null | undefined) => {
+    await setMeta(META_LATEST_NOTIFICATION_ID, id === null || id === undefined ? null : String(id))
+  }
+
   return {
     open: openDatabase,
     readNotifications,
@@ -197,5 +211,7 @@ export const useNotificationDB = () => {
     setMeta,
     getLastSyncAt,
     setLastSyncAt,
+    getLatestCachedNotificationId,
+    setLatestCachedNotificationId,
   }
 }

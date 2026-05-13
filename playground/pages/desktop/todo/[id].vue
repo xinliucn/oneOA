@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import type { ApprovalAction } from '~/types/approval'
+import { formatRequestName } from '~/utils/todo'
 
 definePageMeta({
   layout: 'desktop',
@@ -15,6 +16,17 @@ type WorkflowField = {
   filedHtmlShow?: string
 }
 
+type MainFieldInfo = {
+  fieldid?: string | number
+  fieldname?: string
+  selectattr?: {
+    selectitemlist?: Array<{
+      selectname?: string
+      selectvalue?: string | number
+    }>
+  }
+}
+
 type TimelineItem = {
   id: string
   nodeName: string
@@ -28,6 +40,7 @@ const toDoFrom: any = useState('mobile:todo-form', () => null)
 const { form, getFormData } = useApplicationCatalog()
 const { formAttachments, getFormAttachments } = useToDoData()
 const { showTodoToast } = useDesktopTodoToast()
+const { t } = useAppI18n()
 
 const showAllApprovers = ref(false)
 const actionComment = ref('')
@@ -41,6 +54,10 @@ const workflowBaseInfo = computed(() => processInfo.value?.workflowBaseInfo ?? t
 const workflowFields = computed<WorkflowField[]>(() => {
   return processInfo.value?.workflowMainTableInfo?.requestRecords?.[0]?.workflowRequestTableFields ?? []
 })
+
+const isRecord = (value: unknown): value is Record<string, unknown> => {
+  return !!value && typeof value === 'object' && !Array.isArray(value)
+}
 
 const stripHtml = (value?: string | number | null) => {
   if (value === null || value === undefined) {
@@ -68,7 +85,8 @@ const formatDateTime = (date?: string | null, time?: string | null) => {
 }
 
 const getFieldByName = (name: string) => {
-  return workflowFields.value.find(field => field.fieldName === name)
+  const normalizedName = name.toLowerCase()
+  return workflowFields.value.find(field => field.fieldName === name || field.fieldName?.toLowerCase() === normalizedName)
 }
 
 const getFieldById = (id: string) => {
@@ -83,8 +101,68 @@ const getFieldDisplayValue = (field?: WorkflowField) => {
   return stripHtml(field.fieldShowValue || field.filedHtmlShow || field.fieldValue)
 }
 
+const getMainFieldInfoByName = (name: string): MainFieldInfo | undefined => {
+  const fieldInfoMap = form.value?.formInfo?.tableInfo?.main?.fieldinfomap
+  if (!isRecord(fieldInfoMap)) {
+    return undefined
+  }
+
+  const normalizedName = name.toLowerCase()
+  return Object.values(fieldInfoMap).find((fieldInfo): fieldInfo is MainFieldInfo => {
+    return isRecord(fieldInfo)
+      && (fieldInfo.fieldname === name || String(fieldInfo.fieldname || '').toLowerCase() === normalizedName)
+  })
+}
+
+const getSpecialObjectDisplayValue = (value: unknown) => {
+  if (Array.isArray(value)) {
+    return value.map((item) => {
+      if (isRecord(item)) {
+        return stripHtml(String(item.name || item.showname || item.value || item.id || ''))
+      }
+
+      return stripHtml(String(item || ''))
+    }).filter(Boolean).join(', ')
+  }
+
+  if (isRecord(value)) {
+    return stripHtml(String(value.name || value.showname || value.value || value.id || ''))
+  }
+
+  return ''
+}
+
+const getMainFieldSelectValue = (fieldInfo: MainFieldInfo | undefined, value: unknown) => {
+  const normalizedValue = String(value ?? '')
+  const selectItem = fieldInfo?.selectattr?.selectitemlist?.find(item => String(item.selectvalue) === normalizedValue)
+  return stripHtml(selectItem?.selectname || '')
+}
+
+const getMainFieldValue = (name: string) => {
+  const fieldInfo = getMainFieldInfoByName(name)
+  const fieldId = fieldInfo?.fieldid
+  if (fieldId === undefined || fieldId === null) {
+    return ''
+  }
+
+  const mainData = form.value?.formInfo?.maindata
+  const fieldData = isRecord(mainData) ? mainData[`field${fieldId}`] : undefined
+  if (!isRecord(fieldData)) {
+    return ''
+  }
+
+  return getSpecialObjectDisplayValue(fieldData.specialobj)
+    || getMainFieldSelectValue(fieldInfo, fieldData.value)
+    || stripHtml(String(fieldData.value ?? ''))
+}
+
 const getFieldValue = (name: string, fallbackFieldId?: string) => {
   return getFieldDisplayValue(getFieldByName(name) || (fallbackFieldId ? getFieldById(fallbackFieldId) : undefined))
+    || getMainFieldValue(name)
+}
+
+const getContractFieldValue = (name: string) => {
+  return getFieldValue(name) || '-'
 }
 
 const approvalSummary = computed(() => {
@@ -96,7 +174,7 @@ const approvalSummary = computed(() => {
     referenceNumber,
     status,
     processStatus: currentNodeName ? `${status} (${currentNodeName})` : status,
-    title: processInfo.value?.requestName || toDoFrom.value?.requestName || referenceNumber,
+    title: formatRequestName(processInfo.value?.requestName || toDoFrom.value?.requestName) || referenceNumber,
     submittedBy: processInfo.value?.creatorName || toDoFrom.value?.creatorName || '-',
     submittedDate: formatDate(processInfo.value?.createTime || toDoFrom.value?.createTime || toDoFrom.value?.receiveTime),
     requestDate: formatDate(processInfo.value?.createTime || toDoFrom.value?.createTime),
@@ -136,29 +214,28 @@ const statusBarColor = computed(() => {
 
 const formFields = computed(() => [
   {
-    label: 'Reference No.',
-    value: approvalSummary.value.referenceNumber,
+    label: t('mobile.approval.fields.contractName'),
+    value: getContractFieldValue('TitleReferenceNoOfContract'),
   },
   {
-    label: 'Process Status',
-    value: approvalSummary.value.processStatus,
-    highlight: true,
+    label: t('mobile.approval.fields.dchSigningEntity'),
+    value: getContractFieldValue('dchsigningentity1'),
   },
   {
-    label: 'Requestor',
-    value: approvalSummary.value.submittedBy,
+    label: t('mobile.approval.fields.counterpartyName'),
+    value: getContractFieldValue('CounterpartyName_MultiLine'),
   },
   {
-    label: 'Request Date',
-    value: approvalSummary.value.requestDate || '-',
+    label: t('mobile.approval.fields.contractAmountHkd'),
+    value: getContractFieldValue('ContractAmountHKD'),
   },
   {
-    label: 'Portfolio',
-    value: approvalSummary.value.portfolio,
+    label: t('mobile.approval.fields.contractStartDate'),
+    value: getContractFieldValue('contractstartdate'),
   },
   {
-    label: 'Business Unit',
-    value: approvalSummary.value.businessUnit,
+    label: t('mobile.approval.fields.contractEndDate'),
+    value: getContractFieldValue('WithEndDate'),
   },
 ])
 
@@ -425,7 +502,7 @@ watch(
           class="todo-detail__field"
         >
           <label>{{ field.label }}</label>
-          <span :class="{ 'is-highlight': field.highlight }">{{ field.value }}</span>
+          <span>{{ field.value }}</span>
         </div>
       </section>
 

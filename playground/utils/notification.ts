@@ -9,6 +9,23 @@ const getNotificationTimestamp = (item: NotificationItem) => {
   return Number.isFinite(timestamp) ? timestamp : 0
 }
 
+export const getLatestNotificationId = (items: NotificationItem[]) => {
+  if (items.length === 0) {
+    return null
+  }
+
+  const numericIds = items
+    .map(item => Number(item.id))
+    .filter(id => Number.isFinite(id))
+
+  if (numericIds.length === items.length) {
+    return String(Math.max(...numericIds))
+  }
+
+  const sortedItems = [...items].sort((left, right) => getNotificationTimestamp(right) - getNotificationTimestamp(left))
+  return sortedItems[0]?.id ? String(sortedItems[0].id) : null
+}
+
 export const isNotificationUnread = (item: NotificationItem) => {
   if (item.readAt) {
     return false

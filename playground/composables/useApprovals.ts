@@ -1,4 +1,5 @@
 import type { ApprovalAction, ApprovalItem } from '~/types/approval'
+import { formatRequestName } from '~/utils/todo'
 
 interface WorkflowBaseInfo {
   workflowName?: string
@@ -87,7 +88,7 @@ const mapWorkflowToApproval = (item: WorkflowListItem): ApprovalItem => {
     code,
     category: item.workflowBaseInfo?.workflowTypeName || 'workflow',
     status: 'Pending',
-    title: item.requestName || code || 'Workflow Request',
+    title: formatRequestName(item.requestName) || code || 'Workflow Request',
     subtitle: item.status || processStatus || 'Pending Approval',
     date: requestDate,
     badge: null,

@@ -35,12 +35,14 @@ const asLegacyAuthUser = (value: unknown): LegacyAuthUserPayload | null => {
 }
 
 const resolveLegacyUser = (response: LegacyAuthUserResponse): LegacyAuthUserPayload | null => {
-  if (asLegacyAuthUser(response.user)) {
-    return response.user
+  const directUser = asLegacyAuthUser(response.user)
+  if (directUser) {
+    return directUser
   }
 
-  if (isRecord(response.data) && asLegacyAuthUser(response.data.user)) {
-    return response.data.user
+  const nestedUser = isRecord(response.data) ? asLegacyAuthUser(response.data.user) : null
+  if (nestedUser) {
+    return nestedUser
   }
 
   return asLegacyAuthUser(response.data)

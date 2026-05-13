@@ -1,4 +1,5 @@
 import type { H3Event } from 'h3'
+import { splitSetCookieString } from 'cookie-es'
 
 type ProxyBody = BodyInit | Record<string, unknown> | unknown[] | null
 
@@ -105,9 +106,37 @@ export const getForwardHeaders = (event: H3Event): Record<string, string> => {
   }
 }
 
+const getRequestHostname = (event: H3Event) => {
+  return String(getRequestHeader(event, 'host') || '')
+    .split(':')[0]
+    ?.trim()
+    .toLowerCase() || ''
+}
+
+const normalizeCookieDomain = (domain: string) => {
+  return domain.trim().replace(/^\./, '').toLowerCase()
+}
+
+const canSetCookieForHost = (domain: string, hostname: string) => {
+  const normalizedDomain = normalizeCookieDomain(domain)
+  return normalizedDomain === hostname || hostname.endsWith(`.${normalizedDomain}`)
+}
+
+const normalizeSetCookieForCurrentHost = (event: H3Event, cookie: string) => {
+  const hostname = getRequestHostname(event)
+  const domainMatch = cookie.match(/;\s*domain=([^;]+)/i)
+
+  if (!hostname || !domainMatch?.[1] || canSetCookieForHost(domainMatch[1], hostname)) {
+    return cookie
+  }
+
+  return cookie.replace(/;\s*domain=[^;]+/i, '')
+}
+
 export const forwardSetCookieHeaders = (event: H3Event, response: { headers: Headers }) => {
   const rawHeaders = response.headers as Headers & { getSetCookie?: () => string[] }
-  const setCookies = rawHeaders.getSetCookie?.() || []
+  const setCookies = (rawHeaders.getSetCookie?.() || [])
+    .map(cookie => normalizeSetCookieForCurrentHost(event, cookie))
 
   if (setCookies.length > 0) {
     setHeader(event, 'set-cookie', setCookies)
@@ -116,7 +145,12 @@ export const forwardSetCookieHeaders = (event: H3Event, response: { headers: Hea
 
   const singleSetCookie = response.headers.get('set-cookie')
   if (singleSetCookie) {
-    setHeader(event, 'set-cookie', singleSetCookie)
+    setHeader(
+      event,
+      'set-cookie',
+      splitSetCookieString(singleSetCookie)
+        .map(cookie => normalizeSetCookieForCurrentHost(event, cookie)),
+    )
   }
 }
 

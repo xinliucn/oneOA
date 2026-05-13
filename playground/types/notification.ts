@@ -22,8 +22,15 @@ export interface NotificationListResponse {
   page: number
   pageSize: number
   unreadCount: number
+  latestId: string | null
   hasMore: boolean
   syncedAt: number
+}
+
+export interface NotificationCheckResponse {
+  unreadCount: number
+  latestId: string | null
+  checkedAt: number
 }
 
 export interface NotificationDetailResponse {

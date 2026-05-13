@@ -21,12 +21,12 @@ definePageMeta({
   middleware: 'auth',
 })
 
-const tabComponents = {
+const tabComponents: Record<number, Component> = {
   1: MobileHomeTab,
   2: MobileTodoTab,
   3: MobileApplicationsTab,
   4: MobileProfileTab,
-} satisfies Record<number, Component>
+}
 
 const activeTab = inject<Ref<number>>('activeTab')
 const activeComponent = computed(() => tabComponents[activeTab?.value || 1] || MobileHomeTab)

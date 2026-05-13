@@ -1,23 +1,12 @@
 <template>
   <NuxtPage v-if="isAttachmentRoute" />
 
-  <div
-    v-else
-    class="mobile-approval"
-  >
+  <div v-else class="mobile-approval">
     <MobileToast />
 
     <header class="mobile-approval__header">
-      <button
-        class="mobile-approval__back"
-        type="button"
-        @click="handleBack"
-      >
-        <IconCustom
-          name="chevron-right"
-          :size="18"
-          :rotate="180"
-        />
+      <button class="mobile-approval__back" type="button" @click="handleBack">
+        <IconCustom name="chevron-right" :size="18" :rotate="180" />
         <span class="mobile-approval__back-label">{{ backLabel }}</span>
       </button>
       <h1 class="mobile-approval__header-title">
@@ -30,10 +19,7 @@
       <section class="mobile-approval__sheet">
         <div class="mobile-approval__meta">
           <span class="mobile-approval__ref">{{ approvalSummary.referenceNumber }}</span>
-          <span
-            class="mobile-approval__status-text"
-            :class="statusClass"
-          >{{ approvalSummary.status }}</span>
+          <span class="mobile-approval__status-text" :class="statusClass">{{ approvalSummary.status }}</span>
         </div>
 
         <h2 class="mobile-approval__title">
@@ -42,11 +28,7 @@
 
         <div class="mobile-approval__submitter">
           <div class="mobile-approval__submitter-avatar">
-            <IconCustom
-              name="personnel"
-              :size="18"
-              color="#ffffff"
-            />
+            <IconCustom name="personnel" :size="18" color="#ffffff" />
           </div>
           <div class="mobile-approval__submitter-info">
             <span class="mobile-approval__submitter-label">Submitted by</span>
@@ -56,28 +38,14 @@
         </div>
 
         <div class="mobile-approval__progress">
-          <div
-            class="mobile-approval__progress-bar"
-            :class="statusClass"
-          >
+          <div class="mobile-approval__progress-bar" :class="statusClass">
             {{ approvalSummary.status }}
           </div>
           <div class="mobile-approval__timeline">
-            <div
-              v-for="approver in visibleTimelineItems"
-              :key="approver.id"
-              class="mobile-approval__timeline-item"
-            >
+            <div v-for="approver in visibleTimelineItems" :key="approver.id" class="mobile-approval__timeline-item">
               <div class="mobile-approval__timeline-marker">
-                <div
-                  class="mobile-approval__timeline-avatar"
-                  :class="getApproverStatusClass(approver.action)"
-                >
-                  <IconCustom
-                    name="personnel"
-                    :size="14"
-                    color="#ffffff"
-                  />
+                <div class="mobile-approval__timeline-avatar" :class="getApproverStatusClass(approver.action)">
+                  <IconCustom name="personnel" :size="14" color="#ffffff" />
                 </div>
               </div>
               <div class="mobile-approval__timeline-info">
@@ -87,101 +55,53 @@
                 </span>
               </div>
             </div>
-            <button
-              v-if="timelineItems.length > timelinePreviewCount"
-              type="button"
-              class="mobile-approval__show-more"
-              @click="showAllApprovers = !showAllApprovers"
-            >
+            <button v-if="timelineItems.length > timelinePreviewCount" type="button" class="mobile-approval__show-more"
+              @click="showAllApprovers = !showAllApprovers">
               {{ showAllApprovers ? 'Show less' : 'Show more' }}
             </button>
           </div>
         </div>
 
-        <div
-          v-if="attachments.length > 0"
-          class="mobile-approval__attachments"
-        >
-          <NuxtLink
-            :to="attachmentRoute"
-            class="mobile-approval__attachment"
-          >
+        <div v-if="attachments.length > 0" class="mobile-approval__attachments">
+          <NuxtLink :to="attachmentRoute" class="mobile-approval__attachment">
             <span class="mobile-approval__attachment-icon">
-              <IconCustom
-                name="document"
-                :size="13"
-                color="#3b82f6"
-              />
+              <IconCustom name="document" :size="13" color="#3b82f6" />
             </span>
             <span class="mobile-approval__attachment-name">{{ attachments[0]?.name }}</span>
           </NuxtLink>
-          <NuxtLink
-            v-if="attachments.length > 1"
-            :to="attachmentRoute"
-            class="mobile-approval__attachment mobile-approval__attachment--count"
-          >
+          <NuxtLink v-if="attachments.length > 1" :to="attachmentRoute"
+            class="mobile-approval__attachment mobile-approval__attachment--count">
             +{{ attachments.length - 1 }}
           </NuxtLink>
         </div>
 
         <div class="mobile-approval__fields">
-          <div
-            v-for="field in formFields"
-            :key="field.label"
-            class="mobile-approval__field"
-          >
+          <div v-for="field in formFields" :key="field.label" class="mobile-approval__field">
             <span class="mobile-approval__field-label">{{ field.label }}</span>
             <span class="mobile-approval__field-value">{{ field.value }}</span>
           </div>
         </div>
 
-        <button
-          type="button"
-          class="mobile-approval__link"
-          @click="openWorkflowDetail"
-        >
+        <button type="button" class="mobile-approval__link" @click="openWorkflowDetail">
           {{ 'View details in WOA-DPM' }} &gt;
         </button>
       </section>
     </main>
 
-    <footer
-      v-if="actionMode !== 'viewOnly'"
-      class="mobile-approval__footer"
-    >
-      <textarea
-        v-if="actionMode === 'approveReject'"
-        v-model="actionComment"
-        class="mobile-approval__comment"
-        :placeholder="t('mobile.approval.actions.commentPlaceholder')"
-      />
-      <div
-        v-if="actionMode === 'approveReject'"
-        class="mobile-approval__actions mobile-approval__actions--approval"
-      >
-        <button
-          type="button"
-          class="mobile-approval__action mobile-approval__action--approve"
-          :class="{ active: selectedAction === 'Approve' }"
-          @click="selectAction('Approve')"
-        >
+    <footer v-if="actionMode !== 'viewOnly'" class="mobile-approval__footer">
+      <textarea v-if="actionMode === 'approveReject'" v-model="actionComment" class="mobile-approval__comment"
+        :placeholder="t('mobile.approval.actions.commentPlaceholder')" />
+      <div v-if="actionMode === 'approveReject'" class="mobile-approval__actions mobile-approval__actions--approval">
+        <button type="button" class="mobile-approval__action mobile-approval__action--approve"
+          :class="{ active: selectedAction === 'Approve' }" @click="selectAction('Approve')">
           {{ t('mobile.approval.actions.approve') }}
         </button>
-        <button
-          type="button"
-          class="mobile-approval__action mobile-approval__action--reject"
-          :class="{ active: selectedAction === 'Reject' }"
-          @click="selectAction('Reject')"
-        >
+        <button type="button" class="mobile-approval__action mobile-approval__action--reject"
+          :class="{ active: selectedAction === 'Reject' }" @click="selectAction('Reject')">
           {{ t('mobile.approval.actions.reject') }}
         </button>
       </div>
-      <button
-        type="button"
-        class="mobile-approval__confirm"
-        :disabled="isConfirmDisabled"
-        @click="handleConfirm"
-      >
+      <button type="button" class="mobile-approval__confirm" :disabled="isConfirmDisabled" @click="handleConfirm">
         {{ submittingAction ? t('mobile.approval.actions.submitting') : confirmButtonLabel }}
       </button>
     </footer>
@@ -195,6 +115,7 @@
 
 <script setup lang="ts">
 import type { ApprovalAction } from '~/types/approval'
+import { formatRequestName } from '~/utils/todo'
 import MobileToast from '~/components/MobileToast.vue'
 
 const { form, getFormData } = useApplicationCatalog()
@@ -233,6 +154,17 @@ type WorkflowField = {
   mand?: boolean
 }
 
+type MainFieldInfo = {
+  fieldid?: string | number
+  fieldname?: string
+  selectattr?: {
+    selectitemlist?: Array<{
+      selectname?: string
+      selectvalue?: string | number
+    }>
+  }
+}
+
 type TimelineItem = {
   id: string
   nodeName: string
@@ -245,6 +177,10 @@ const workflowBaseInfo = computed(() => processInfo.value?.workflowBaseInfo ?? t
 const workflowFields = computed<WorkflowField[]>(() => {
   return processInfo.value?.workflowMainTableInfo?.requestRecords?.[0]?.workflowRequestTableFields ?? []
 })
+
+const isRecord = (value: unknown): value is Record<string, unknown> => {
+  return !!value && typeof value === 'object' && !Array.isArray(value)
+}
 
 const stripHtml = (value?: string | number | null) => {
   if (value === null || value === undefined) {
@@ -272,7 +208,8 @@ const formatDateTime = (date?: string | null, time?: string | null) => {
 }
 
 const getFieldByName = (name: string) => {
-  return workflowFields.value.find(field => field.fieldName === name)
+  const normalizedName = name.toLowerCase()
+  return workflowFields.value.find(field => field.fieldName === name || field.fieldName?.toLowerCase() === normalizedName)
 }
 
 const getFieldById = (id: string) => {
@@ -287,8 +224,68 @@ const getFieldDisplayValue = (field?: WorkflowField) => {
   return stripHtml(field.fieldShowValue || field.filedHtmlShow || field.fieldValue)
 }
 
+const getMainFieldInfoByName = (name: string): MainFieldInfo | undefined => {
+  const fieldInfoMap = form.value?.formInfo?.tableInfo?.main?.fieldinfomap
+  if (!isRecord(fieldInfoMap)) {
+    return undefined
+  }
+
+  const normalizedName = name.toLowerCase()
+  return Object.values(fieldInfoMap).find((fieldInfo): fieldInfo is MainFieldInfo => {
+    return isRecord(fieldInfo)
+      && (fieldInfo.fieldname === name || String(fieldInfo.fieldname || '').toLowerCase() === normalizedName)
+  })
+}
+
+const getSpecialObjectDisplayValue = (value: unknown) => {
+  if (Array.isArray(value)) {
+    return value.map((item) => {
+      if (isRecord(item)) {
+        return stripHtml(String(item.name || item.showname || item.value || item.id || ''))
+      }
+
+      return stripHtml(String(item || ''))
+    }).filter(Boolean).join(', ')
+  }
+
+  if (isRecord(value)) {
+    return stripHtml(String(value.name || value.showname || value.value || value.id || ''))
+  }
+
+  return ''
+}
+
+const getMainFieldSelectValue = (fieldInfo: MainFieldInfo | undefined, value: unknown) => {
+  const normalizedValue = String(value ?? '')
+  const selectItem = fieldInfo?.selectattr?.selectitemlist?.find(item => String(item.selectvalue) === normalizedValue)
+  return stripHtml(selectItem?.selectname || '')
+}
+
+const getMainFieldValue = (name: string) => {
+  const fieldInfo = getMainFieldInfoByName(name)
+  const fieldId = fieldInfo?.fieldid
+  if (fieldId === undefined || fieldId === null) {
+    return ''
+  }
+
+  const mainData = form.value?.formInfo?.maindata
+  const fieldData = isRecord(mainData) ? mainData[`field${fieldId}`] : undefined
+  if (!isRecord(fieldData)) {
+    return ''
+  }
+
+  return getSpecialObjectDisplayValue(fieldData.specialobj)
+    || getMainFieldSelectValue(fieldInfo, fieldData.value)
+    || stripHtml(String(fieldData.value ?? ''))
+}
+
 const getFieldValue = (name: string, fallbackFieldId?: string) => {
   return getFieldDisplayValue(getFieldByName(name) || (fallbackFieldId ? getFieldById(fallbackFieldId) : undefined))
+    || getMainFieldValue(name)
+}
+
+const getContractFieldValue = (name: string) => {
+  return getFieldValue(name) || '-'
 }
 
 const approvalSummary = computed(() => {
@@ -300,7 +297,7 @@ const approvalSummary = computed(() => {
     referenceNumber: requestMark,
     status,
     processStatus: currentNodeName ? `${status} (${currentNodeName})` : status,
-    title: processInfo.value?.requestName || toDoFrom.value?.requestName || requestMark,
+    title: formatRequestName(processInfo.value?.requestName || toDoFrom.value?.requestName) || requestMark,
     submittedBy: processInfo.value?.creatorName || toDoFrom.value?.creatorName || '-',
     submittedDate: formatDate(processInfo.value?.createTime || toDoFrom.value?.createTime || toDoFrom.value?.receiveTime),
     requestDate: formatDate(processInfo.value?.createTime || toDoFrom.value?.createTime),
@@ -312,28 +309,28 @@ const approvalSummary = computed(() => {
 const formFields = computed(() => {
   return [
     {
-      label: 'Reference Number',
-      value: approvalSummary.value.referenceNumber,
+      label: t('mobile.approval.fields.contractName'),
+      value: getContractFieldValue('TitleReferenceNoOfContract'),
     },
     {
-      label: 'Process Status',
-      value: approvalSummary.value.processStatus,
+      label: t('mobile.approval.fields.dchSigningEntity'),
+      value: getContractFieldValue('dchsigningentity1'),
     },
     {
-      label: 'Requestor',
-      value: approvalSummary.value.submittedBy,
+      label: t('mobile.approval.fields.counterpartyName'),
+      value: getContractFieldValue('CounterpartyName_MultiLine'),
     },
     {
-      label: 'Request Date',
-      value: approvalSummary.value.requestDate || '-',
+      label: t('mobile.approval.fields.contractAmountHkd'),
+      value: getContractFieldValue('ContractAmountHKD'),
     },
     {
-      label: 'Portfolio',
-      value: approvalSummary.value.portfolio,
+      label: t('mobile.approval.fields.contractStartDate'),
+      value: getContractFieldValue('contractstartdate'),
     },
     {
-      label: 'Business Unit',
-      value: approvalSummary.value.businessUnit,
+      label: t('mobile.approval.fields.contractEndDate'),
+      value: getContractFieldValue('contractenddate'),
     },
   ]
 })
@@ -385,11 +382,11 @@ const timelineItems = computed<TimelineItem[]>(() => {
   const logs = processInfo.value?.workflowRequestLogs
   const items: TimelineItem[] = Array.isArray(logs)
     ? logs.map((log: Record<string, any>, index: number) => ({
-        id: String(log.id || `${log.nodeId || 'log'}-${index}`),
-        nodeName: stripHtml(log.nodeName || log.operatorName || `Step ${index + 1}`),
-        action: stripHtml(log.operateType || 'Processed'),
-        date: formatDateTime(log.operateDate, log.operateTime),
-      }))
+      id: String(log.id || `${log.nodeId || 'log'}-${index}`),
+      nodeName: stripHtml(log.nodeName || log.operatorName || `Step ${index + 1}`),
+      action: stripHtml(log.operateType || 'Processed'),
+      date: formatDateTime(log.operateDate, log.operateTime),
+    }))
     : []
 
   const currentNodeName = stripHtml(processInfo.value?.currentNodeName || toDoFrom.value?.currentNodeName)

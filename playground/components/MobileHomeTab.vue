@@ -166,7 +166,7 @@
             >
             <div class="news-card__body">
               <h3>{{ item.title }}</h3>
-              <time>{{ item.date }}</time>
+              <time>{{ formatNewsDate(item.date, locale) }}</time>
             </div>
           </article>
         </div>
@@ -311,11 +311,11 @@
 <script setup lang="ts">
 import { computed, ref, onMounted, onBeforeUnmount } from 'vue'
 import type { ApplicationCatalogItem } from '~/composables/useApplicationCatalog'
+import type { NewsItem } from '~/composables/useNewsList'
 import type { RecentItem } from '~/composables/useRecentItems'
 import heroImage from '~/assets/images/Group 120.png'
-import newsImage1 from '~/assets/images/news/news1.png'
-import newsImage2 from '~/assets/images/news/news2.png'
 import { APPLICATION_BUSINESS_FILTER } from '~/composables/useApplicationCatalog'
+import { formatNewsDate } from '~/utils/date'
 
 type FavouriteKind = 'application' | 'intranet' | 'custom'
 
@@ -336,6 +336,7 @@ type CatalogRecord = ApplicationCatalogItem & Record<string, any>
 const { user } = useAuth()
 const { t, locale } = useAppI18n()
 const { requestApplicationCatalogData } = useApplicationCatalog()
+const { newsList, fetchNewsList } = useNewsList()
 const { items: recentItems, hydrate: hydrateRecentItems, addRecentItem } = useRecentItems()
 const {
   getFavourite,
@@ -817,18 +818,7 @@ const applicationItems = computed(() => {
   })
 })
 
-const newsItems = [
-  {
-    image: newsImage1,
-    title: 'DCH Foods Hosts Trade Event to Promote New Bran...',
-    date: '24 October, 2024',
-  },
-  {
-    image: newsImage2,
-    title: 'DCH Foods Hosts Trade Event to Promote New Bran...',
-    date: '24 October, 2024',
-  },
-]
+const newsItems = computed(() => newsList.value.slice(0, 2))
 
 const openApplicationsPage = async () => {
   activeTab.value = 3
@@ -976,12 +966,12 @@ const handleShortcutClick = async (item: ShortcutItem) => {
   }
 }
 
-const openNewsItem = async (item: { title: string, date: string }) => {
+const openNewsItem = async (item: NewsItem) => {
   recordRecentItem({
-    id: `news:${item.title}`,
+    id: `news:${item.id}`,
     type: 'news',
     label: item.title,
-    subtitle: item.date,
+    subtitle: formatNewsDate(item.date, locale.value),
     icon: 'document',
     path: '/mobile/news',
   })
@@ -1006,6 +996,10 @@ onMounted(async () => {
 
   getFavourite().catch((error) => {
     console.error('Get mobile home favourites failed:', error)
+  })
+
+  fetchNewsList().catch((error) => {
+    console.error('Get mobile home news failed:', error)
   })
 
   fetchCatalogItems()

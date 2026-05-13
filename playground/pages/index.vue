@@ -38,20 +38,22 @@ definePageMeta({
 const { checkAuth, login } = useAuth()
 const { getDeviceRoute, isMobile } = useDevice()
 const { t } = useAppI18n()
-const route = useRoute()
 const loadingState = ref<'checking' | 'success' | 'redirecting' | 'failed'>('checking')
 const shouldShowFirstLaunchGuide = ref(false)
 const hasStartedLogin = ref(false)
 const loadingText = computed(() => t(`auth.loading.${loadingState.value}`))
 const firstLaunchGuideStorageKey = 'mobile:first-launch-guide:v1:completed'
 
-const shouldOpenFirstLaunchGuide = () => {
+const shouldOpenFirstLaunchGuideAfterLogin = () => {
   if (!import.meta.client) {
     return false
   }
 
-  return route.query.firstLaunchGuide === '1'
-    || (isMobile() && window.localStorage.getItem(firstLaunchGuideStorageKey) !== '1')
+  return isMobile() && window.localStorage.getItem(firstLaunchGuideStorageKey) !== '1'
+}
+
+const goToDeviceHome = async () => {
+  await navigateTo(getDeviceRoute())
 }
 
 const loginInit = async () => {
@@ -65,7 +67,13 @@ const loginInit = async () => {
     const isLoggedIn = await checkAuth()
     if (isLoggedIn) {
       loadingState.value = 'success'
-      await navigateTo(getDeviceRoute())
+
+      if (shouldOpenFirstLaunchGuideAfterLogin()) {
+        shouldShowFirstLaunchGuide.value = true
+        return
+      }
+
+      await goToDeviceHome()
     }
     else {
       loadingState.value = 'redirecting'
@@ -80,15 +88,10 @@ const loginInit = async () => {
 
 const handleFirstLaunchGuideComplete = async () => {
   shouldShowFirstLaunchGuide.value = false
-  await loginInit()
+  await goToDeviceHome()
 }
 
 onMounted(async () => {
-  if (shouldOpenFirstLaunchGuide()) {
-    shouldShowFirstLaunchGuide.value = true
-    return
-  }
-
   await loginInit()
 })
 </script>

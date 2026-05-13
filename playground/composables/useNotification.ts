@@ -1,8 +1,8 @@
-import type { NotificationItem, NotificationListResponse } from '~/types/notification'
+import type { NotificationCheckResponse, NotificationItem, NotificationListResponse } from '~/types/notification'
 import { useCurrentUserId } from '~/composables/useCurrentUserId'
-import { isNotificationUnread, sortNotificationsForDisplay } from '~/utils/notification'
+import { getLatestNotificationId, isNotificationUnread, sortNotificationsForDisplay } from '~/utils/notification'
 
-const POLLING_INTERVAL = 60 * 1000
+const POLLING_INTERVAL = 15 * 1000
 
 // 模块级状态：多个组件共享同一套轮询、可见性监听和启动流程
 let pollingTimer: ReturnType<typeof setInterval> | null = null
@@ -36,11 +36,14 @@ export const useNotification = () => {
   const isHydrated = useState<boolean>('notifications:is-hydrated', () => false)
   const loading = useState<boolean>('notifications:loading', () => false)
   const syncing = useState<boolean>('notifications:syncing', () => false)
+  const checking = useState<boolean>('notifications:checking', () => false)
+  const serverUnreadCount = useState<number | null>('notifications:server-unread-count', () => null)
 
   const db = useNotificationDB()
   const { getCurrentUserId } = useCurrentUserId()
 
-  const unreadCount = computed(() => notifications.value.filter(item => isNotificationUnread(item)).length)
+  const localUnreadCount = computed(() => notifications.value.filter(item => isNotificationUnread(item)).length)
+  const unreadCount = computed(() => serverUnreadCount.value ?? localUnreadCount.value)
 
   // 将当前通知列表和同步时间写入 IndexedDB，供下次进入页面快速恢复
   const persist = async () => {
@@ -51,6 +54,7 @@ export const useNotification = () => {
     await Promise.all([
       db.writeNotifications(notifications.value),
       db.setLastSyncAt(lastSyncedAt.value),
+      db.setLatestCachedNotificationId(getLatestNotificationId(notifications.value)),
     ])
   }
 
@@ -71,6 +75,10 @@ export const useNotification = () => {
 
     lastSyncedAt.value = cachedLastSyncedAt || lastSyncedAt.value
     isHydrated.value = true
+  }
+
+  const getLocalLatestNotificationId = async () => {
+    return await db.getLatestCachedNotificationId() || getLatestNotificationId(notifications.value)
   }
 
   // 从服务端拉取最新通知列表；silent=true 时不触发页面加载态
@@ -95,6 +103,7 @@ export const useNotification = () => {
       }
 
       notifications.value = sortNotificationsForDisplay(response.items)
+      serverUnreadCount.value = response.unreadCount
       lastSyncedAt.value = response.syncedAt || Date.now()
 
       await persist()
@@ -113,17 +122,57 @@ export const useNotification = () => {
     return syncNotifications({ silent })
   }
 
-  silentRefreshHandler = () => refreshFromServer({ silent: true })
+  const checkNotifications = async () => {
+    if (checking.value || syncing.value) {
+      return
+    }
+
+    checking.value = true
+
+    try {
+      const response = await $fetch<NotificationCheckResponse>('/api/notifications', {
+        method: 'GET',
+        query: {
+          mode: 'check',
+        },
+      })
+
+      serverUnreadCount.value = response.unreadCount
+
+      const remoteLatestId = response.latestId ? String(response.latestId) : null
+      const localLatestId = await getLocalLatestNotificationId()
+
+      if (remoteLatestId && remoteLatestId !== localLatestId) {
+        await syncNotifications({ silent: true })
+        return
+      }
+
+      lastSyncedAt.value = response.checkedAt || Date.now()
+      if (import.meta.client) {
+        await db.setLastSyncAt(lastSyncedAt.value)
+      }
+    }
+    catch (error) {
+      console.error('Check notification failed:', error)
+    }
+    finally {
+      checking.value = false
+    }
+  }
+
+  silentRefreshHandler = checkNotifications
 
   // 接收推送或前台 FCM 消息，写入内存状态和 IndexedDB
   const ingestNotification = async (item: NotificationItem) => {
     notifications.value = mergeNotifications(notifications.value, [item])
+    serverUnreadCount.value = localUnreadCount.value
     lastSyncedAt.value = Date.now()
 
     if (import.meta.client) {
       await Promise.all([
         db.upsertNotification(item),
         db.setLastSyncAt(lastSyncedAt.value),
+        db.setLatestCachedNotificationId(getLatestNotificationId(notifications.value)),
       ])
     }
   }
@@ -140,6 +189,7 @@ export const useNotification = () => {
     target.readAt = readAt
     target.is_read = '1'
     notifications.value = sortNotificationsForDisplay([...notifications.value])
+    serverUnreadCount.value = localUnreadCount.value
 
     if (import.meta.client) {
       await db.markNotificationAsRead(target.id, readAt)
@@ -229,12 +279,15 @@ export const useNotification = () => {
   return {
     notifications,
     unreadCount,
+    localUnreadCount,
     loading,
+    checking,
     isHydrated,
     lastSyncedAt,
     bootstrap,
     hydrateFromCache,
     refreshFromServer,
+    checkNotifications,
     ingestNotification,
     markAsRead,
     handleServiceWorkerMessage,

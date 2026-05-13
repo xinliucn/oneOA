@@ -6,7 +6,7 @@ export default defineNuxtConfig({
   // 优化 CSS 加载
   css: ['~/assets/css/desktop-critical.css'],
   runtimeConfig: {
-    mockEnabled: true,
+    mockEnabled: false,
     trustedProxyIps: process.env.NUXT_TRUSTED_PROXY_IPS || '',
     vapidPrivateKey: process.env.NUXT_VAPID_PRIVATE_KEY || '',
     vapidSubject: process.env.NUXT_VAPID_SUBJECT || '',

@@ -1,5 +1,5 @@
 aws ecr get-login-password --region ap-east-1 --profile 303358823819_PowerUserAccess_Customized | docker login --username AWS --password-stdin 303358823819.dkr.ecr.ap-east-1.amazonaws.com
 
-docker build --platform linux/amd64 -t superapp:v1.4.50 .
-docker tag superapp:v1.4.50 303358823819.dkr.ecr.ap-east-1.amazonaws.com/superapp:v1.4.50
-docker push 303358823819.dkr.ecr.ap-east-1.amazonaws.com/superapp:v1.4.50
+docker build --platform linux/amd64 -t superapp:v1.4.58 .
+docker tag superapp:v1.4.58 303358823819.dkr.ecr.ap-east-1.amazonaws.com/superapp:v1.4.58
+docker push 303358823819.dkr.ecr.ap-east-1.amazonaws.com/superapp:v1.4.58

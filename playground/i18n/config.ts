@@ -54,8 +54,8 @@ export const appMessages = {
       todo: {
         via: '通过',
         filters: {
-          category: '筛选 1',
-          status: '筛选 2',
+          category: '业务',
+          status: '状态',
           all: '全部',
           it: 'IT',
           legal: 'Legal',
@@ -72,6 +72,14 @@ export const appMessages = {
         },
       },
       approval: {
+        fields: {
+          contractName: '合同名称',
+          dchSigningEntity: 'DCH签署单位',
+          counterpartyName: '乙方名称',
+          contractAmountHkd: '合同金额（港元）',
+          contractStartDate: '合同开始日期',
+          contractEndDate: '合同结束日期',
+        },
         actions: {
           approve: '批准',
           reject: '拒绝',
@@ -225,8 +233,8 @@ export const appMessages = {
       todo: {
         via: '透過',
         filters: {
-          category: '篩選 1',
-          status: '篩選 2',
+          category: '業務',
+          status: '狀態',
           all: '全部',
           it: 'IT',
           legal: 'Legal',
@@ -243,6 +251,14 @@ export const appMessages = {
         },
       },
       approval: {
+        fields: {
+          contractName: '合同名稱',
+          dchSigningEntity: 'DCH簽署單位',
+          counterpartyName: '乙方名稱',
+          contractAmountHkd: '合同金額（港元）',
+          contractStartDate: '合同開始日期',
+          contractEndDate: '合同結束日期',
+        },
         actions: {
           approve: '批准',
           reject: '拒絕',
@@ -396,8 +412,8 @@ export const appMessages = {
       todo: {
         via: 'via',
         filters: {
-          category: 'Filter 1',
-          status: 'Filter 2',
+          category: 'Business',
+          status: 'Status',
           all: 'All',
           it: 'IT',
           legal: 'Legal',
@@ -414,6 +430,14 @@ export const appMessages = {
         },
       },
       approval: {
+        fields: {
+          contractName: 'Contract Name',
+          dchSigningEntity: 'DCH Signing Entity',
+          counterpartyName: 'Counterparty Name',
+          contractAmountHkd: 'Contract Amount (HKD)',
+          contractStartDate: 'Contract Start Date',
+          contractEndDate: 'Contract End Date',
+        },
         actions: {
           approve: 'Approve',
           reject: 'Reject',

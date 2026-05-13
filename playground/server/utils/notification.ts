@@ -1,4 +1,4 @@
-import type { NotificationItem, NotificationListResponse } from '~/types/notification'
+import type { NotificationCheckResponse, NotificationItem, NotificationListResponse } from '~/types/notification'
 
 const toNonEmptyString = (value: any, fallback = '') => {
   if (typeof value === 'string' && value.trim().length > 0) {
@@ -56,6 +56,27 @@ export const normalizeNotification = (raw: any): NotificationItem => {
   }
 }
 
+export const getLatestNotificationId = (items: NotificationItem[]) => {
+  if (items.length === 0) {
+    return null
+  }
+
+  const numericIds = items
+    .map(item => Number(item.id))
+    .filter(id => Number.isFinite(id))
+
+  if (numericIds.length === items.length) {
+    return String(Math.max(...numericIds))
+  }
+
+  const sortedItems = [...items].sort((left, right) => {
+    return new Date(right.updated_at || right.created_at || right.createdAt).getTime()
+      - new Date(left.updated_at || left.created_at || left.createdAt).getTime()
+  })
+
+  return sortedItems[0]?.id ? String(sortedItems[0].id) : null
+}
+
 export const normalizeNotificationList = (
   raw: any,
   page: number,
@@ -70,16 +91,21 @@ export const normalizeNotificationList = (
       || (Array.isArray(candidate) ? candidate : [])
 
   const items = (Array.isArray(sourceItems) ? sourceItems : []).map(item => normalizeNotification(item))
-  const total = Number(candidate?.total || candidate?.count || candidate?.pagination?.total || items.length)
+  const total = Number(candidate?.total ?? candidate?.count ?? candidate?.pagination?.total ?? items.length)
   const unreadCount = Number(
     candidate?.unreadCount
-    || candidate?.unread
-    || candidate?.total_unread
-    || candidate?.unread_count
-    || items.filter(item => !item.readAt).length,
+    ?? candidate?.unread
+    ?? candidate?.total_unread
+    ?? candidate?.unread_count
+    ?? items.filter(item => !item.readAt).length,
   )
-  const resolvedPage = Number(candidate?.page || page)
-  const resolvedPageSize = Number(candidate?.pageSize || candidate?.page_size || pageSize)
+  const latestId
+    = toNonEmptyString(candidate?.latestId, '')
+      || toNonEmptyString(candidate?.latest_id, '')
+      || toNonEmptyString(candidate?.last_id, '')
+      || getLatestNotificationId(items)
+  const resolvedPage = Number(candidate?.page ?? page)
+  const resolvedPageSize = Number(candidate?.pageSize ?? candidate?.page_size ?? pageSize)
   const resolvedTotal = Number.isFinite(total) ? total : items.length
 
   return {
@@ -88,7 +114,30 @@ export const normalizeNotificationList = (
     page: Number.isFinite(resolvedPage) ? resolvedPage : page,
     pageSize: Number.isFinite(resolvedPageSize) ? resolvedPageSize : pageSize,
     unreadCount: Number.isFinite(unreadCount) ? unreadCount : 0,
+    latestId,
     hasMore: Boolean(candidate?.hasMore ?? candidate?.has_more) || (resolvedPage * resolvedPageSize < resolvedTotal),
     syncedAt: Date.now(),
+  }
+}
+
+export const normalizeNotificationCheck = (raw: any): NotificationCheckResponse => {
+  const candidate = raw?.data ?? raw
+  const unreadCount = Number(
+    candidate?.unreadCount
+    ?? candidate?.unread
+    ?? candidate?.total_unread
+    ?? candidate?.unread_count
+    ?? 0,
+  )
+  const latestId
+    = toNonEmptyString(candidate?.latestId, '')
+      || toNonEmptyString(candidate?.latest_id, '')
+      || toNonEmptyString(candidate?.last_id, '')
+      || null
+
+  return {
+    unreadCount: Number.isFinite(unreadCount) ? unreadCount : 0,
+    latestId,
+    checkedAt: Date.now(),
   }
 }
