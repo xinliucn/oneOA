@@ -104,7 +104,12 @@
 
 <script setup lang="ts">
 import type { NotificationItem } from '~/types/notification'
-import { isNotificationUnread, sortNotificationsForDisplay } from '~/utils/notification'
+import {
+  formatNotificationLocalizedText,
+  formatNotificationTitle,
+  isNotificationUnread,
+  sortNotificationsForDisplay,
+} from '~/utils/notification'
 
 const props = withDefaults(defineProps<{
   variant?: 'page' | 'desktop-popover'
@@ -131,6 +136,7 @@ const {
 } = usePushSubscription()
 const route = useRoute()
 const toDoFrom: any = useState('mobile:todo-form', () => null)
+const { locale } = useAppI18n()
 
 const activeFilter = ref('all')
 const isPushToggleLoading = ref(false)
@@ -155,7 +161,7 @@ const showSubscriptionResultPrompt = (enabled: boolean) => {
 }
 
 const formatCategoryLabel = (value?: string) => {
-  const raw = value?.trim()
+  const raw = formatNotificationLocalizedText(value, locale.value)
   if (!raw) {
     return ''
   }
@@ -292,13 +298,13 @@ const handleSelect = async (item: NotificationItem) => {
     toDoFrom.value = {
       requestId,
       requestmark: reference,
-      requestName: item.title,
-      status: item.category || 'Pending',
-      creatorName: item.source,
+      requestName: formatNotificationTitle(item.title, locale.value),
+      status: formatNotificationLocalizedText(item.category, locale.value) || 'Pending',
+      creatorName: item.creator || item.source,
       createTime: item.createdAt,
       receiveTime: item.createdAt,
       workflowBaseInfo: {
-        workflowName: item.summary,
+        workflowName: item.sourceSystem || item.summary,
       },
     }
 

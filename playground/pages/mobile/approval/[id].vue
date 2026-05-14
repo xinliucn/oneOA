@@ -83,7 +83,7 @@
         </div>
 
         <button type="button" class="mobile-approval__link" @click="openWorkflowDetail">
-          {{ 'View details in WOA-DPM' }} &gt;
+          {{ workflowDetailLabel }} &gt;
         </button>
       </section>
     </main>
@@ -174,6 +174,18 @@ type TimelineItem = {
 
 const processInfo = computed(() => form.value?.processInfo ?? {})
 const workflowBaseInfo = computed(() => processInfo.value?.workflowBaseInfo ?? toDoFrom.value?.workflowBaseInfo ?? {})
+const workflowDetailLabel = computed(() => {
+  const workflowName = stripHtml(
+    workflowBaseInfo.value?.workflowName
+    || workflowBaseInfo.value?.workFlowName
+    || workflowBaseInfo.value?.workflowTypeName
+    || toDoFrom.value?.workFlowName
+    || toDoFrom.value?.workflowName
+    || 'Workflow',
+  )
+
+  return `View details in ${workflowName || 'Workflow'}`
+})
 const workflowFields = computed<WorkflowField[]>(() => {
   return processInfo.value?.workflowMainTableInfo?.requestRecords?.[0]?.workflowRequestTableFields ?? []
 })
@@ -923,7 +935,7 @@ watch(
 
 .mobile-approval__field-label {
   font-size: 10px;
-  color: #5f5f5f;
+  color: #A3AAB2;
   font-weight: 600;
 }
 

@@ -5,6 +5,9 @@ export interface NotificationItem {
   summary?: string
   referenceId?: string
   requestId?: string
+  creator?: string
+  sourceSystem?: string
+  businessName?: string
   link?: string
   source?: string
   category?: string

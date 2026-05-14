@@ -1,4 +1,5 @@
 import { getNotificationApiPrefix, proxyWindmill } from '../../utils/windmillProxy'
+import { normalizeNotification } from '../../utils/notification'
 
 export default defineEventHandler(async (event) => {
   const id = String(getRouterParam(event, 'id') || '').trim()
@@ -13,7 +14,7 @@ export default defineEventHandler(async (event) => {
   const config = useRuntimeConfig()
 
   if (config.mockEnabled) {
-    return {
+    const mockItem = {
       id: 192,
       body: '您有一条新的泛微通知',
       icon: '/icons/icon-192.png',
@@ -38,13 +39,23 @@ export default defineEventHandler(async (event) => {
       dispatch_status: 'pending',
       source_message_id: null,
     }
+
+    return {
+      item: normalizeNotification(mockItem),
+    }
   }
 
   const notificationApiPrefix = getNotificationApiPrefix()
   const params = new URLSearchParams({ id })
 
-  return proxyWindmill<Record<string, unknown>>(event, `${notificationApiPrefix}/detail?${params.toString()}`, {
+  const response = await proxyWindmill<Record<string, any>>(event, `${notificationApiPrefix}/detail?${params.toString()}`, {
     method: 'GET',
     errorMessage: '获取通知详情失败',
   })
+
+  const candidate = response?.item ?? response?.data?.item ?? response?.data ?? response
+
+  return {
+    item: candidate ? normalizeNotification(candidate) : null,
+  }
 })

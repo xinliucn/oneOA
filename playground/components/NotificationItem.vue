@@ -5,7 +5,7 @@
   >
     <div class="notification-item__main">
       <div class="notification-item__top">
-        <span class="notification-item__title">{{ item.title }}</span>
+        <span class="notification-item__title">{{ displayTitle }}</span>
         <span class="notification-item__time">{{ timeText }}</span>
       </div>
 
@@ -15,9 +15,9 @@
       >
         {{ subtitle }}
       </p>
-      <p class="notification-item__reference">
+      <!-- <p class="notification-item__reference">
         {{ referenceText }}
-      </p>
+      </p> -->
     </div>
 
     <span
@@ -29,7 +29,11 @@
 
 <script setup lang="ts">
 import type { NotificationItem as NotificationItemModel } from '~/types/notification'
-import { isNotificationUnread } from '~/utils/notification'
+import {
+  formatNotificationListTitle,
+  formatNotificationSubtitle,
+  isNotificationUnread,
+} from '~/utils/notification'
 
 const props = withDefaults(defineProps<{
   item: NotificationItemModel
@@ -43,19 +47,14 @@ const emit = defineEmits<{
 }>()
 
 const isUnread = computed(() => isNotificationUnread(props.item))
+const { locale } = useAppI18n()
 
-const subtitle = computed(() => {
-  return props.item.source || props.item.summary || props.item.content || ''
+const displayTitle = computed(() => {
+  return formatNotificationListTitle(props.item, locale.value)
 })
 
-const referenceText = computed(() => {
-  const referenceId = props.item.referenceId?.trim()
-  if (referenceId) {
-    return referenceId
-  }
-
-  const category = props.item.category?.trim()
-  return category ? `${category.toUpperCase()}-${props.item.id}` : props.item.id
+const subtitle = computed(() => {
+  return formatNotificationSubtitle(props.item, locale.value)
 })
 
 const timeText = computed(() => {

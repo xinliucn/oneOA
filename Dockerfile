@@ -4,7 +4,7 @@
 # ============================================
 # 阶段 1: 构建阶段
 # ============================================
-FROM node:20-alpine AS builder
+FROM node:22-alpine AS builder
 
 # 设置工作目录
 WORKDIR /app
@@ -12,6 +12,7 @@ WORKDIR /app
 # 安装项目锁定的 yarn，并使用国内镜像源提升 Docker 构建稳定性
 RUN corepack enable && corepack prepare yarn@1.22.22 --activate
 ENV NPM_CONFIG_REGISTRY=https://registry.npmmirror.com
+ENV ONNXRUNTIME_NODE_INSTALL_CUDA=skip
 RUN npm config set registry https://registry.npmmirror.com \
   && yarn config set registry https://registry.npmmirror.com \
   && yarn config set network-timeout 600000
@@ -39,7 +40,7 @@ RUN yarn build
 # ============================================
 # 阶段 2: 运行阶段
 # ============================================
-FROM node:20-alpine AS runner
+FROM node:22-alpine AS runner
 
 # 设置工作目录
 WORKDIR /app
