@@ -224,8 +224,8 @@ const getFallbackContentHtml = () => {
 
 const paragraphBlockPattern = /<p\b[^>]*>[\s\S]*?<\/p>/gi
 const htmlBlockPattern = /<(div|li)\b[^>]*>[\s\S]*?<\/\1>/gi
-const traditionalOnlyPattern = /[讀願遵這點擊鈕會體請細擊]/u
-const simplifiedOnlyPattern = /[读愿遵这点击钮会体请细击]/u
+const traditionalOnlyPattern = /[讀願遵這點擊鈕會體請細]/u
+const simplifiedOnlyPattern = /[读愿遵这点击钮会体请细]/u
 const latinLetterPattern = /[A-Za-z]/u
 const chineseCharacterPattern = /[\u3400-\u9FFF]/u
 
@@ -392,10 +392,6 @@ const openPreview = () => {
       fileName: previewFileName.value,
     },
   })
-}
-
-const handleAccept = () => {
-  accepted.value = true
 }
 </script>
 

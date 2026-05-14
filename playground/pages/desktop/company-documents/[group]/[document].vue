@@ -89,7 +89,7 @@
               :size="15"
               color="#a60a3a"
             />
-            <span>{{ documentDetail.fileName }}</span>
+            <span>{{ previewFileName }}</span>
             <button
               type="button"
               @click="downloadDocument"
@@ -117,17 +117,13 @@
         />
 
         <div class="company-document-view__acknowledgement">
-          <p>我已閱讀並願意遵守本政策內容。</p>
-
           <label>
             <input
               v-model="accepted"
               type="checkbox"
             >
-            <span>我已阅读并愿意遵守本政策内容。</span>
+            <span>{{ acknowledgementText }}</span>
           </label>
-
-          <p>I have read and agreed with the policy content.</p>
         </div>
 
         <button
@@ -135,7 +131,7 @@
           class="company-document-view__accept"
           @click="handleAccept"
         >
-          Accept
+          {{ acceptText }}
         </button>
       </section>
     </main>
@@ -215,11 +211,33 @@ const groupTitle = computed(() => String(route.query.groupTitle || route.query.t
 const documentTitle = computed(() => String(route.query.title || 'Company Document'))
 const selectedDocumentDetail = useState<CompanyDocumentDetailResponseItem | null>('company-document:selected-detail', () => null)
 const companyDocumentDetailResponse = ref<any>(null)
+const companyDocumentPreviewResponse = ref<CompanyDocumentPreviewResponse | null>(null)
 const loading = ref(true)
 const accepted = ref(false)
+const { locale } = useAppI18n()
 
 const fixedPreviewFileName = 'testpdf.pdf'
 const fixedPreviewServerRelativeUrl = '%2Fsites%2FDCHGroupLegalCompliancePublicSite%2FTemplates%2FShared%20Documents%2FKey%20Functions%20-%2002.%20Contract%20Templates%20%26%20Digital%20Playbooks%2F%E5%86%85%E5%9C%B0%E7%89%A9%E6%B5%81%2F01.%20Digital%20Playbooks%2F02.%20Non%E2%80%91Disclosure%20Agreement%20Playbook%2Ftestpdf.pdf'
+
+type PolicyLocale = 'zh-CN' | 'zh-TW' | 'en'
+
+const policyAcknowledgementCopy = {
+  'zh-CN': '我已阅读并愿意遵守本政策内容。',
+  'zh-TW': '我已閱讀並願意遵守本政策內容。',
+  'en': 'I have read and agreed with the policy content.',
+} satisfies Record<PolicyLocale, string>
+
+const policyAcceptCopy = {
+  'zh-CN': '同意',
+  'zh-TW': '同意',
+  'en': 'Accept',
+} satisfies Record<PolicyLocale, string>
+
+const getPolicyLocale = (localeCode: string): PolicyLocale => {
+  if (localeCode === 'en') return 'en'
+  if (localeCode === 'zh-TW') return 'zh-TW'
+  return 'zh-CN'
+}
 
 const normalizeCompanyDocumentDetailResponse = (response: any): CompanyDocumentDetailResponseItem[] => {
   if (Array.isArray(response)) {
@@ -262,10 +280,52 @@ const getDocumentCodeAndVersion = (numberVersion?: string) => {
 
 const getFallbackContentHtml = () => {
   return [
-    '<p>请你在同意之前，仔细阅读本政策。点击“同意”按钮，代表你愿意遵守本政策内容。</p>',
+    '<p>請你在同意之前，仔細閱讀本政策。點擊「同意」按鈕，代表你願意遵守本政策內容。</p>',
     '<p>请你在同意之前，仔细阅读本政策。点击“同意”按钮，代表你愿意遵守本政策内容。</p>',
     '<p>Please read this policy carefully before clicking the "Accept" button. Your acceptance to this policy means you agree to comply with the policy content.</p>',
   ].join('')
+}
+
+const paragraphBlockPattern = /<p\b[^>]*>[\s\S]*?<\/p>/gi
+const htmlBlockPattern = /<(div|li)\b[^>]*>[\s\S]*?<\/\1>/gi
+const traditionalOnlyPattern = /[讀願遵這點擊鈕會體請細]/u
+const simplifiedOnlyPattern = /[读愿遵这点击钮会体请细]/u
+const latinLetterPattern = /[A-Za-z]/u
+const chineseCharacterPattern = /[\u3400-\u9FFF]/u
+
+const stripHtml = (value: string) => {
+  return value.replace(/<[^>]*>/g, '').replace(/&nbsp;/g, ' ').trim()
+}
+
+const getHtmlBlockLocale = (block: string): PolicyLocale | null => {
+  const text = stripHtml(block)
+
+  if (!text) return null
+  if (latinLetterPattern.test(text) && !chineseCharacterPattern.test(text)) return 'en'
+  if (traditionalOnlyPattern.test(text)) return 'zh-TW'
+  if (simplifiedOnlyPattern.test(text)) return 'zh-CN'
+
+  return null
+}
+
+const splitHtmlBlocks = (html: string) => {
+  const paragraphBlocks = html.match(paragraphBlockPattern)
+  if (paragraphBlocks?.length) {
+    return paragraphBlocks
+  }
+
+  const blocks = html.match(htmlBlockPattern)
+  return blocks?.length ? blocks : [html]
+}
+
+const localizePolicyHtml = (html: string, targetLocale: PolicyLocale) => {
+  const blocks = splitHtmlBlocks(html)
+  const localizedBlocks = blocks.filter((block) => {
+    const blockLocale = getHtmlBlockLocale(block)
+    return !blockLocale || blockLocale === targetLocale
+  })
+
+  return localizedBlocks.length ? localizedBlocks.join('') : html
 }
 
 const splitDateTime = (value?: string) => {
@@ -312,6 +372,7 @@ const documentDetail = computed<CompanyDocumentDetail | null>(() => {
   const serverRelativeUrl = getMainTableServerRelativeUrl(mainTable)
   const fileName = getMainTableFileName(mainTable, serverRelativeUrl.split('/').pop() || `${title}.pdf`)
   const createdDateTime = splitDateTime(mainTable.createddate || mainTable.RequestPublishDate)
+  const policyLocale = getPolicyLocale(locale.value)
 
   return {
     title,
@@ -323,10 +384,29 @@ const documentDetail = computed<CompanyDocumentDetail | null>(() => {
     createdDate: createdDateTime.date || '-',
     createdTime: createdDateTime.time || '',
     publishedDateTime: mainTable.RequestPublishDate || mainTable.createddate || '-',
-    contentHtml: sanitizeControlledHtml(mainTable.content_display || getFallbackContentHtml()),
-    footerHtml: sanitizeControlledHtml(mainTable.footer_display || ''),
+    contentHtml: sanitizeControlledHtml(localizePolicyHtml(mainTable.content_display || getFallbackContentHtml(), policyLocale)),
+    footerHtml: sanitizeControlledHtml(localizePolicyHtml(mainTable.footer_display || '', policyLocale)),
     status: getStatus(selectedDocument.value),
   }
+})
+
+const acknowledgementText = computed(() => {
+  return policyAcknowledgementCopy[getPolicyLocale(locale.value)]
+})
+
+const acceptText = computed(() => {
+  return policyAcceptCopy[getPolicyLocale(locale.value)]
+})
+
+const previewQuery = computed<{ serverRelativeUrl: string, fileName: string }>(() => {
+  return {
+    serverRelativeUrl: fixedPreviewServerRelativeUrl,
+    fileName: fixedPreviewFileName,
+  }
+})
+
+const previewFileName = computed(() => {
+  return companyDocumentPreviewResponse.value?.fileName || documentDetail.value?.fileName || 'Preview file'
 })
 
 const fetchCompanyDocumentDetail = async () => {
@@ -347,17 +427,21 @@ const fetchCompanyDocumentDetail = async () => {
   }
 }
 
+const fetchCompanyDocumentPreview = async () => {
+  companyDocumentPreviewResponse.value = await $fetch<CompanyDocumentPreviewResponse>('/api/ecologyOa/companyDocumentPreview', {
+    method: 'GET',
+    query: previewQuery.value,
+  })
+}
+
 const downloadDocument = async () => {
   if (!documentDetail.value) {
     return
   }
 
-  const response = await $fetch<CompanyDocumentPreviewResponse>('/api/ecologyOa/companyDocumentPreview', {
+  const response = companyDocumentPreviewResponse.value || await $fetch<CompanyDocumentPreviewResponse>('/api/ecologyOa/companyDocumentPreview', {
     method: 'GET',
-    query: {
-      serverRelativeUrl: documentDetail.value.serverRelativeUrl || fixedPreviewServerRelativeUrl,
-      fileName: documentDetail.value.fileName || fixedPreviewFileName,
-    },
+    query: previewQuery.value,
   })
 
   if (!response.data || !import.meta.client) {
@@ -370,7 +454,7 @@ const downloadDocument = async () => {
   const url = URL.createObjectURL(blob)
   const link = document.createElement('a')
   link.href = url
-  link.download = response.fileName || documentDetail.value.fileName
+  link.download = response.fileName || previewFileName.value
   link.click()
   URL.revokeObjectURL(url)
 }
@@ -381,10 +465,12 @@ const handleAccept = () => {
 
 watch([folderbaseid, documentSlug], () => {
   fetchCompanyDocumentDetail()
+  fetchCompanyDocumentPreview()
 })
 
 onMounted(() => {
   fetchCompanyDocumentDetail()
+  fetchCompanyDocumentPreview()
 })
 </script>
 
@@ -582,7 +668,6 @@ onMounted(() => {
   background: #f5f5f5;
   color: #000000;
   font-family: "Source Sans Pro", sans-serif;
-  font-size: 12px;
   line-height: 150%;
 }
 
@@ -642,7 +727,6 @@ onMounted(() => {
   background: #edccd7;
   color: #a60a3a;
   font-family: "Source Sans Pro", sans-serif;
-  font-size: 12px;
   font-weight: 700;
   line-height: 100%;
   cursor: pointer;
@@ -655,7 +739,6 @@ onMounted(() => {
   justify-content: center;
   color: #666666;
   font-family: "Source Sans Pro", sans-serif;
-  font-size: 12px;
 }
 
 .company-document-view__footer {
@@ -665,7 +748,6 @@ onMounted(() => {
   color: #ffffff;
   text-align: center;
   font-family: "Source Sans Pro", sans-serif;
-  font-size: 12px;
   line-height: 100%;
 }
 </style>
