@@ -1,7 +1,7 @@
 import { appLocales, appMessages } from './i18n/config'
 
 export default defineNuxtConfig({
-  modules: ['../src/module', '@element-plus/nuxt'],
+  modules: ['../src/module', '@element-plus/nuxt', '@pinia/nuxt'],
   devtools: { enabled: process.env.NODE_ENV !== 'production' },
   // 优化 CSS 加载
   css: ['~/assets/css/desktop-critical.css'],
@@ -11,8 +11,8 @@ export default defineNuxtConfig({
     vapidPrivateKey: process.env.NUXT_VAPID_PRIVATE_KEY || '',
     vapidSubject: process.env.NUXT_VAPID_SUBJECT || '',
     public: {
+      apiBase: process.env.NUXT_PUBLIC_API_BASE,
       logrocketAppId: process.env.NUXT_PUBLIC_LOGROCKET_APP_ID || '',
-      apiBase: process.env.NUXT_PUBLIC_API_BASE || 'https://windmill-uat.dchbi.app',
       allowedRedirectHostSuffixes: process.env.NUXT_PUBLIC_ALLOWED_REDIRECT_HOST_SUFFIXES || 'dchbi.app,dch.com.hk',
       notificationApiPrefix: process.env.NUXT_PUBLIC_NOTIFICATION_API_PREFIX || '/api/r/notification',
       internalNetworkGuardEnabled: process.env.NUXT_PUBLIC_INTERNAL_NETWORK_GUARD_ENABLED === 'true',

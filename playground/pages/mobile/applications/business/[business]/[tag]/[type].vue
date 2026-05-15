@@ -61,7 +61,7 @@
 
     <section class="mobile-app-detail__list">
       <button
-        v-for="item in filteredCatalog"
+        v-for="item in sortedCatalog"
         :key="getItemKey(item)"
         type="button"
         class="mobile-app-detail__item"
@@ -143,6 +143,7 @@ type ApplicationCatalogEntry = {
     application?: string
     category?: string
     iconx64?: string
+    order_number?: string
   }
   mobileUrl?: string
   homepageUrl?: string
@@ -362,6 +363,15 @@ const filteredCatalog = computed(() => {
 
     return true
   })
+})
+
+const getItemOrder = (item: ApplicationCatalogEntry) => {
+  const orderNumber = Number(normalizeString(item.mainTable?.order_number))
+  return Number.isFinite(orderNumber) ? orderNumber : Number.POSITIVE_INFINITY
+}
+
+const sortedCatalog = computed(() => {
+  return [...filteredCatalog.value].sort((left, right) => getItemOrder(left) - getItemOrder(right))
 })
 
 const getItemKey = (item: ApplicationCatalogEntry) => {

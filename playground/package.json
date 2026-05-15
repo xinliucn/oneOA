@@ -10,8 +10,10 @@
   },
   "dependencies": {
     "@huggingface/transformers": "^3.0.0",
+    "@pinia/nuxt": "^0.11.3",
     "firebase": "^9.23.0",
     "logrocket": "^12.1.0",
-    "nuxt": "4"
+    "nuxt": "4",
+    "pinia": "^3.0.4"
   }
 }
