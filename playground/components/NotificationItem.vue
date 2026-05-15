@@ -32,6 +32,7 @@ import type { NotificationItem as NotificationItemModel } from '~/types/notifica
 import {
   formatNotificationListTitle,
   formatNotificationSubtitle,
+  getNotificationTimestamp,
   isNotificationUnread,
 } from '~/utils/notification'
 
@@ -58,8 +59,13 @@ const subtitle = computed(() => {
 })
 
 const timeText = computed(() => {
-  const createdAt = new Date(props.item.updated_at).getTime()
-  const diff = Math.max(0, Date.now() - createdAt)
+  const timestamp = getNotificationTimestamp(props.item)
+
+  if (!timestamp) {
+    return ''
+  }
+
+  const diff = Math.max(0, Date.now() - timestamp)
   const minute = 60 * 1000
   const hour = 60 * minute
   const day = 24 * hour

@@ -59,51 +59,37 @@
       </button>
     </section>
 
-    <section
-      v-for="group in groupedCatalog"
-      :key="group.id"
-      class="mobile-app-detail__group"
-    >
+    <section class="mobile-app-detail__list">
       <button
+        v-for="item in filteredCatalog"
+        :key="getItemKey(item)"
         type="button"
-        class="mobile-app-detail__group-header"
-        @click="toggleGroup(group.id)"
+        class="mobile-app-detail__item"
+        @click="handleItemClick(item)"
       >
-        <span>{{ group.title }} ({{ group.items.length }})</span>
+        <span class="mobile-app-detail__item-icon">
+          <img
+            v-if="getItemIcon(item)"
+            :src="getItemIcon(item)"
+            :alt="getItemName(item)"
+            class="mobile-app-detail__item-icon-img"
+          >
+          <IconCustom
+            v-else
+            name="document"
+            :size="22"
+            color="#A60A3A"
+          />
+        </span>
+        <span class="mobile-app-detail__item-name">
+          {{ getItemName(item) }}
+        </span>
         <IconCustom
           name="chevron-right"
           :size="16"
-          color="#171717"
-          :rotate="isGroupOpen(group.id) ? -90 : 90"
+          color="#A60A3A"
         />
       </button>
-
-      <div
-        v-show="isGroupOpen(group.id)"
-        class="mobile-app-detail__group-list"
-      >
-        <button
-          v-for="item in group.items"
-          :key="getItemKey(item)"
-          type="button"
-          class="mobile-app-detail__item"
-          @click="handleItemClick(item)"
-        >
-          <div class="mobile-app-detail__item-info">
-            <div class="mobile-app-detail__item-name">
-              {{ getItemName(item) }}
-            </div>
-            <div class="mobile-app-detail__item-type">
-              {{ getItemSubtitle(item) }}
-            </div>
-          </div>
-          <IconCustom
-            name="chevron-right"
-            :size="18"
-            color="#A60A3A"
-          />
-        </button>
-      </div>
     </section>
   </div>
 
@@ -149,10 +135,14 @@ type ApplicationCatalogEntry = {
     mobileurl?: string
     homepage_url?: string
     name_en?: string
+    name_sc?: string
+    name_tc?: string
     description_en?: string
     type?: string
     business?: string
     application?: string
+    category?: string
+    iconx64?: string
   }
   mobileUrl?: string
   homepageUrl?: string
@@ -160,10 +150,11 @@ type ApplicationCatalogEntry = {
 
 const { requestApplicationCatalogData } = useApplicationCatalog()
 const { openGuardedUrl } = useNetworkGuard()
+const { locale } = useAppI18n()
 const route = useRoute()
 const selectedBusiness = useState<BusinessSummary | null>('mobile:selected-business', () => null)
 const regionOrder = ['HK', 'CN', 'SEA']
-const typeOrder = ['Data', 'Form', 'Portal', 'Application']
+const detailRequestType = 'Group'
 
 definePageMeta({
   layout: 'mobile',
@@ -172,7 +163,6 @@ definePageMeta({
 
 const activeTab = useState<number>('mobile:activeTab', () => 3)
 const selectedRegion = ref<string>('')
-const expandedGroups = ref<string[]>([])
 const detailCatalog = ref<ApplicationCatalogEntry[]>([])
 
 const normalizeString = (value?: string | null) => {
@@ -229,14 +219,6 @@ const matchesBusinessFamily = (candidate?: string | null, target?: string | null
 
   const normalizedCandidate = normalizeString(candidate).toLowerCase()
   return normalizedCandidate === normalizedTarget || normalizedCandidate.startsWith(`${normalizedTarget} -`)
-}
-
-const slugify = (value?: string | null) => {
-  return normalizeString(value)
-    .toLowerCase()
-    .replace(/&/g, 'and')
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/^-+|-+$/g, '')
 }
 
 const getBusinessDisplayName = (name?: string) => {
@@ -339,10 +321,7 @@ const getBusinessDescription = (name?: string, description?: string) => {
 
 const routeBusiness = computed(() => decodeRouteParam(route.params.business))
 const routeTags = computed(() => sortByKnownOrder(uniq(splitMultiValue(decodeRouteParam(route.params.tag))), regionOrder))
-const routeTypes = computed(() => sortByKnownOrder(uniq(splitMultiValue(decodeRouteParam(route.params.type))), typeOrder))
 const regions = computed(() => routeTags.value.length ? routeTags.value : regionOrder)
-const allowedTypes = computed(() => routeTypes.value.length ? routeTypes.value : typeOrder)
-const allowedTypesKey = computed(() => allowedTypes.value.join('/'))
 
 const mapBusinessSummary = (entry: ApplicationCatalogEntry): BusinessSummary => {
   const businessName = normalizeString(entry.mainTable?.business || entry.business || entry.mainTable?.name_en)
@@ -363,7 +342,6 @@ const mapBusinessSummary = (entry: ApplicationCatalogEntry): BusinessSummary => 
 const filteredCatalog = computed(() => {
   const targetBusiness = routeBusiness.value.toLowerCase()
   const targetRegion = normalizeString(selectedRegion.value).toLowerCase()
-  const targetTypes = allowedTypes.value.map(item => item.toLowerCase())
 
   return detailCatalog.value.filter((item) => {
     const itemBusiness = normalizeString(item.mainTable?.business || item.business)
@@ -378,10 +356,6 @@ const filteredCatalog = computed(() => {
       return false
     }
 
-    if (targetTypes.length > 0 && !targetTypes.includes(itemType.toLowerCase())) {
-      return false
-    }
-
     if (targetRegion && itemTags.length > 0 && !itemTags.includes(targetRegion)) {
       return false
     }
@@ -390,60 +364,33 @@ const filteredCatalog = computed(() => {
   })
 })
 
-const groupLabelMap: Record<string, string> = {
-  form: 'New Forms',
-  data: 'Data',
-  portal: 'Portals',
-  application: 'Applications',
-}
-
-const groupOrder = ['Form', 'Data', 'Portal', 'Application']
-
-const groupedCatalog = computed(() => {
-  const groups = new Map<string, ApplicationCatalogEntry[]>()
-
-  for (const item of filteredCatalog.value) {
-    const type = normalizeString(item.mainTable?.type || item.type || 'Application')
-    const currentItems = groups.get(type) || []
-    groups.set(type, [...currentItems, item])
-  }
-
-  return Array.from(groups.entries())
-    .sort(([left], [right]) => {
-      const leftIndex = groupOrder.indexOf(left)
-      const rightIndex = groupOrder.indexOf(right)
-      const safeLeft = leftIndex === -1 ? groupOrder.length : leftIndex
-      const safeRight = rightIndex === -1 ? groupOrder.length : rightIndex
-      return safeLeft - safeRight
-    })
-    .map(([type, items]) => ({
-      id: slugify(type) || 'applications',
-      title: groupLabelMap[type.toLowerCase()] || type,
-      items,
-    }))
-})
-
-const isGroupOpen = (groupId: string) => expandedGroups.value.includes(groupId)
-
-const toggleGroup = (groupId: string) => {
-  expandedGroups.value = isGroupOpen(groupId)
-    ? expandedGroups.value.filter(id => id !== groupId)
-    : [...expandedGroups.value, groupId]
-}
-
-const getItemSubtitle = (item: ApplicationCatalogEntry) => {
-  return normalizeString(item.mainTable?.application)
-    || normalizeString(item.mainTable?.type)
-    || normalizeString(item.mainTable?.description_en)
-    || 'Application Entry'
-}
-
 const getItemKey = (item: ApplicationCatalogEntry) => {
   return item.mainTable?.id || item.mobileUrl || item.homepageUrl || getItemName(item)
 }
 
 const getItemName = (item: ApplicationCatalogEntry) => {
-  return normalizeString(item.mainTable?.name_en) || 'Untitled Application'
+  if (locale.value === 'zh-CN') {
+    return normalizeString(item.mainTable?.name_sc)
+      || normalizeString(item.mainTable?.name_en)
+      || normalizeString(item.mainTable?.name_tc)
+      || 'Untitled Application'
+  }
+
+  if (locale.value === 'zh-TW') {
+    return normalizeString(item.mainTable?.name_tc)
+      || normalizeString(item.mainTable?.name_en)
+      || normalizeString(item.mainTable?.name_sc)
+      || 'Untitled Application'
+  }
+
+  return normalizeString(item.mainTable?.name_en)
+    || normalizeString(item.mainTable?.name_tc)
+    || normalizeString(item.mainTable?.name_sc)
+    || 'Untitled Application'
+}
+
+const getItemIcon = (item: ApplicationCatalogEntry) => {
+  return normalizeString(item.mainTable?.iconx64)
 }
 
 const syncSelectedBusiness = () => {
@@ -500,18 +447,13 @@ const fetchCatalog = async () => {
     return
   }
 
-  const requestedTypes = allowedTypes.value.length ? allowedTypes.value : ['Data', 'Form']
-  const responses = await Promise.all(requestedTypes.map(async (type) => {
-    const filters: ApplicationCatalogFilters = {
-      business: routeBusiness.value,
-      tag: selectedRegion.value,
-      type,
-    }
+  const filters: ApplicationCatalogFilters = {
+    business: routeBusiness.value,
+    tag: selectedRegion.value,
+    type: detailRequestType,
+  }
+  const mergedCatalog = await requestApplicationCatalogData(filters)
 
-    return requestApplicationCatalogData(filters)
-  }))
-
-  const mergedCatalog = responses.flat()
   detailCatalog.value = mergedCatalog.filter((item, index, items) => {
     const currentId = item.mainTable?.id || item.mobileUrl || item.homepageUrl || item.mainTable?.name_en
     return index === items.findIndex((candidate) => {
@@ -520,14 +462,6 @@ const fetchCatalog = async () => {
     })
   })
 }
-
-watch(
-  groupedCatalog,
-  (groups) => {
-    expandedGroups.value = groups.map(group => group.id)
-  },
-  { immediate: true },
-)
 
 watch(
   regions,
@@ -542,7 +476,7 @@ watch(
 watch(routeBusiness, syncSelectedBusiness, { immediate: true })
 
 watch(
-  [selectedRegion, routeBusiness, allowedTypesKey],
+  [selectedRegion, routeBusiness],
   async () => {
     await fetchCatalog()
   },
@@ -625,11 +559,13 @@ activeTab.value = 3
 .mobile-app-detail__regions {
   display: flex;
   gap: 0;
-  margin: 14px 16px 16px;
+  margin: 14px 22px 0;
   padding: 3px;
   background: #ffffff;
   border-radius: 999px;
   box-shadow: 0 8px 18px rgba(17, 17, 17, 0.08);
+  position: relative;
+  z-index: 1;
 }
 
 .mobile-app-detail__region-btn {
@@ -648,27 +584,8 @@ activeTab.value = 3
   color: #ffffff;
 }
 
-.mobile-app-detail__group {
-  margin-bottom: 12px;
-  background: #ffffff;
-  border-top: 1px solid #ececec;
-  border-bottom: 1px solid #ececec;
-}
-
-.mobile-app-detail__group-header {
-  width: 100%;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 13px 16px;
-  border: 0;
-  background: #fafafa;
-  font-size: 15px;
-  font-weight: 700;
-  color: #161616;
-}
-
-.mobile-app-detail__group-list {
+.mobile-app-detail__list {
+  padding: 10px 10px 0;
   background: #ffffff;
 }
 
@@ -676,32 +593,43 @@ activeTab.value = 3
   width: 100%;
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  padding: 13px 16px;
+  gap: 14px;
+  min-height: 62px;
+  padding: 0 0 0 2px;
   border: 0;
-  border-top: 1px solid #ececec;
+  border-bottom: 1px dashed #ececec;
   background: #ffffff;
   text-align: left;
 }
 
-.mobile-app-detail__item-info {
-  min-width: 0;
-  flex: 1;
+.mobile-app-detail__item:last-child {
+  border-bottom: 0;
+}
+
+.mobile-app-detail__item-icon {
+  width: 26px;
+  height: 26px;
+  flex: 0 0 26px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: #a60a3a;
+}
+
+.mobile-app-detail__item-icon-img {
+  max-width: 24px;
+  max-height: 24px;
+  object-fit: contain;
 }
 
 .mobile-app-detail__item-name {
-  font-size: 14px;
-  font-weight: 500;
+  min-width: 0;
+  flex: 1;
+  font-size: 13px;
+  font-weight: 700;
   line-height: 1.35;
-  color: #171717;
-}
-
-.mobile-app-detail__item-type {
-  margin-top: 2px;
-  font-size: 12px;
-  line-height: 1.4;
-  color: #8b8b8b;
+  color: #15172c;
+  overflow-wrap: anywhere;
 }
 
 .mobile-app-detail__empty {

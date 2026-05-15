@@ -173,7 +173,7 @@ const selectedBusiness = useState<SelectedBusinessSummary | null>('mobile:select
 const isBusinessTab = computed(() => activePrimaryTab.value === 'business')
 const catalogEntries = computed(() => catalog.value as CatalogEntry[])
 const regionOrder = ['HK', 'CN', 'SEA']
-const detailRouteTypes = ['Data', 'Form']
+const detailRouteTypes = ['Group']
 
 const normalizeString = (value?: string | null) => {
   return typeof value === 'string' ? value.trim() : ''

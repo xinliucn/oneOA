@@ -10,9 +10,29 @@ const NOTIFICATION_LOCALE_CODES: Record<string, string> = {
   'zh-TW': '9',
 }
 
-const getNotificationTimestamp = (item: NotificationItem) => {
-  const raw = item.updated_at || item.created_at || item.createdAt
-  const timestamp = new Date(raw).getTime()
+const parseNotificationTimestamp = (value: unknown) => {
+  if (typeof value === 'number' && Number.isFinite(value)) {
+    return value
+  }
+
+  if (typeof value === 'string') {
+    const trimmedValue = value.trim()
+
+    if (/^\d+$/.test(trimmedValue)) {
+      const numericValue = Number(trimmedValue)
+      return Number.isFinite(numericValue) ? numericValue : 0
+    }
+
+    const timestamp = new Date(trimmedValue).getTime()
+    return Number.isFinite(timestamp) ? timestamp : 0
+  }
+
+  return 0
+}
+
+export const getNotificationTimestamp = (item: NotificationItem) => {
+  const raw = item.payload?.msgPublishAt || item.updated_at || item.created_at || item.createdAt
+  const timestamp = parseNotificationTimestamp(raw)
 
   return Number.isFinite(timestamp) ? timestamp : 0
 }
@@ -259,10 +279,11 @@ export const isNotificationUnread = (item: NotificationItem) => {
 
 export const sortNotificationsForDisplay = (items: NotificationItem[]) => {
   return [...items].sort((left, right) => {
-    const unreadDiff = Number(isNotificationUnread(right)) - Number(isNotificationUnread(left))
+    const leftUnread = isNotificationUnread(left)
+    const rightUnread = isNotificationUnread(right)
 
-    if (unreadDiff !== 0) {
-      return unreadDiff
+    if (leftUnread !== rightUnread) {
+      return leftUnread ? -1 : 1
     }
 
     return getNotificationTimestamp(right) - getNotificationTimestamp(left)

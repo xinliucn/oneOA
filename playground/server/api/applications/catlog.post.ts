@@ -35,12 +35,23 @@ const matchesDiscreteFilter = (candidate?: string | null, filter?: string | stri
   return normalizedFilters.some((item: string) => candidateValues.includes(item))
 }
 
+const matchesCatalogTypeFilter = (candidate?: string | null, filter?: string | string[] | null) => {
+  const normalizedFilters = splitFilterValues(filter).map((item: string) => item.toLowerCase())
+  if (normalizedFilters.length === 0) {
+    return true
+  }
+
+  const expandedFilters = normalizedFilters.flatMap((item: string) => item === 'group' ? ['data', 'form'] : [item])
+  const candidateValues = splitFilterValues(candidate).map((item: string) => item.toLowerCase())
+  return expandedFilters.some((item: string) => candidateValues.includes(item))
+}
+
 const filterApplicationCatalog = (items: Array<Record<string, any>>, filters: Record<string, any>) => {
   return items.filter((item) => {
     const mainTable = item?.mainTable || {}
     return matchesBusinessFilter(mainTable.business, filters.business)
       && matchesDiscreteFilter(mainTable.tag, filters.tag)
-      && matchesDiscreteFilter(mainTable.type, filters.type)
+      && matchesCatalogTypeFilter(mainTable.type, filters.type)
   })
 }
 

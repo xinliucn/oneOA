@@ -46,7 +46,7 @@
           </button>
         </div>
       </section>
-      <section class="home-section">
+      <!-- <section class="home-section">
         <div class="home-section__header">
           <div
             class="home-section__tabs"
@@ -112,7 +112,7 @@
             {{ visibleShortcutEmptyCopy }}
           </div>
         </div>
-      </section>
+      </section> -->
 
       <section class="home-section">
         <div class="home-section__header">
@@ -459,7 +459,7 @@ const greetingLabel = computed(() => {
 })
 
 const regionOrder = ['HK', 'CN', 'SEA']
-const detailRouteTypes = ['Data', 'Form']
+const detailRouteTypes = ['Group']
 
 const normalizeString = (value?: any) => {
   if (typeof value === 'string') {
