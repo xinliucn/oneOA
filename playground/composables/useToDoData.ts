@@ -1,4 +1,4 @@
-export type TodoView = 'approvals' | 'requests' | 'tasks'
+export type TodoView = 'approvals' | 'requests' | 'tasks' | 'approved'
 
 export interface WorkflowFormAttachment {
   id: string
@@ -138,15 +138,28 @@ const requestMap: Record<TodoView, string> = {
   approvals: '/api/todo/approvals',
   requests: '/api/todo/requests',
   tasks: '/api/todo/todos',
+  approved: '/api/todo/approvalCompletedList',
 }
 
 const normalizeTodoListResponse = <T = any>(response?: TodoListResponse<T> | null): T[] => {
+  if (!response) {
+    return []
+  }
+
   if (Array.isArray(response)) {
     return response
   }
 
   if (Array.isArray(response?.data)) {
     return response.data
+  }
+
+  if (isRecord(response)) {
+    const source = response as Record<string, unknown>
+    const list = source.list ?? source.records ?? source.items ?? source.rows
+    if (Array.isArray(list)) {
+      return list as T[]
+    }
   }
 
   return normalizeTodoListResponse(response?.data)
@@ -179,6 +192,13 @@ const buildTodoListPayload = (view: TodoView, query: TodoQuery) => {
       otherParams: { ismonitor: '1' },
     }
   }
+
+  return {
+    pageNo: getPageNo(query),
+    pageSize: query.pageSize ?? 10,
+    ...(query.conditions ? { conditions: query.conditions } : {}),
+    ...(query.otherParams ? { otherParams: query.otherParams } : {}),
+  }
 }
 
 const fetchTodoList = async <T = any>(view: TodoView, query: TodoQuery = {}): Promise<T[]> => {
@@ -201,10 +221,15 @@ export const useToDoData = () => {
   const approvals = useState<TodoItem[]>('todo:approvals', () => [])
   const requests = useState<TodoItem[]>('todo:requests', () => [])
   const tasks = useState<TodoItem[]>('todo:tasks', () => [])
+  const completedApprovals = useState<TodoItem[]>('todo:completed-approvals', () => [])
   const formAttachments = useState<WorkflowFormAttachment[]>('todo:form-attachments', () => [])
   const loading = useState<boolean>('todo:loading', () => false)
 
   const list = computed(() => {
+    if (activeView.value === 'approved') {
+      return completedApprovals.value
+    }
+
     if (activeView.value === 'requests') {
       return requests.value
     }
@@ -231,6 +256,12 @@ export const useToDoData = () => {
   const getTodos = async (query: TodoQuery = {}) => {
     const data = await fetchTodoList<TodoItem>('tasks', query)
     tasks.value = data
+    return data
+  }
+
+  const getCompletedApprovals = async (query: TodoQuery = {}) => {
+    const data = await fetchTodoList<TodoItem>('approved', query)
+    completedApprovals.value = data
     return data
   }
 
@@ -267,6 +298,10 @@ export const useToDoData = () => {
         return await getTodos(query)
       }
 
+      if (view === 'approved') {
+        return await getCompletedApprovals(query)
+      }
+
       return await getApprovals(query)
     }
     finally {
@@ -279,12 +314,14 @@ export const useToDoData = () => {
     approvals,
     requests,
     tasks,
+    completedApprovals,
     formAttachments,
     list,
     loading,
     getApprovals,
     getRequests,
     getTodos,
+    getCompletedApprovals,
     getFormAttachments,
     fetchByView,
   }

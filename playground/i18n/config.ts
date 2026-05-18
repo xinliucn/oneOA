@@ -113,6 +113,7 @@ export const appMessages = {
       link: '待办 >',
       tabs: {
         approval: '我的审批',
+        approved: '已审批',
         requests: '我的申请',
         tasks: '我的任务',
         watchlist: '关注列表',
@@ -292,6 +293,7 @@ export const appMessages = {
       link: '待辦 >',
       tabs: {
         approval: '我的審批',
+        approved: '已審批',
         requests: '我的申請',
         tasks: '我的任務',
         watchlist: '關注清單',
@@ -471,6 +473,7 @@ export const appMessages = {
       link: 'To-Do >',
       tabs: {
         approval: 'My Approval',
+        approved: 'Approved',
         requests: 'My Requests',
         tasks: 'My Tasks',
         watchlist: 'Watchlist',

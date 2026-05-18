@@ -195,7 +195,7 @@
                { 'zh-CN': '暂无消息', 'zh-TW': '暫無消息', "en": 'No items' }) }}
       </div>
       <template v-else>
-        <template v-if="selectedViewValue === 'approvals'">
+        <template v-if="selectedViewValue === 'approvals' || selectedViewValue === 'approved'">
           <div
             v-for="task in filteredTasks"
             :key="task.id"
@@ -208,9 +208,9 @@
                   <span class="todo-item__code">{{ getTaskReference(task) }}</span>
                   <span
                     class="todo-item__status"
-                    :class="`status-pending`"
+                    :class="getTaskStatusClass(task)"
                   >
-                    {{ t(`${task.status}`) }}
+                    {{ getTaskStatusLabel(task) || t('tasks.status.pending') }}
                   </span>
                 </div>
                 <div class="todo-item__date">
@@ -327,14 +327,14 @@
 
 <script setup lang="ts">
 import { computed, nextTick, ref } from 'vue'
-import type { TodoItem } from '~/composables/useToDoData'
+import type { TodoItem, TodoView } from '~/composables/useToDoData'
 import { formatRequestName } from '~/utils/todo'
 
 const toDoFrom = useState<TodoItem | null>('mobile:todo-form', () => null)
 
 type TodoOption = {
   label: string
-  value: string
+  value: TodoView
 }
 
 type LocaleMessages = Record<string, string>
@@ -353,12 +353,13 @@ const todoOptions = computed<TodoOption[]>(() => [
   { label: t('tasks.tabs.approval'), value: 'approvals' },
   { label: t('tasks.tabs.requests'), value: 'requests' },
   { label: t('tasks.tabs.tasks'), value: 'tasks' },
+  { label: t('tasks.tabs.approved'), value: 'approved' },
 ])
-const selectedViewValue = ref('approvals')
+const selectedViewValue = ref<TodoView>('approvals')
 const selectedView = computed<TodoOption>(() => {
   return todoOptions.value.find(option => option.value === selectedViewValue.value)
     ?? todoOptions.value[0]
-    ?? { label: '', value: '' }
+    ?? { label: '', value: 'approvals' }
 })
 const appliedCategoryFilter = ref('all')
 const appliedStatusFilter = ref('all')
@@ -414,6 +415,20 @@ const getTaskStatus = (task: TodoItem) => {
 
 const getTaskStatusLabel = (task: TodoItem) => {
   return String(task.status || task.currentNodeName || '').trim()
+}
+
+const getTaskStatusClass = (task: TodoItem) => {
+  const status = getTaskStatus(task)
+
+  if (status.includes('reject')) {
+    return 'status-rejected'
+  }
+
+  if (status.includes('approv') || status.includes('complete')) {
+    return 'status-approved'
+  }
+
+  return 'status-pending'
 }
 
 const getTaskSearchFields = (task: TodoItem) => {
@@ -605,7 +620,7 @@ const filteredTasks = computed(() => {
   })
 })
 
-const handleTaskClick = (selectedViewValue: string, task: TodoItem) => {
+const handleTaskClick = (selectedViewValue: TodoView, task: TodoItem) => {
   toDoFrom.value = {
     ...task,
     todoView: selectedViewValue,
@@ -719,7 +734,7 @@ watch(
 watch(
   selectedViewValue,
   async (view) => {
-    await fetchByView(view as 'approvals' | 'requests' | 'tasks')
+    await fetchByView(view)
   },
   { immediate: true },
 )

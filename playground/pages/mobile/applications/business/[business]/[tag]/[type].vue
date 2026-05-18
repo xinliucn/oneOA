@@ -163,6 +163,7 @@ definePageMeta({
 })
 
 const activeTab = useState<number>('mobile:activeTab', () => 3)
+const activeApplicationsTab = useState<'business' | 'application'>('mobile:applications:active-tab', () => 'business')
 const selectedRegion = ref<string>('')
 const detailCatalog = ref<ApplicationCatalogEntry[]>([])
 
@@ -431,6 +432,7 @@ const syncSelectedBusiness = () => {
 
 const handleBack = () => {
   activeTab.value = 3
+  activeApplicationsTab.value = 'business'
   return navigateTo('/mobile')
 }
 
@@ -494,6 +496,7 @@ watch(
 )
 
 activeTab.value = 3
+activeApplicationsTab.value = 'business'
 </script>
 
 <style scoped>

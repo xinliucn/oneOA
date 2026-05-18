@@ -109,7 +109,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref, watch } from 'vue'
+import { computed, watch } from 'vue'
 import { APPLICATION_BUSINESS_FILTER } from '~/composables/useApplicationCatalog'
 import type { ApplicationCatalogFilters, ApplicationCatalogItem } from '~/composables/useApplicationCatalog'
 
@@ -168,7 +168,7 @@ const getCatalogFilters = (tabKey: PrimaryTabKey): ApplicationCatalogFilters => 
   ...catalogFiltersByTab[tabKey],
 })
 
-const activePrimaryTab = ref<PrimaryTabKey>('application')
+const activePrimaryTab = useState<PrimaryTabKey>('mobile:applications:active-tab', () => 'application')
 const selectedBusiness = useState<SelectedBusinessSummary | null>('mobile:selected-business', () => null)
 const isBusinessTab = computed(() => activePrimaryTab.value === 'business')
 const catalogEntries = computed(() => catalog.value as CatalogEntry[])

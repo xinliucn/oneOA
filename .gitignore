@@ -26,6 +26,8 @@ dist
 
 # Env
 .env
+.env.*
+!.env.example
 
 # Testing
 reports
