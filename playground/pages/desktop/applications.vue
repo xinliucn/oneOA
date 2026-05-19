@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import type { ApplicationCatalogItem } from '~/composables/useApplicationCatalog'
+import type { ApplicationCatalogItem } from '~/types/applicationCatalog'
 
 definePageMeta({ layout: 'desktop', middleware: 'auth' })
 

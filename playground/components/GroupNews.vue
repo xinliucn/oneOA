@@ -17,19 +17,19 @@
       v-if="loading"
       class="group-news__state"
     >
-      Loading news...
+      {{ t('pages.news.states.loading') }}
     </div>
     <div
       v-else-if="error"
       class="group-news__state group-news__state--error"
     >
-      Failed to load news.
+      {{ t('pages.news.states.error') }}
     </div>
     <div
       v-else-if="homeNewsList.length === 0"
       class="group-news__state"
     >
-      No news found.
+      {{ t('pages.news.states.empty') }}
     </div>
 
     <div
@@ -63,26 +63,55 @@
 
 <script setup lang="ts">
 import { onMounted } from 'vue'
-import type { NewsItem } from '~/composables/useNewsList'
+import type { NewsItem } from '~/types/news'
 import { formatNewsDate } from '~/utils/date'
 
 const { locale, t } = useAppI18n()
 const { newsList, loading, error, fetchNewsList } = useNewsList()
 const { addRecentItem } = useRecentItems('desktop')
+const { openGuardedUrl } = useNetworkGuard()
 
-const homeNewsList = computed(() => newsList.value.slice(0, 4))
+const getNewsTimestamp = (item: NewsItem) => {
+  const timestamp = new Date(item.date).getTime()
+  return Number.isFinite(timestamp) ? timestamp : 0
+}
 
-const handleClick = (news: NewsItem) => {
+const isGroupNewsItem = (item: NewsItem) => {
+  return item.tags?.some(tag => tag.toLowerCase() === 'group news') || item.category === 'Group News'
+}
+
+const homeNewsList = computed(() => {
+  return [...newsList.value]
+    .sort((left, right) => {
+      const rightPriority = isGroupNewsItem(right) ? 1 : 0
+      const leftPriority = isGroupNewsItem(left) ? 1 : 0
+
+      if (rightPriority !== leftPriority) {
+        return rightPriority - leftPriority
+      }
+
+      return getNewsTimestamp(right) - getNewsTimestamp(left)
+    })
+    .slice(0, 4)
+})
+
+const handleClick = async (news: NewsItem) => {
   addRecentItem({
     id: `news:${news.id}`,
     type: 'news',
     label: news.title,
     subtitle: formatNewsDate(news.date, locale.value),
     icon: 'document',
-    path: '/desktop/news',
+    url: news.url,
+    path: news.url ? undefined : '/desktop/news',
   })
 
-  navigateTo('/desktop/news')
+  if (news.url) {
+    await openGuardedUrl(news.url, '_self')
+    return
+  }
+
+  await navigateTo('/desktop/news')
 }
 
 onMounted(() => {

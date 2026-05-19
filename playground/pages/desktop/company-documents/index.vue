@@ -41,7 +41,7 @@
             :key="filter"
             type="button"
             :class="['company-docs__filter', { 'is-active': activeFilter === filter }]"
-            @click="activeFilter = filter"
+            @click="handleFilterClick(filter)"
           >
             {{ filter }}
           </button>
@@ -88,7 +88,7 @@
             <NuxtLink
               class="company-docs-table__link"
               :to="{
-                path: `/desktop/company-documents/${encodeURIComponent(folder.slug)}`,
+                path: `/desktop/company-documents/${encodeURIComponent(folder.folderbaseid)}`,
                 query: {
                   folderbaseid: folder.folderbaseid,
                   title: folder.title,
@@ -157,64 +157,50 @@
 
 <script setup lang="ts">
 import heroImage from '~/assets/images/Rectangle 2.png'
+import type { CompanyDocumentFolder, CompanyDocumentGroupResponseItem, CompanyDocumentStatus, DocumentCategoryStatusFilter, DocumentCategoryTabKey } from '~/types/documentManagement'
 
 definePageMeta({
   layout: 'desktop',
   middleware: 'auth',
 })
 
-type CompanyDocumentStatus = 'Acknowledged' | 'Not Acknowledged'
+const filters = ['All', 'Acknowledged', 'Not Yet Acknowledged'] as const
+type DocumentFilter = typeof filters[number]
 
-interface CompanyDocumentGroupResponseItem {
-  id?: string | number
-  osid?: string | number
-  count?: string | number
-  FolderTitle?: string
-  FolderDescription?: string
-  status?: string
-  readstatus?: string
-  readstatus_display?: string
-  acknowledgedate?: string
-  acknowledgedate_display?: string
-  acknowledgedCount?: string | number
-  notAcknowledgedCount?: string | number
-}
-
-interface CompanyDocumentFolder {
-  slug: string
-  folderbaseid: string
-  title: string
-  description: string
-  articles: number
-  acknowledgedCount: number
-  notAcknowledgedCount: number
-  status?: CompanyDocumentStatus
-}
-
-const filters = ['All', 'Acknowledged', 'Not Yet Acknowledged']
-const activeFilter = ref('All')
+const documentStore = useDocumentManagementStore()
+const activeFilter = ref<DocumentFilter>('All')
 const searchQuery = ref('')
-const loading = ref(true)
-const error = ref<Error | null>(null)
 const currentPage = ref(1)
 const pageSize = 15
-const companyDocumentResponse = ref<any>(null)
+const pageLoading = ref(false)
+const pageError = ref<Error | null>(null)
 
-const normalizeCompanyDocumentResponse = (response: any): CompanyDocumentGroupResponseItem[] => {
-  if (Array.isArray(response)) {
-    return response
-  }
-
-  if (Array.isArray(response?.data)) {
-    return response.data
-  }
-
-  if (Array.isArray(response?.data?.data)) {
-    return response.data.data
-  }
-
-  return []
+const filterTabByFilter: Record<DocumentFilter, DocumentCategoryTabKey> = {
+  'All': 'all',
+  'Acknowledged': 'acknowledged',
+  'Not Yet Acknowledged': 'notAcknowledged',
 }
+const filterStatusByFilter: Record<DocumentFilter, DocumentCategoryStatusFilter> = {
+  'All': '',
+  'Acknowledged': 'Acknowledged',
+  'Not Yet Acknowledged': 'NotYetAcknowledged',
+}
+
+const activeTabKey = computed<DocumentCategoryTabKey>(() => filterTabByFilter[activeFilter.value])
+
+const { pending: initialLoading, error: categoryError } = await useAsyncData('desktop-document-categories', () => {
+  return documentStore.fetchCategoryTabs({
+    page: 1,
+    pageSize: 20,
+    matchingKeyword: '',
+  })
+})
+
+const loading = computed(() => {
+  return initialLoading.value || pageLoading.value || documentStore.categoryLoadingByTab[activeTabKey.value]
+})
+
+const error = computed(() => categoryError.value || pageError.value)
 
 const getNumber = (value: any) => {
   const numberValue = Number(value)
@@ -238,7 +224,7 @@ const getStatus = (item: CompanyDocumentGroupResponseItem): CompanyDocumentStatu
 }
 
 const folders = computed<CompanyDocumentFolder[]>(() => {
-  return normalizeCompanyDocumentResponse(companyDocumentResponse.value).map((item) => {
+  return documentStore.categoriesByTab[activeTabKey.value].map((item) => {
     const title = item.FolderTitle || ''
     const slug = String(item.id || item.osid || title)
 
@@ -257,32 +243,23 @@ const folders = computed<CompanyDocumentFolder[]>(() => {
 
 const filteredFolders = computed(() => {
   const keyword = searchQuery.value.trim().toLowerCase()
-  const matchesKeyword = (folder: CompanyDocumentFolder) => {
-    if (!keyword) {
-      return true
-    }
 
-    return [folder.title, folder.description].some(value => value.toLowerCase().includes(keyword))
+  if (!keyword) {
+    return folders.value
   }
 
-  return folders.value.filter((folder) => {
-    if (!matchesKeyword(folder)) {
-      return false
-    }
-
-    if (activeFilter.value === 'Acknowledged') {
-      return folder.status === 'Acknowledged' || folder.acknowledgedCount > 0
-    }
-
-    if (activeFilter.value === 'Not Yet Acknowledged') {
-      return folder.status === 'Not Acknowledged' || folder.notAcknowledgedCount > 0
-    }
-
-    return true
-  })
+  return folders.value.filter(folder =>
+    [folder.title, folder.description].some(value => value.toLowerCase().includes(keyword)),
+  )
 })
 
-const totalRecords = computed(() => filteredFolders.value.length)
+const totalRecords = computed(() => {
+  if (searchQuery.value.trim()) {
+    return filteredFolders.value.length
+  }
+
+  return documentStore.categoryPaginationByTab[activeTabKey.value].total || filteredFolders.value.length
+})
 const totalPages = computed(() => Math.max(1, Math.ceil(totalRecords.value / pageSize)))
 
 const paginatedFolders = computed(() => {
@@ -314,25 +291,53 @@ const goToPage = (page: number) => {
   currentPage.value = Math.min(Math.max(page, 1), totalPages.value)
 }
 
-const fetchCompanyDocuments = async () => {
-  loading.value = true
-  error.value = null
+const handleFilterClick = async (filter: DocumentFilter) => {
+  activeFilter.value = filter
+  pageLoading.value = true
+  pageError.value = null
 
   try {
-    companyDocumentResponse.value = await $fetch('/api/ecologyOa/companyDocument', {
-      method: 'POST',
-      body: {
-        page: 1,
-        pageSize: 100,
-      },
+    await documentStore.fetchCategories({
+      page: 1,
+      pageSize: 20,
+      matchingKeyword: '',
+      status: filterStatusByFilter[filter],
     })
   }
   catch (caughtError) {
-    error.value = caughtError instanceof Error ? caughtError : new Error('Fetch company documents failed')
-    companyDocumentResponse.value = null
+    pageError.value = caughtError instanceof Error ? caughtError : new Error('Fetch company documents failed')
   }
   finally {
-    loading.value = false
+    pageLoading.value = false
+  }
+}
+
+const ensureCurrentPageLoaded = async () => {
+  if (searchQuery.value.trim()) {
+    return
+  }
+
+  const requiredCount = Math.min(currentPage.value * pageSize, totalRecords.value)
+
+  if (requiredCount <= folders.value.length) {
+    return
+  }
+
+  pageLoading.value = true
+  pageError.value = null
+  try {
+    while (
+      folders.value.length < requiredCount
+      && documentStore.hasMoreCategories(activeTabKey.value)
+    ) {
+      await documentStore.fetchNextCategoryPage(activeTabKey.value)
+    }
+  }
+  catch (caughtError) {
+    pageError.value = caughtError instanceof Error ? caughtError : new Error('Fetch company documents failed')
+  }
+  finally {
+    pageLoading.value = false
   }
 }
 
@@ -346,8 +351,8 @@ watch(totalPages, (nextTotalPages) => {
   }
 })
 
-onMounted(() => {
-  fetchCompanyDocuments()
+watch([activeTabKey, currentPage], () => {
+  void ensureCurrentPageLoaded()
 })
 </script>
 

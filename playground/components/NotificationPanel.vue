@@ -5,26 +5,6 @@
         <h1 class="notification-panel__title">
           Notifications
         </h1>
-        <button
-          v-if="props.variant === 'desktop-popover'"
-          type="button"
-          class="notification-panel__toggle"
-          :class="{ 'is-on': desktopToggleOn, 'is-loading': isPushToggleLoading }"
-          :disabled="isPushToggleLoading"
-          @click="toggleDesktopSubscription"
-        >
-          <span class="notification-panel__toggle-knob" />
-        </button>
-        <button
-          v-else
-          type="button"
-          class="notification-panel__toggle"
-          :class="{ 'is-on': desktopToggleOn, 'is-loading': isPushToggleLoading }"
-          :disabled="isPushToggleLoading"
-          @click="togglePageSubscription"
-        >
-          <span class="notification-panel__toggle-knob" />
-        </button>
       </div>
 
       <div class="notification-panel__filters">
@@ -74,31 +54,6 @@
         />
       </div>
     </div>
-
-    <div
-      v-if="subscriptionPrompt.visible"
-      class="notification-panel__ios-overlay"
-    >
-      <section class="notification-panel__ios-dialog">
-        <h2 class="notification-panel__ios-title">
-          Notifications {{ subscriptionPrompt.type === 'enabled' ? 'Enabled' : 'Disabled' }}
-        </h2>
-        <p class="notification-panel__ios-message">
-          {{ subscriptionPrompt.type === 'enabled'
-            ? 'Notifications are on. You’ll receive alerts for new to-do list items.'
-            : 'You won’t receive to-do list alerts unless notifications are enabled. Enable in Settings > Notifications.' }}
-        </p>
-        <div class="notification-panel__ios-actions">
-          <button
-            type="button"
-            class="notification-panel__ios-action"
-            @click="dismissSubscriptionPrompt"
-          >
-            Dismiss
-          </button>
-        </div>
-      </section>
-    </div>
   </div>
 </template>
 
@@ -128,82 +83,52 @@ const {
   bootstrap,
   markAsRead,
 } = useNotification()
-const {
-  status: pushStatus,
-  subscribe,
-  unsubscribe,
-  init: initPushSubscription,
-} = usePushSubscription()
 const route = useRoute()
 const toDoFrom: any = useState('mobile:todo-form', () => null)
-const { locale } = useAppI18n()
+const { locale, t } = useAppI18n()
 
 const activeFilter = ref('all')
-const isPushToggleLoading = ref(false)
-const subscriptionPrompt = reactive({
-  visible: false,
-  type: 'enabled' as 'enabled' | 'disabled',
-})
-const desktopToggleOn = computed(() => pushStatus.value === 'subscribed')
 
-const dismissSubscriptionPrompt = () => {
-  subscriptionPrompt.visible = false
-}
-
-const showSubscriptionResultPrompt = (enabled: boolean) => {
-  console.info('[NotificationPanel subscription result]', {
-    enabled,
-    pushStatus: pushStatus.value,
-  })
-
-  subscriptionPrompt.type = enabled ? 'enabled' : 'disabled'
-  subscriptionPrompt.visible = true
-}
-
-const formatCategoryLabel = (value?: string) => {
-  const raw = formatNotificationLocalizedText(value, locale.value)
-  if (!raw) {
-    return ''
-  }
-
-  if (/^[a-z]{1,3}$/i.test(raw)) {
-    return raw.toUpperCase()
-  }
-
-  return raw
-    .split(/[\s/_-]+/)
+const getNotificationCategoryText = (item: NotificationItem) => {
+  return [
+    formatNotificationLocalizedText(item.category, locale.value),
+    formatNotificationLocalizedText(getPayloadString(item.payload, ['msgCategory', 'msg_category', 'category', 'type']), locale.value),
+    item.source,
+  ]
     .filter(Boolean)
-    .map(part => part.charAt(0).toUpperCase() + part.slice(1))
     .join(' ')
+    .toLowerCase()
 }
 
-const categoryFilters = computed(() => {
-  const counts = new Map<string, number>()
+const isSystemNotification = (item: NotificationItem) => {
+  const categoryText = getNotificationCategoryText(item)
 
-  for (const item of notifications.value) {
-    const category = formatCategoryLabel(item.category)
-    if (!category) {
-      continue
-    }
+  return categoryText.includes('系统公告')
+    || categoryText.includes('系統公告')
+    || categoryText.includes('system announcement')
+    || categoryText.includes('system notice')
+}
 
-    counts.set(category, (counts.get(category) || 0) + 1)
-  }
+const isPersonalNotification = (item: NotificationItem) => {
+  const categoryText = getNotificationCategoryText(item)
 
-  return Array.from(counts.entries())
-    .sort((left, right) => right[1] - left[1])
-    .slice(0, 3)
-    .map(([label, count]) => ({
-      label,
-      value: `category:${label}`,
-      count,
-    }))
-})
+  return categoryText.includes('个人讯息')
+    || categoryText.includes('個人訊息')
+    || categoryText.includes('个人消息')
+    || categoryText.includes('個人消息')
+    || categoryText.includes('personal message')
+    || !isSystemNotification(item)
+}
 
 const filters = computed(() => {
+  const systemCount = notifications.value.filter(item => isSystemNotification(item)).length
+  const personalCount = notifications.value.filter(item => isPersonalNotification(item)).length
+
   return [
-    { label: 'All', value: 'all', count: null as number | null },
-    ...categoryFilters.value,
-    { label: 'Pending', value: 'pending', count: unreadCount.value },
+    { label: t('notification.filters.all'), value: 'all', count: null as number | null },
+    { label: t('notification.filters.unread'), value: 'unread', count: unreadCount.value || null },
+    { label: t('notification.filters.system'), value: 'system', count: systemCount || null },
+    { label: t('notification.filters.personal'), value: 'personal', count: personalCount || null },
   ]
 })
 
@@ -214,13 +139,16 @@ const filteredNotifications = computed(() => {
     return sortedNotifications
   }
 
-  if (activeFilter.value === 'pending') {
+  if (activeFilter.value === 'unread') {
     return sortedNotifications.filter(item => isNotificationUnread(item))
   }
 
-  if (activeFilter.value.startsWith('category:')) {
-    const targetCategory = activeFilter.value.replace('category:', '')
-    return sortedNotifications.filter(item => formatCategoryLabel(item.category) === targetCategory)
+  if (activeFilter.value === 'system') {
+    return sortedNotifications.filter(item => isSystemNotification(item))
+  }
+
+  if (activeFilter.value === 'personal') {
+    return sortedNotifications.filter(item => isPersonalNotification(item))
   }
 
   return sortedNotifications
@@ -336,52 +264,8 @@ const handleSelect = async (item: NotificationItem) => {
   })
 }
 
-const toggleDesktopSubscription = async () => {
-  if (props.variant !== 'desktop-popover' || isPushToggleLoading.value) {
-    return
-  }
-
-  isPushToggleLoading.value = true
-
-  try {
-    if (desktopToggleOn.value) {
-      await unsubscribe()
-      return
-    }
-
-    const nextSubscription = await subscribe()
-    showSubscriptionResultPrompt(Boolean(nextSubscription))
-  }
-  finally {
-    isPushToggleLoading.value = false
-  }
-}
-
-const togglePageSubscription = async () => {
-  if (isPushToggleLoading.value) {
-    return
-  }
-
-  isPushToggleLoading.value = true
-
-  try {
-    if (desktopToggleOn.value) {
-      await unsubscribe()
-      showSubscriptionResultPrompt(false)
-      return
-    }
-
-    const nextSubscription = await subscribe()
-    showSubscriptionResultPrompt(Boolean(nextSubscription))
-  }
-  finally {
-    isPushToggleLoading.value = false
-  }
-}
-
 onMounted(async () => {
   await bootstrap()
-  await initPushSubscription()
 })
 </script>
 
@@ -434,46 +318,9 @@ onMounted(async () => {
   letter-spacing: 1px;
 }
 
-.notification-panel__toggle {
-  position: relative;
-  width: 38px;
-  height: 22px;
-  border: 0;
-  border-radius: 999px;
-  background: #b10f49;
-  padding: 2px;
-  transition: background-color 0.2s ease;
-}
-
-.notification-panel__toggle:disabled {
-  cursor: default;
-  opacity: 0.72;
-}
-
-.notification-panel__toggle-knob {
-  display: block;
-  width: 18px;
-  height: 18px;
-  border-radius: 999px;
-  background: #ffffff;
-  transform: translateX(16px);
-  transition: transform 0.2s ease;
-}
-
-.notification-panel__toggle:not(.is-on) {
-  background: #d7d0d3;
-}
-
-.notification-panel__toggle:not(.is-on) .notification-panel__toggle-knob {
-  transform: translateX(0);
-}
-
-.notification-panel__toggle.is-loading .notification-panel__toggle-knob {
-  box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.35);
-}
-
 .notification-panel__filters {
   display: flex;
+  align-items: center;
   gap: 8px;
   overflow-x: auto;
   -webkit-overflow-scrolling: touch;
@@ -509,10 +356,19 @@ onMounted(async () => {
 
 .notification-panel__filter-label,
 .notification-panel__filter-count {
+  font-family: 'Source Sans Pro', sans-serif;
+  font-weight: 400;
   line-height: 1;
+  letter-spacing: 0;
+  vertical-align: middle;
+}
+
+.notification-panel__filter-label {
+  font-size: 16px;
 }
 
 .notification-panel__filter-count {
+  font-size: 12px;
   color: #8c8588;
 }
 
@@ -538,63 +394,6 @@ onMounted(async () => {
   display: flex;
   flex-direction: column;
   background: #ffffff;
-}
-
-.notification-panel__ios-overlay {
-  position: fixed;
-  inset: 0;
-  z-index: 10000;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 24px;
-  background: rgb(0 0 0 / 28%);
-}
-
-.notification-panel__ios-dialog {
-  width: min(290px, calc(100vw - 64px));
-  overflow: hidden;
-  border-radius: 18px;
-  background: #f7f7f7;
-  color: #111111;
-  text-align: center;
-  box-shadow: 0 16px 40px rgb(0 0 0 / 22%);
-}
-
-.notification-panel__ios-title {
-  margin: 0;
-  padding: 18px 20px 6px;
-  font-size: 14px;
-  line-height: 1.25;
-  font-weight: 700;
-}
-
-.notification-panel__ios-message {
-  margin: 0;
-  padding: 0 20px 18px;
-  color: #111111;
-  font-size: 12px;
-  line-height: 1.28;
-}
-
-.notification-panel__ios-actions {
-  display: flex;
-  padding: 0 12px 12px;
-}
-
-.notification-panel__ios-actions--split {
-  gap: 8px;
-}
-
-.notification-panel__ios-action {
-  flex: 1;
-  min-height: 42px;
-  border: 0;
-  border-radius: 999px;
-  background: #d9d9d9;
-  color: #111111;
-  font-size: 12px;
-  font-weight: 700;
 }
 
 :global(.notification-panel__dropdown-popper.el-popper),

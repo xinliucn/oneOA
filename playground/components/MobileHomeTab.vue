@@ -1,13 +1,8 @@
 <template>
-  <div
-    class="mobile-home"
-    :class="{ 'is-favourites-editing': isFavouritesEditOpen }"
-  >
+  <div class="mobile-home" :class="{ 'is-favourites-editing': isFavouritesEditOpen }">
     <template v-if="!isFavouritesEditOpen">
-      <section
-        class="home-hero"
-        :style="{ backgroundImage: `linear-gradient(90deg, rgba(0, 0, 0, 0.62), rgba(0, 0, 0, 0.12)), url(${heroImage})` }"
-      >
+      <section class="home-hero"
+        :style="{ backgroundImage: `linear-gradient(90deg, rgba(0, 0, 0, 0.62), rgba(0, 0, 0, 0.12)), url(${heroImage})` }">
         <div class="home-hero__greeting">
           <span>{{ greetingLabel }}</span>
           <strong>{{ displayName }}</strong>
@@ -19,151 +14,75 @@
       </section>
       <section class="home-section">
         <div class="home-shortcuts">
-          <button
-            type="button"
-            class="home-shortcut-card"
-            @click="openSearch"
-          >
-            <IconCustom
-              name="search"
-              :size="24"
-              color="#b20f4b"
-            />
-            <span>Search</span>
-          </button>
-
-          <button
-            type="button"
-            class="home-shortcut-card"
-            @click="openNotifications"
-          >
-            <IconCustom
-              name="bell"
-              :size="24"
-              color="#b20f4b"
-            />
-            <span>Notifications</span>
-          </button>
+          <form class="home-search-card" @submit.prevent="openSearch">
+            <input v-model="homeSearchQuery" type="search" class="home-search-card__input"
+              :placeholder="t('home.searchPlaceholder')">
+            <button type="submit" class="home-search-card__submit" :aria-label="t('home.searchPlaceholder')">
+              <IconCustom name="search" :size="22" color="#6f6f6f" />
+            </button>
+          </form>
         </div>
       </section>
-      <!-- <section class="home-section">
+      <section class="home-section">
         <div class="home-section__header">
-          <div
-            class="home-section__tabs"
-            role="tablist"
-            aria-label="Favourite views"
-          >
-            <button
-              type="button"
-              class="home-section__tab"
-              :class="{ 'is-active': favouriteView === 'favourites' }"
-              role="tab"
-              :aria-selected="favouriteView === 'favourites'"
-              @click="favouriteView = 'favourites'"
-            >
+          <div class="home-section__tabs" role="tablist" aria-label="Favourite views">
+            <button type="button" class="home-section__tab" :class="{ 'is-active': favouriteView === 'favourites' }"
+              role="tab" :aria-selected="favouriteView === 'favourites'" @click="favouriteView = 'favourites'">
               Favourites
             </button>
-            <button
-              type="button"
-              class="home-section__tab"
-              :class="{ 'is-active': favouriteView === 'recents' }"
-              role="tab"
-              :aria-selected="favouriteView === 'recents'"
-              @click="favouriteView = 'recents'"
-            >
+            <button type="button" class="home-section__tab" :class="{ 'is-active': favouriteView === 'recents' }"
+              role="tab" :aria-selected="favouriteView === 'recents'" @click="favouriteView = 'recents'">
               Recents
             </button>
           </div>
-          <button
-            type="button"
-            :disabled="favouriteLoading"
-            @click="openFavouritesEdit"
-          >
+          <button type="button" :disabled="favouriteLoading" @click="openFavouritesEdit">
             {{ t('favourites.edit') }}
           </button>
         </div>
         <div class="favourites-grid">
-          <div
-            v-if="favouriteView === 'favourites' && favouriteLoading"
-            class="home-empty-state"
-          >
+          <div v-if="favouriteView === 'favourites' && favouriteLoading" class="home-empty-state">
             Loading...
           </div>
           <template v-else-if="visibleFavouriteItems.length">
-            <button
-              v-for="item in visibleFavouriteItems"
-              :key="item.id"
-              type="button"
-              class="favourite-item"
-              @click="handleShortcutClick(item)"
-            >
-              <IconCustom
-                :name="item.icon"
-                :size="39"
-                color="#A60A3A"
-              />
+            <button v-for="item in visibleFavouriteItems" :key="item.id" type="button" class="favourite-item"
+              @click="handleShortcutClick(item)">
+              <IconCustom :name="item.icon" :size="39" color="#A60A3A" />
               <span>{{ item.label }}</span>
             </button>
           </template>
-          <div
-            v-else
-            class="home-empty-state"
-          >
+          <div v-else class="home-empty-state">
             {{ visibleShortcutEmptyCopy }}
           </div>
         </div>
-      </section> -->
+      </section>
 
       <section class="home-section">
         <div class="home-section__header">
-          <h2>Applications</h2>
-          <button
-            type="button"
-            @click="openApplicationsPage"
-          >
-            View all
+          <h2>{{ t('desktopApps.title') }}</h2>
+          <button type="button" @click="openApplicationsPage">
+            {{ t('common.viewAll') }}
           </button>
         </div>
         <div class="applications-grid">
-          <button
-            v-for="item in applicationItems"
-            :key="item.title"
-            type="button"
-            class="application-card"
-            @click="openBusinessDetail(item.entry)"
-          >
-            <IconCustom
-              :name="item.icon"
-              :size="39"
-              :color="item.color"
-            />
+          <button v-for="item in applicationItems" :key="item.title" type="button" class="application-card"
+            :class="{ 'application-card--centered': !item.description }" @click="openBusinessDetail(item.entry)">
+            <IconCustom :name="item.icon" :size="39" :color="item.color" />
             <strong>{{ item.title }}</strong>
-            <span>{{ item.description }}</span>
+            <span v-if="item.description">{{ item.description }}</span>
           </button>
         </div>
       </section>
 
       <section class="home-section home-section--news">
         <div class="home-section__header">
-          <h2>Group News</h2>
-          <button
-            type="button"
-            @click="navigateTo('/mobile/news')"
-          >
-            View all
+          <h2>{{ t('groupNews.title') }}</h2>
+          <button type="button" @click="navigateTo('/mobile/news')">
+            {{ t('common.viewAll') }}
           </button>
         </div>
         <div class="news-strip">
-          <article
-            v-for="item in newsItems"
-            :key="item.title"
-            class="news-card"
-            @click="openNewsItem(item)"
-          >
-            <img
-              :src="item.image"
-              :alt="item.title"
-            >
+          <article v-for="item in newsItems" :key="item.id" class="news-card" @click="openNewsItem(item)">
+            <img :src="item.image" :alt="item.title">
             <div class="news-card__body">
               <h3>{{ item.title }}</h3>
               <time>{{ formatNewsDate(item.date, locale) }}</time>
@@ -173,58 +92,26 @@
       </section>
     </template>
 
-    <section
-      v-else
-      class="home-favourites-page"
-    >
+    <section v-else class="home-favourites-page">
       <div class="home-favourites-page__header">
-        <div
-          v-if="isFavouritesSearchOpen"
-          class="home-favourites-page__search-row"
-        >
+        <div v-if="isFavouritesSearchOpen" class="home-favourites-page__search-row">
           <label class="home-favourites-page__search">
-            <IconCustom
-              name="search"
-              :size="16"
-              class="home-favourites-page__search-icon"
-            />
-            <input
-              v-model.trim="favouritesSearchQuery"
-              type="text"
-              :placeholder="copy.searchPlaceholder"
-            >
+            <IconCustom name="search" :size="16" class="home-favourites-page__search-icon" />
+            <input v-model.trim="favouritesSearchQuery" type="text" :placeholder="copy.searchPlaceholder">
           </label>
-          <button
-            type="button"
-            class="home-favourites-page__action-text"
-            @click="closeFavouritesSearch"
-          >
+          <button type="button" class="home-favourites-page__action-text" @click="closeFavouritesSearch">
             {{ copy.cancel }}
           </button>
         </div>
 
-        <div
-          v-else
-          class="home-favourites-page__title-row"
-        >
+        <div v-else class="home-favourites-page__title-row">
           <h1>{{ t('favourites.title') }}</h1>
           <div class="home-favourites-page__actions">
-            <button
-              type="button"
-              class="home-favourites-page__icon-btn"
-              @click="openFavouritesSearch"
-            >
-              <IconCustom
-                name="search"
-                :size="18"
-              />
+            <button type="button" class="home-favourites-page__icon-btn" @click="openFavouritesSearch">
+              <IconCustom name="search" :size="18" />
             </button>
-            <button
-              type="button"
-              class="home-favourites-page__action-text"
-              :disabled="favouriteSaving"
-              @click="completeFavouritesEdit"
-            >
+            <button type="button" class="home-favourites-page__action-text" :disabled="favouriteSaving"
+              @click="completeFavouritesEdit">
               {{ favouriteSaving ? copy.saving : copy.done }}
             </button>
           </div>
@@ -236,17 +123,9 @@
           <div class="home-favourites-section__title">
             {{ copy.myFavourites }}
           </div>
-          <button
-            v-for="item in selectedEditableFavourites"
-            :key="item.itemId"
-            type="button"
-            class="home-favourites-row is-selected"
-            @click="toggleDraftFavourite(item.itemId)"
-          >
-            <span
-              class="home-favourites-row__check"
-              aria-hidden="true"
-            >
+          <button v-for="item in selectedEditableFavourites" :key="item.itemId" type="button"
+            class="home-favourites-row is-selected" @click="toggleDraftFavourite(item.itemId)">
+            <span class="home-favourites-row__check" aria-hidden="true">
               <span />
             </span>
             <span class="home-favourites-row__body">
@@ -254,10 +133,7 @@
               <span class="home-favourites-row__subtitle">{{ item.subtitle }}</span>
             </span>
           </button>
-          <div
-            v-if="!selectedEditableFavourites.length"
-            class="home-favourites-empty-row"
-          >
+          <div v-if="!selectedEditableFavourites.length" class="home-favourites-empty-row">
             {{ copy.selectAtLeastOne }}
           </div>
         </div>
@@ -266,41 +142,24 @@
           <div class="home-favourites-section__title">
             {{ copy.allItems }}
           </div>
-          <button
-            v-for="item in unselectedEditableFavourites"
-            :key="item.itemId"
-            type="button"
-            class="home-favourites-row"
-            :class="{ 'is-disabled': isMaxSelected }"
-            @click="toggleDraftFavourite(item.itemId)"
-          >
-            <span
-              class="home-favourites-row__check"
-              aria-hidden="true"
-            />
+          <button v-for="item in unselectedEditableFavourites" :key="item.itemId" type="button"
+            class="home-favourites-row" :class="{ 'is-disabled': isMaxSelected }"
+            @click="toggleDraftFavourite(item.itemId)">
+            <span class="home-favourites-row__check" aria-hidden="true" />
             <span class="home-favourites-row__body">
               <span class="home-favourites-row__title">{{ item.label }}</span>
               <span class="home-favourites-row__subtitle">{{ item.subtitle }}</span>
             </span>
-            <IconCustom
-              v-if="item.kind === 'custom'"
-              name="chevron-right"
-              :size="16"
-              class="home-favourites-row__arrow"
-            />
+            <IconCustom v-if="item.kind === 'custom'" name="chevron-right" :size="16"
+              class="home-favourites-row__arrow" />
           </button>
         </div>
 
-        <div
-          v-if="catalogLoading"
-          class="home-favourites-page__empty"
-        >
+        <div v-if="catalogLoading" class="home-favourites-page__empty">
           Loading...
         </div>
-        <div
-          v-else-if="!selectedEditableFavourites.length && !unselectedEditableFavourites.length"
-          class="home-favourites-page__empty"
-        >
+        <div v-else-if="!selectedEditableFavourites.length && !unselectedEditableFavourites.length"
+          class="home-favourites-page__empty">
           {{ copy.searchEmpty }}
         </div>
       </div>
@@ -310,8 +169,8 @@
 
 <script setup lang="ts">
 import { computed, ref, onMounted, onBeforeUnmount } from 'vue'
-import type { ApplicationCatalogItem } from '~/composables/useApplicationCatalog'
-import type { NewsItem } from '~/composables/useNewsList'
+import type { ApplicationCatalogItem } from '~/types/applicationCatalog'
+import type { NewsItem } from '~/types/news'
 import type { RecentItem } from '~/composables/useRecentItems'
 import heroImage from '~/assets/images/Group 120.png'
 import { APPLICATION_BUSINESS_FILTER } from '~/composables/useApplicationCatalog'
@@ -338,6 +197,8 @@ const { t, locale } = useAppI18n()
 const { requestApplicationCatalogData } = useApplicationCatalog()
 const { newsList, fetchNewsList } = useNewsList()
 const { items: recentItems, hydrate: hydrateRecentItems, addRecentItem } = useRecentItems()
+const applicationsStore = useApplicationsStore()
+const { openGuardedUrl } = useNetworkGuard()
 const {
   getFavourite,
   saveFavourite,
@@ -348,22 +209,12 @@ const {
 } = useFavourite()
 
 const activeTab = useState<number>('mobile:activeTab', () => 1)
-const mobileReturnPath = useState<string>('mobile:notification:return-path', () => '/mobile')
-const selectedBusiness = useState<{
-  id?: string
-  icon?: string
-  name_en?: string
-  business?: string
-  description_en?: string
-  color?: string
-  intranetLabel?: string
-  intranetUrl?: string
-} | null>('mobile:selected-business', () => null)
 const currentTime = ref(new Date())
 const favouriteView = ref<'favourites' | 'recents'>('favourites')
 const isFavouritesEditOpen = ref(false)
 const isFavouritesSearchOpen = ref(false)
 const favouritesSearchQuery = ref('')
+const homeSearchQuery = ref('')
 const draftFavouriteItemIds = ref<number[]>([])
 const catalogItems = ref<ApplicationCatalogItem[]>([])
 const catalogLoading = ref(false)
@@ -372,7 +223,11 @@ const businessEntries = ref<Array<{
   mainTable?: {
     id?: string
     name_en?: string
+    name_sc?: string
+    name_tc?: string
     description_en?: string
+    description_sc?: string
+    description_tc?: string
     business?: string
     tag?: string
     color?: string
@@ -702,54 +557,51 @@ const unselectedEditableFavourites = computed(() => {
   return filteredEditableFavourites.value.filter(item => !selectedSet.has(item.itemId))
 })
 
-const getBusinessDisplayName = (name?: string) => {
-  const normalized = normalizeString(name)
-  const lowerName = normalized.toLowerCase()
-
-  if (lowerName.includes('digital') || lowerName.includes('technology') || lowerName.includes('it')) {
-    return 'Digital & Technology'
+const getBusinessDisplayName = (business?: {
+  name_en?: string
+  name_sc?: string
+  name_tc?: string
+}) => {
+  if (locale.value === 'zh-CN') {
+    return normalizeString(business?.name_sc)
+      || normalizeString(business?.name_en)
+      || normalizeString(business?.name_tc)
+      || 'Business'
   }
 
-  if (lowerName.includes('finance')) {
-    return 'Finance'
+  if (locale.value === 'zh-TW') {
+    return normalizeString(business?.name_tc)
+      || normalizeString(business?.name_en)
+      || normalizeString(business?.name_sc)
+      || 'Business'
   }
 
-  if (lowerName.includes('legal') || lowerName.includes('compliance')) {
-    return 'Legal & Compliance'
-  }
-
-  if (lowerName.includes('human resources') || lowerName.includes('hr')) {
-    return 'Human Resources'
-  }
-
-  return normalized.replace(/^group\s+/i, '') || 'Business'
+  return normalizeString(business?.name_en)
+    || normalizeString(business?.name_sc)
+    || normalizeString(business?.name_tc)
+    || 'Business'
 }
 
-const getBusinessDescription = (name?: string, description?: string) => {
-  const normalizedDescription = normalizeString(description)
-  if (normalizedDescription) {
-    return normalizedDescription
+const getBusinessDescription = (business?: {
+  description_en?: string
+  description_sc?: string
+  description_tc?: string
+}) => {
+  if (locale.value === 'zh-CN') {
+    return normalizeString(business?.description_sc)
+      || normalizeString(business?.description_en)
+      || normalizeString(business?.description_tc)
   }
 
-  const normalized = normalizeString(name).toLowerCase()
-
-  if (normalized.includes('digital') || normalized.includes('technology') || normalized.includes('it')) {
-    return 'Core applications for infrastructure, collaboration, and operational support.'
+  if (locale.value === 'zh-TW') {
+    return normalizeString(business?.description_tc)
+      || normalizeString(business?.description_en)
+      || normalizeString(business?.description_sc)
   }
 
-  if (normalized.includes('finance')) {
-    return 'Finance operations, reporting tools, and workflow entry points.'
-  }
-
-  if (normalized.includes('legal') || normalized.includes('compliance')) {
-    return 'Legal, compliance, and governance related applications.'
-  }
-
-  if (normalized.includes('human resources') || normalized.includes('hr')) {
-    return 'People operations, leave, payroll, and related HR services.'
-  }
-
-  return 'Business applications, workflows, and related entry points.'
+  return normalizeString(business?.description_en)
+    || normalizeString(business?.description_sc)
+    || normalizeString(business?.description_tc)
 }
 
 const getBusinessFallbackIcon = (name?: string) => {
@@ -812,13 +664,35 @@ const applicationItems = computed(() => {
       entry: item,
       icon: getBusinessFallbackIcon(businessName),
       color: getBusinessAccentColor(businessName, item.mainTable?.color),
-      title: getBusinessDisplayName(businessName),
-      description: getBusinessDescription(businessName, item.mainTable?.description_en),
+      title: getBusinessDisplayName(item.mainTable),
+      description: getBusinessDescription(item.mainTable),
     }
   })
 })
 
-const newsItems = computed(() => newsList.value.slice(0, 2))
+const getNewsTimestamp = (item: NewsItem) => {
+  const timestamp = new Date(item.date).getTime()
+  return Number.isFinite(timestamp) ? timestamp : 0
+}
+
+const isGroupNewsItem = (item: NewsItem) => {
+  return item.tags?.some(tag => tag.toLowerCase() === 'group news') || item.category === 'Group News'
+}
+
+const newsItems = computed(() => {
+  return [...newsList.value]
+    .sort((left, right) => {
+      const rightPriority = isGroupNewsItem(right) ? 1 : 0
+      const leftPriority = isGroupNewsItem(left) ? 1 : 0
+
+      if (rightPriority !== leftPriority) {
+        return rightPriority - leftPriority
+      }
+
+      return getNewsTimestamp(right) - getNewsTimestamp(left)
+    })
+    .slice(0, 2)
+})
 
 const openApplicationsPage = async () => {
   activeTab.value = 3
@@ -833,7 +707,11 @@ const openBusinessDetail = async (item: {
   mainTable?: {
     id?: string
     name_en?: string
+    name_sc?: string
+    name_tc?: string
     description_en?: string
+    description_sc?: string
+    description_tc?: string
     business?: string
     tag?: string
     color?: string
@@ -843,40 +721,46 @@ const openBusinessDetail = async (item: {
 }) => {
   const businessName = normalizeString(item.mainTable?.business || item.mainTable?.name_en)
   const businessTags = sortByKnownOrder(splitMultiValue(item.mainTable?.tag), regionOrder)
-  const displayName = getBusinessDisplayName(item.mainTable?.name_en || businessName)
+  const displayName = getBusinessDisplayName(item.mainTable)
   const targetPath = `/mobile/applications/business/${encodeURIComponent(businessName)}/${encodeURIComponent((businessTags.length ? businessTags : regionOrder).join('/'))}/${encodeURIComponent(detailRouteTypes.join('/'))}`
 
-  selectedBusiness.value = {
+  applicationsStore.setSelectedBusiness({
     id: businessName,
     icon: getBusinessFallbackIcon(item.mainTable?.name_en || businessName),
     name_en: displayName,
     business: businessName,
-    description_en: getBusinessDescription(item.mainTable?.name_en || businessName, item.mainTable?.description_en),
+    description_en: getBusinessDescription(item.mainTable),
     color: getBusinessAccentColor(item.mainTable?.name_en || businessName, item.mainTable?.color),
     intranetLabel: `${displayName} Intranet >`,
     intranetUrl: item.mainTable?.homepage_url || item.mainTable?.mobileurl || 'https://intranet.dch.com.hk/',
-  }
+  })
 
   recordRecentItem({
     id: `business:${businessName || item.mainTable?.id || displayName}`,
     type: 'business',
     label: displayName,
-    subtitle: getBusinessDescription(item.mainTable?.name_en || businessName, item.mainTable?.description_en),
+    subtitle: getBusinessDescription(item.mainTable),
     icon: getBusinessFallbackIcon(item.mainTable?.name_en || businessName),
     path: targetPath,
   })
 
   activeTab.value = 3
+  applicationsStore.activePrimaryTab = 'business'
   await navigateTo(targetPath)
 }
 
 const openSearch = async () => {
-  await navigateTo('/mobile/search')
-}
+  const query = homeSearchQuery.value.trim()
 
-const openNotifications = async () => {
-  mobileReturnPath.value = '/mobile'
-  await navigateTo('/mobile/notifications')
+  if (!query) {
+    await navigateTo('/mobile/search')
+    return
+  }
+
+  await navigateTo({
+    path: '/mobile/search',
+    query: { q: query },
+  })
 }
 
 const fetchCatalogItems = async () => {
@@ -973,8 +857,14 @@ const openNewsItem = async (item: NewsItem) => {
     label: item.title,
     subtitle: formatNewsDate(item.date, locale.value),
     icon: 'document',
-    path: '/mobile/news',
+    url: item.url,
+    path: item.url ? undefined : '/mobile/news',
   })
+
+  if (item.url) {
+    await openGuardedUrl(item.url, '_self')
+    return
+  }
 
   await navigateTo('/mobile/news')
 }
@@ -1082,9 +972,56 @@ onBeforeUnmount(() => {
 }
 
 .home-shortcuts {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 16px;
+  display: block;
+}
+
+.home-search-card {
+  width: 100%;
+  min-height: 45px;
+  border: 0;
+  border-radius: 9px;
+  background: #f4f4f4;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 14px 0 11px;
+}
+
+.home-search-card__input {
+  min-width: 0;
+  flex: 1;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  color: #595959;
+  font-size: 16px;
+  line-height: 1;
+}
+
+.home-search-card__input::placeholder {
+  color: #6f6f6f;
+}
+
+.home-search-card__input::-webkit-search-cancel-button {
+  appearance: none;
+  width: 16px;
+  height: 16px;
+  background:
+    linear-gradient(45deg, transparent 43%, #a60a3a 44%, #a60a3a 56%, transparent 57%),
+    linear-gradient(-45deg, transparent 43%, #a60a3a 44%, #a60a3a 56%, transparent 57%);
+}
+
+.home-search-card__submit {
+  width: 24px;
+  height: 24px;
+  order: -1;
+  flex-shrink: 0;
+  border: 0;
+  padding: 0;
+  background: transparent;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .home-shortcut-card {
@@ -1233,6 +1170,12 @@ onBeforeUnmount(() => {
   text-align: center;
 }
 
+.application-card--centered {
+  justify-content: center;
+  gap: 10px;
+  padding-bottom: 14px;
+}
+
 .application-card strong {
   width: 141;
   height: 20;
@@ -1261,6 +1204,11 @@ onBeforeUnmount(() => {
   leading-trim: NONE;
   line-height: 100%;
   letter-spacing: 0%;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
 }
 
 .news-strip {
@@ -1270,55 +1218,51 @@ onBeforeUnmount(() => {
 }
 
 .news-card {
-  width: 179px;
-  height: 251px;
-  top: 995px;
-  left: 16px;
-  angle: 0 deg;
-  opacity: 1;
-  border-radius: 24px;
+  min-width: 0;
+  overflow: hidden;
+  border-radius: 16px;
   background: #ffffff;
-  box-shadow: 0px 2px 50px 6px #0000001A;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
 }
 
 .news-card img {
-  width: 179px;
-  height: 130px;
-  angle: 0 deg;
-  opacity: 1;
-  border-top-left-radius: 24px;
-  border-top-right-radius: 24px;
-
+  width: 100%;
+  aspect-ratio: 1.38;
+  display: block;
+  object-fit: cover;
 }
 
 .news-card__body {
-  padding: 10px 10px 12px;
+  min-height: 104px;
+  padding: 10px 11px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
 }
 
 .news-card__body h3 {
-  font-family: Source Sans Pro;
+  margin: 0;
+  padding-bottom: 9px;
+  border-bottom: 1px solid #d9d9d9;
+  font-family: 'Source Sans Pro', sans-serif;
   font-weight: 600;
-  font-style: SemiBold;
   font-size: 16px;
-  leading-trim: NONE;
-  line-height: 100%;
-  letter-spacing: 0%;
-  vertical-align: middle;
-  border-bottom: 1px solid #D9D9D9;
-  margin-bottom: 8px;
-  height: 60px;
+  line-height: 1.18;
+  color: #171717;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
 }
 
 .news-card__body time {
-  font-family: Source Sans Pro;
+  margin-top: auto;
+  font-family: 'Source Sans Pro', sans-serif;
   font-weight: 400;
-  font-style: Regular;
   font-size: 12px;
-  leading-trim: NONE;
-  line-height: 100%;
-  letter-spacing: 0%;
-  vertical-align: middle;
-  margin-top: 16px;
+  line-height: 1.2;
+  color: #7b7b7b;
 }
 
 .home-favourites-page {

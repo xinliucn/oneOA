@@ -37,16 +37,16 @@
       <div class="company-docs-detail-table">
         <div class="company-docs-detail-table__row company-docs-detail-table__row--head">
           <button type="button">
-            Number [version]
+            {{ t('pages.companyDocuments.fields.numberVersion') }}
           </button>
           <button type="button">
-            ePolicy Name
+            {{ t('pages.companyDocuments.fields.ePolicyName') }}
           </button>
           <button type="button">
-            Published Date
+            {{ t('pages.companyDocuments.fields.publishedDate') }}
           </button>
           <button type="button">
-            Acknowledged Status
+            {{ t('pages.companyDocuments.fields.acknowledgedStatus') }}
           </button>
         </div>
 
@@ -110,72 +110,23 @@
 </template>
 
 <script setup lang="ts">
+import type { CompanyDocumentDetailResponseItem, CompanyDocumentItem, CompanyDocumentStatus } from '~/types/documentManagement'
+
 definePageMeta({
   layout: 'desktop',
   middleware: 'auth',
 })
 
-type CompanyDocumentStatus = 'Acknowledged' | 'Not Acknowledged'
-
-interface CompanyDocumentDetailResponseItem {
-  mainTable?: {
-    id?: string | number
-    RequestName?: string
-    Number_Version?: string
-    RequestPublishDate?: string
-    createddate?: string
-    readstatus?: string
-    acknowledgedate_display?: string
-    createdby?: string
-    content_display?: string
-    footer_display?: string
-    fileName?: string
-    filename?: string
-    file_name?: string
-    serverRelativeUrl?: string
-    ServerRelativeUrl?: string
-    server_relative_url?: string
-    fileUrl?: string
-    file_url?: string
-  }
-}
-
-interface CompanyDocumentItem {
-  slug: string
-  title: string
-  code: string
-  version: string
-  numberVersion: string
-  publishedDate: string
-  status: CompanyDocumentStatus
-  raw: CompanyDocumentDetailResponseItem
-}
-
 const route = useRoute()
+const { t } = useAppI18n()
+const documentStore = useDocumentManagementStore()
 const groupSlug = computed(() => String(route.params.group || ''))
-const folderbaseid = computed(() => String(route.query.folderbaseid || groupSlug.value))
+const folderbaseid = computed(() => groupSlug.value)
 const groupTitle = computed(() => String(route.query.title || 'Company Documents'))
 const searchQuery = ref('')
 const loading = ref(true)
 const error = ref<Error | null>(null)
-const companyDocumentDetailResponse = ref<any>(null)
 const selectedDocumentDetail = useState<CompanyDocumentDetailResponseItem | null>('company-document:selected-detail', () => null)
-
-const normalizeCompanyDocumentDetailResponse = (response: any): CompanyDocumentDetailResponseItem[] => {
-  if (Array.isArray(response)) {
-    return response
-  }
-
-  if (Array.isArray(response?.data)) {
-    return response.data
-  }
-
-  if (Array.isArray(response?.data?.data)) {
-    return response.data.data
-  }
-
-  return []
-}
 
 const getStatus = (item: CompanyDocumentDetailResponseItem): CompanyDocumentStatus => {
   const readstatus = item.mainTable?.readstatus || ''
@@ -203,7 +154,7 @@ const formatSummaryDate = (date?: string) => {
 }
 
 const documents = computed<CompanyDocumentItem[]>(() => {
-  return normalizeCompanyDocumentDetailResponse(companyDocumentDetailResponse.value).map((item) => {
+  return documentStore.documentsList.map((item) => {
     const mainTable = item.mainTable || {}
     const numberVersion = mainTable.Number_Version || ''
     const { code, version } = getDocumentCodeAndVersion(numberVersion)
@@ -235,7 +186,7 @@ const filteredDocuments = computed(() => {
       document.title,
       document.publishedDate,
       document.status,
-    ].some(value => value.toLowerCase().includes(keyword))
+    ].some(value => String(value || '').toLowerCase().includes(keyword))
   })
 })
 
@@ -253,23 +204,19 @@ const getDocumentRoute = (document: CompanyDocumentItem) => ({
   },
 })
 
-const fetchCompanyDocumentDetail = async () => {
+const loadDocumentsList = async () => {
   loading.value = true
   error.value = null
 
   try {
-    companyDocumentDetailResponse.value = await $fetch('/api/ecologyOa/companyDocumentDetail', {
-      method: 'POST',
-      body: {
-        folderbaseid: folderbaseid.value,
-        pageNo: 1,
-        pageSize: 100,
-      },
+    await documentStore.fetchDocumentList({
+      folderbaseid: folderbaseid.value,
+      pageNo: 1,
+      pageSize: 10,
     })
   }
   catch (caughtError) {
-    error.value = caughtError instanceof Error ? caughtError : new Error('Fetch company document detail failed')
-    companyDocumentDetailResponse.value = null
+    error.value = caughtError instanceof Error ? caughtError : new Error('Fetch document list failed')
   }
   finally {
     loading.value = false
@@ -277,11 +224,11 @@ const fetchCompanyDocumentDetail = async () => {
 }
 
 watch(folderbaseid, () => {
-  fetchCompanyDocumentDetail()
+  void loadDocumentsList()
 })
 
 onMounted(() => {
-  fetchCompanyDocumentDetail()
+  void loadDocumentsList()
 })
 </script>
 

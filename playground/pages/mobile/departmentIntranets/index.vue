@@ -12,7 +12,7 @@
         :key="card.title"
         type="button"
         class="mobile-department-intranets__card"
-        @click="handleCardClick(card)"
+        @click="handleCardClick"
       >
         <div
           v-if="card.image"
@@ -42,32 +42,32 @@
 
 <script setup lang="ts">
 import humanResourcesImage from '~/assets/images/news/news2.png'
+import { getDepartmentIntranetUrl } from '~/utils/departmentIntranet'
 
 definePageMeta({
   layout: 'mobile',
   middleware: 'auth',
 })
 
-const { t } = useAppI18n()
+const { locale, t } = useAppI18n()
 const { openGuardedUrl } = useNetworkGuard()
 
 const pageTitle = computed(() => t('pages.departmentIntranets.title'))
+const departmentIntranetUrl = computed(() => getDepartmentIntranetUrl(locale.value))
 
 const cards = [
   {
     title: 'Group Human Resources',
     image: humanResourcesImage,
-    url: 'https://intranet.dch.com.hk/',
   },
   {
     title: 'Environmental, Social, Governance',
     image: '',
-    url: 'https://intranet.dch.com.hk/',
   },
 ]
 
-const handleCardClick = async (card: typeof cards[number]) => {
-  await openGuardedUrl(card.url, '_blank')
+const handleCardClick = async () => {
+  await openGuardedUrl(departmentIntranetUrl.value, '_blank')
 }
 </script>
 

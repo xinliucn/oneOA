@@ -22,6 +22,27 @@
     </section>
 
     <section class="mobile-profile__section">
+      <div class="mobile-profile__row mobile-profile__row--inline">
+        <div>
+          <span class="mobile-profile__label">{{ t('notification.push.title') }}</span>
+          <!-- <span class="mobile-profile__value">
+            {{ pushToggleOn ? t('notification.push.on') : t('notification.push.off') }}
+          </span> -->
+        </div>
+        <button
+          type="button"
+          class="mobile-profile__toggle"
+          :class="{ 'is-on': pushToggleOn, 'is-loading': isPushToggleLoading }"
+          :disabled="isPushToggleLoading"
+          :aria-label="t('notification.push.title')"
+          @click="togglePushSubscription"
+        >
+          <span class="mobile-profile__toggle-knob" />
+        </button>
+      </div>
+    </section>
+
+    <section class="mobile-profile__section">
       <button
         type="button"
         class="mobile-profile__action"
@@ -30,11 +51,52 @@
         Sign out
       </button>
     </section>
+
+    <div
+      v-if="subscriptionPrompt.visible"
+      class="mobile-profile__ios-overlay"
+    >
+      <section class="mobile-profile__ios-dialog">
+        <h2 class="mobile-profile__ios-title">
+          {{ subscriptionPrompt.type === 'enabled'
+            ? t('notification.push.enabledTitle')
+            : t('notification.push.disabledTitle') }}
+        </h2>
+        <p class="mobile-profile__ios-message">
+          {{ subscriptionPrompt.type === 'enabled'
+            ? t('notification.push.enabledMessage')
+            : t('notification.push.disabledMessage') }}
+        </p>
+        <div class="mobile-profile__ios-actions">
+          <button
+            type="button"
+            class="mobile-profile__ios-action"
+            @click="dismissSubscriptionPrompt"
+          >
+            {{ t('notification.push.dismiss') }}
+          </button>
+        </div>
+      </section>
+    </div>
   </div>
 </template>
 
 <script setup lang="ts">
 const { user, logout } = useAuth()
+const {
+  status: pushStatus,
+  subscribe,
+  unsubscribe,
+  init: initPushSubscription,
+} = usePushSubscription()
+const { t } = useAppI18n()
+
+const isPushToggleLoading = ref(false)
+const subscriptionPrompt = reactive({
+  visible: false,
+  type: 'enabled' as 'enabled' | 'disabled',
+})
+const pushToggleOn = computed(() => pushStatus.value === 'subscribed')
 
 const displayName = computed(() => {
   return user.value?.name || user.value?.displayName || user.value?.username || 'Profile'
@@ -53,9 +115,44 @@ const profileInitials = computed(() => {
   return parts.slice(0, 2).map(part => part[0]?.toUpperCase() || '').join('') || 'P'
 })
 
+const dismissSubscriptionPrompt = () => {
+  subscriptionPrompt.visible = false
+}
+
+const showSubscriptionResultPrompt = (enabled: boolean) => {
+  subscriptionPrompt.type = enabled ? 'enabled' : 'disabled'
+  subscriptionPrompt.visible = true
+}
+
+const togglePushSubscription = async () => {
+  if (isPushToggleLoading.value) {
+    return
+  }
+
+  isPushToggleLoading.value = true
+
+  try {
+    if (pushToggleOn.value) {
+      await unsubscribe()
+      showSubscriptionResultPrompt(false)
+      return
+    }
+
+    const nextSubscription = await subscribe()
+    showSubscriptionResultPrompt(Boolean(nextSubscription))
+  }
+  finally {
+    isPushToggleLoading.value = false
+  }
+}
+
 const handleLogout = async () => {
   await logout()
 }
+
+onMounted(async () => {
+  await initPushSubscription()
+})
 </script>
 
 <style scoped>
@@ -129,6 +226,13 @@ const handleLogout = async () => {
   padding: 12px 0;
 }
 
+.mobile-profile__row--inline {
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
 .mobile-profile__row + .mobile-profile__row {
   border-top: 1px solid #f1e8eb;
 }
@@ -145,6 +249,45 @@ const handleLogout = async () => {
   word-break: break-all;
 }
 
+.mobile-profile__toggle {
+  position: relative;
+  width: 38px;
+  height: 22px;
+  flex-shrink: 0;
+  border: 0;
+  border-radius: 999px;
+  background: #b10f49;
+  padding: 2px;
+  transition: background-color 0.2s ease;
+}
+
+.mobile-profile__toggle:disabled {
+  cursor: default;
+  opacity: 0.72;
+}
+
+.mobile-profile__toggle-knob {
+  display: block;
+  width: 18px;
+  height: 18px;
+  border-radius: 999px;
+  background: #ffffff;
+  transform: translateX(16px);
+  transition: transform 0.2s ease;
+}
+
+.mobile-profile__toggle:not(.is-on) {
+  background: #d7d0d3;
+}
+
+.mobile-profile__toggle:not(.is-on) .mobile-profile__toggle-knob {
+  transform: translateX(0);
+}
+
+.mobile-profile__toggle.is-loading .mobile-profile__toggle-knob {
+  box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.35);
+}
+
 .mobile-profile__action {
   width: 100%;
   border: 0;
@@ -153,6 +296,59 @@ const handleLogout = async () => {
   color: #ffffff;
   padding: 14px 16px;
   font-size: 15px;
+  font-weight: 700;
+}
+
+.mobile-profile__ios-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 10000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  background: rgb(0 0 0 / 28%);
+}
+
+.mobile-profile__ios-dialog {
+  width: min(290px, calc(100vw - 64px));
+  overflow: hidden;
+  border-radius: 18px;
+  background: #f7f7f7;
+  color: #111111;
+  text-align: center;
+  box-shadow: 0 16px 40px rgb(0 0 0 / 22%);
+}
+
+.mobile-profile__ios-title {
+  margin: 0;
+  padding: 18px 20px 6px;
+  font-size: 14px;
+  line-height: 1.25;
+  font-weight: 700;
+}
+
+.mobile-profile__ios-message {
+  margin: 0;
+  padding: 0 20px 18px;
+  color: #111111;
+  font-size: 12px;
+  line-height: 1.28;
+}
+
+.mobile-profile__ios-actions {
+  display: flex;
+  padding: 0 12px 12px;
+}
+
+.mobile-profile__ios-action {
+  flex: 1;
+  min-height: 42px;
+  border: 0;
+  border-radius: 999px;
+  background: #d9d9d9;
+  color: #111111;
+  font-size: 12px;
   font-weight: 700;
 }
 </style>

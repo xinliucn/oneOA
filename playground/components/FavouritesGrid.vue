@@ -1,6 +1,6 @@
 <template>
   <div class="favourites-grid">
-    <div class="favourites-grid__header">
+    <!-- <div class="favourites-grid__header">
       <div
         class="favourites-grid__tabs"
         role="tablist"
@@ -161,12 +161,12 @@
           </div>
         </div>
       </div>
-    </Teleport>
+    </Teleport> -->
   </div>
 </template>
 
 <script setup lang="ts">
-import type { ApplicationCatalogItem } from '~/composables/useApplicationCatalog'
+import type { ApplicationCatalogItem } from '~/types/applicationCatalog'
 import type { RecentItem } from '~/composables/useRecentItems'
 
 type FavouriteKind = 'application' | 'shortcut' | 'intranet' | 'custom'

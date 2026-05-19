@@ -213,6 +213,11 @@ const getPayloadString = (payload: NotificationItem['payload'], keys: string[]) 
   return ''
 }
 
+const getNotificationBusinessName = (item: NotificationItem, locale: string) => {
+  return formatNotificationLocalizedText(item.businessName, locale)
+    || formatNotificationLocalizedText(getPayloadString(item.payload, ['BusinessName', 'businessName', 'business_name', 'business', 'businessUnit']), locale)
+}
+
 export const formatNotificationListTitle = (item: NotificationItem, locale: string) => {
   const requestNo = getPayloadString(item.payload, [
     'requestNo',
@@ -222,6 +227,15 @@ export const formatNotificationListTitle = (item: NotificationItem, locale: stri
     'referenceNo',
   ])
   const body = formatNotificationLocalizedText(item.content, locale)
+  const businessName = getNotificationBusinessName(item, locale)
+
+  if (businessName) {
+    return [`[${businessName}]`, body]
+      .map(part => normalizeDisplayText(part || ''))
+      .filter(Boolean)
+      .join(' ')
+  }
+
   const status = getNotificationTitleStatus(item.title, locale)
   return [requestNo, body, status]
     .map(part => normalizeDisplayText(part || ''))
@@ -229,23 +243,10 @@ export const formatNotificationListTitle = (item: NotificationItem, locale: stri
     .join(' ')
 }
 
-export const formatNotificationSubtitle = (item: NotificationItem, locale: string) => {
-  const creator = formatNotificationLocalizedText(item.creator, locale)
-    || getPayloadString(item.payload, [
-      'creator',
-      'creatorName',
-      'createdBy',
-      'submitter',
-      'submitterName',
-      'requestor',
-      'requestorName',
-    ])
-  const sourceSystem = formatNotificationLocalizedText(item.sourceSystem, locale)
-    || getPayloadString(item.payload, ['sourceSystem', 'source_system', 'systemName', 'system'])
-  const businessName = formatNotificationLocalizedText(item.businessName, locale)
-    || formatNotificationLocalizedText(getPayloadString(item.payload, ['BusinessName', 'businessName', 'business_name', 'business', 'businessUnit']), locale)
-
-  return [creator, sourceSystem, businessName].filter(Boolean).join(' | ')
+export const formatNotificationSubtitle = (item: NotificationItem) => {
+  return getPayloadString(item.payload, [
+    'referenceId',
+  ]) || item.referenceId?.trim() || ''
 }
 
 export const getLatestNotificationId = (items: NotificationItem[]) => {

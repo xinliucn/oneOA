@@ -15,9 +15,6 @@
       >
         {{ subtitle }}
       </p>
-      <!-- <p class="notification-item__reference">
-        {{ referenceText }}
-      </p> -->
     </div>
 
     <span
@@ -55,7 +52,7 @@ const displayTitle = computed(() => {
 })
 
 const subtitle = computed(() => {
-  return formatNotificationSubtitle(props.item, locale.value)
+  return formatNotificationSubtitle(props.item)
 })
 
 const timeText = computed(() => {

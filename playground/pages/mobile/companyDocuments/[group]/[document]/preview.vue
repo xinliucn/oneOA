@@ -86,12 +86,7 @@
 </template>
 
 <script setup lang="ts">
-interface CompanyDocumentPreviewResponse {
-  data?: string
-  fileName?: string
-  contentType?: string
-  documentId?: string
-}
+import type { CompanyDocumentPreviewResponse } from '~/types/documentManagement'
 
 definePageMeta({
   layout: false,
@@ -101,12 +96,8 @@ definePageMeta({
 const route = useRoute()
 const groupSlug = computed(() => String(route.params.group || ''))
 const documentSlug = computed(() => String(route.params.document || ''))
-const folderbaseid = computed(() => String(route.query.folderbaseid || groupSlug.value))
-const groupTitle = computed(() => String(route.query.groupTitle || 'Company Documents'))
 const fixedPreviewFileName = 'testpdf.pdf'
-const fixedPreviewServerRelativeUrl = '%2Fsites%2FDCHGroupLegalCompliancePublicSite%2FTemplates%2FShared%20Documents%2FKey%20Functions%20-%2002.%20Contract%20Templates%20%26%20Digital%20Playbooks%2F%E5%86%85%E5%9C%B0%E7%89%A9%E6%B5%81%2F01.%20Digital%20Playbooks%2F02.%20Non%E2%80%91Disclosure%20Agreement%20Playbook%2Ftestpdf.pdf'
-const fileName = computed(() => fixedPreviewFileName)
-const serverRelativeUrl = computed(() => fixedPreviewServerRelativeUrl)
+const fileName = computed(() => String(route.query.fileName || fixedPreviewFileName))
 const selectedDocumentPreview = useState<CompanyDocumentPreviewResponse | null>('company-document:selected-preview', () => null)
 const loading = ref(false)
 const blobUrl = ref('')
@@ -269,10 +260,9 @@ const loadPreview = async () => {
 
   loading.value = true
   try {
-    const response = await $fetch<CompanyDocumentPreviewResponse>('/api/ecologyOa/companyDocumentPreview', {
+    const response = await $fetch<CompanyDocumentPreviewResponse>('/api/documentManagement/detail', {
       method: 'GET',
       query: {
-        serverRelativeUrl: serverRelativeUrl.value,
         fileName: fileName.value,
       },
     })
@@ -287,15 +277,7 @@ const loadPreview = async () => {
 }
 
 const handleBack = () => {
-  return navigateTo({
-    path: `/mobile/companyDocuments/${encodeURIComponent(groupSlug.value)}/${encodeURIComponent(documentSlug.value)}`,
-    query: {
-      groupTitle: groupTitle.value,
-      folderbaseid: folderbaseid.value,
-      serverRelativeUrl: serverRelativeUrl.value,
-      fileName: fileName.value,
-    },
-  })
+  return navigateTo(`/mobile/companyDocuments/${encodeURIComponent(groupSlug.value)}/${encodeURIComponent(documentSlug.value)}/list`)
 }
 
 watch(

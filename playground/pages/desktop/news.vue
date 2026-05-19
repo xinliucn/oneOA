@@ -4,7 +4,7 @@
       class="desktop-news__hero"
       :style="{ backgroundImage: `url(${heroImage})` }"
     >
-      <h1>News</h1>
+      <h1>{{ t('pages.news.title') }}</h1>
     </section>
 
     <section class="desktop-news__body">
@@ -16,7 +16,7 @@
           Home
         </NuxtLink>
         <span>&gt;</span>
-        <span>News</span>
+        <span>{{ t('pages.news.title') }}</span>
       </nav>
 
       <div class="desktop-news__toolbar">
@@ -26,12 +26,12 @@
         >
           <button
             v-for="category in categories"
-            :key="category"
+            :key="category.value"
             type="button"
-            :class="['desktop-news__filter', { 'is-active': activeCategory === category }]"
-            @click="activeCategory = category"
+            :class="['desktop-news__filter', { 'is-active': activeCategory === category.value }]"
+            @click="activeCategory = category.value"
           >
-            {{ category }}
+            {{ category.label }}
           </button>
         </div>
 
@@ -85,8 +85,15 @@ definePageMeta({
   middleware: 'auth',
 })
 
-const categories = ['All', 'Group News', 'Internal Publish', 'Promotions']
-const activeCategory = ref('All')
+const { t } = useAppI18n()
+
+const categories = computed(() => [
+  { label: t('pages.news.filters.all'), value: 'all' },
+  { label: t('pages.news.filters.groupNews'), value: 'Group News' },
+  { label: t('pages.news.filters.internalPublish'), value: 'Internal Publish' },
+  { label: t('pages.news.filters.promotion'), value: 'Promotion' },
+])
+const activeCategory = ref('all')
 
 const newsItems = [
   {

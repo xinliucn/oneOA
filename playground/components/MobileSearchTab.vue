@@ -125,7 +125,13 @@ const AI_MODEL = 'Xenova/multilingual-e5-small'
 const LOCAL_AI_SEARCH_ENABLED = false
 const TRANSFORMERS_PACKAGE = '@huggingface/transformers'
 
-const searchQuery = ref('')
+const route = useRoute()
+const getRouteSearchQuery = () => {
+  const value = route.query.q || route.query.query
+  return String(Array.isArray(value) ? value[0] || '' : value || '')
+}
+
+const searchQuery = ref(getRouteSearchQuery())
 const isAiMode = ref(false)
 const isAiBusy = ref(false)
 const aiError = ref('')
@@ -381,6 +387,15 @@ watch(normalizedSearchQuery, (query) => {
     scheduleAiSearch()
   }
 })
+
+watch(
+  () => [route.query.q, route.query.query],
+  () => {
+    searchQuery.value = getRouteSearchQuery()
+    handleSearch()
+  },
+  { immediate: true },
+)
 
 onBeforeUnmount(() => {
   if (aiSearchTimer) {

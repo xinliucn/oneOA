@@ -1,3 +1,9 @@
+import type {
+  ApplicationBusiness,
+  ApplicationCatalogFilters,
+  ApplicationCatalogItem,
+} from '~/types/applicationCatalog'
+
 export const APPLICATION_BUSINESS_FILTER: ApplicationCatalogFilters = {
   type: 'Business',
 }
@@ -284,43 +290,4 @@ export const useApplicationCatalog = () => {
     getBusinessBySlug,
     getFormData,
   }
-}
-
-
-export interface ApplicationCatalogItem {
-  id: string
-  name: string
-  type: string
-  regions: string[]
-  business: string
-  homepageUrl: string
-  mobileUrl: string
-  description: string
-  icon: string
-  raw: Record<string, any>
-  mainTable: Record<string, any>
-}
-export interface ApplicationCatalogGroup {
-  id: string
-  title: string
-  items: ApplicationCatalogItem[]
-}
-
-export interface ApplicationBusiness {
-  id: string
-  slug: string
-  name: string
-  icon: string
-  color: string
-  description: string
-  intranetLabel: string
-  regions: string[]
-  groups: ApplicationCatalogGroup[]
-  items: ApplicationCatalogItem[]
-}
-
-export interface ApplicationCatalogFilters {
-  business?: string
-  type?: string | string[]
-  tag?: string
 }

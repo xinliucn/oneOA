@@ -12,6 +12,7 @@ type ProxyWindmillOptions = {
 }
 
 type RuntimeConfigWithProxy = {
+  apiBase?: string
   trustedProxyIps?: string | string[]
   public: {
     apiBase?: string
@@ -44,7 +45,7 @@ const formatProxyErrorMessage = (fallback: string, error?: unknown) => {
 
 export const getWindmillApiBase = () => {
   const config = useRuntimeConfig() as unknown as RuntimeConfigWithProxy
-  const apiBase = String(config.public.apiBase || '').trim()
+  const apiBase = String(config.apiBase || config.public.apiBase || '').trim()
 
   if (!apiBase) {
     throw createError({

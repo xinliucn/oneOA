@@ -1,25 +1,16 @@
-export interface NewsItem {
-  id: number
-  title: string
-  date: string
-  image: string
-  category?: string
-}
-
-interface NewsListResponse {
-  code: number
-  data?: {
-    list?: NewsItem[]
-  }
-}
+import type { FetchNewsListOptions, NewsItem, NewsListResponse } from '~/types/news'
 
 export const useNewsList = () => {
+  const { locale } = useAppI18n()
   const newsList = useState<NewsItem[]>('news:list', () => [])
+  const newsLocale = useState<string>('news:list:locale', () => '')
   const loading = useState<boolean>('news:list:loading', () => false)
   const error = useState<Error | null>('news:list:error', () => null)
 
-  const fetchNewsList = async () => {
-    if (newsList.value.length > 0) {
+  const fetchNewsList = async (options: FetchNewsListOptions = {}) => {
+    const requestLocale = options.locale || locale.value
+
+    if (newsList.value.length > 0 && newsLocale.value === requestLocale) {
       return newsList.value
     }
 
@@ -27,14 +18,20 @@ export const useNewsList = () => {
       loading.value = true
       error.value = null
 
-      const response = await $fetch<NewsListResponse>('/api/news/newslist')
+      const response = await $fetch<NewsListResponse>('/api/news/newslist', {
+        query: {
+          locale: requestLocale,
+        },
+      })
 
       if (response?.code === 1 && Array.isArray(response.data?.list)) {
         newsList.value = response.data.list
+        newsLocale.value = requestLocale
         return newsList.value
       }
 
       newsList.value = []
+      newsLocale.value = requestLocale
       return newsList.value
     }
     catch (err: any) {
@@ -54,6 +51,7 @@ export const useNewsList = () => {
 
   const clearNewsList = () => {
     newsList.value = []
+    newsLocale.value = ''
     error.value = null
   }
 

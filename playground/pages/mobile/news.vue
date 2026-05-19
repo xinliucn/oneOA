@@ -2,7 +2,7 @@
   <div class="news_page">
     <div class="news_tab">
       <div class="news_header">
-        <h1>News</h1>
+        <h1>{{ t('pages.news.title') }}</h1>
         <IconCustom
           name="filterIcon"
           :size="28"
@@ -27,19 +27,19 @@
         v-if="loading"
         class="news_state"
       >
-        Loading news...
+        {{ t('pages.news.states.loading') }}
       </div>
       <div
         v-else-if="error"
         class="news_state news_state--error"
       >
-        Failed to load news.
+        {{ t('pages.news.states.error') }}
       </div>
       <div
         v-else-if="filteredNewsList.length === 0"
         class="news_state"
       >
-        No news found.
+        {{ t('pages.news.states.empty') }}
       </div>
 
       <template v-else>
@@ -47,6 +47,7 @@
           v-for="item in filteredNewsList"
           :key="item.id"
           class="news_content"
+          @click="handleNewsClick(item)"
         >
           <div class="news_content__image">
             <img
@@ -75,10 +76,12 @@
 </template>
 
 <script setup lang="ts">
+import type { NewsItem } from '~/types/news'
 import { formatNewsDate } from '~/utils/date'
 
-const { locale } = useAppI18n()
+const { locale, t } = useAppI18n()
 const { newsList, loading, error, fetchNewsList } = useNewsList()
+const { openGuardedUrl } = useNetworkGuard()
 
 definePageMeta({
   layout: 'mobile',
@@ -87,12 +90,12 @@ definePageMeta({
 
 const activeFilter = ref('all')
 
-const newFilters = [
-  { label: 'All', value: 'all' },
-  { label: 'Group News', value: 'Group News' },
-  { label: 'Internal Publish', value: 'Internal Publish' },
-  { label: 'Promotion', value: 'Promotion' },
-]
+const newFilters = computed(() => [
+  { label: t('pages.news.filters.all'), value: 'all' },
+  { label: t('pages.news.filters.groupNews'), value: 'Group News' },
+  { label: t('pages.news.filters.internalPublish'), value: 'Internal Publish' },
+  { label: t('pages.news.filters.promotion'), value: 'Promotion' },
+])
 
 const filteredNewsList = computed(() => {
   if (activeFilter.value === 'all') {
@@ -101,6 +104,14 @@ const filteredNewsList = computed(() => {
 
   return newsList.value.filter(item => item.category === activeFilter.value)
 })
+
+const handleNewsClick = async (item: NewsItem) => {
+  if (!item.url) {
+    return
+  }
+
+  await openGuardedUrl(item.url, '_self')
+}
 
 onMounted(async () => {
   await fetchNewsList()

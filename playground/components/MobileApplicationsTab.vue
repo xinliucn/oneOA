@@ -35,21 +35,21 @@
     >
       <div
         v-for="app in catalogEntries"
-        :key="app.mainTable.id"
+        :key="getCatalogEntryKey(app)"
         class="app-card"
         @click="handleAppClick(app)"
       >
         <div class="app-card__logo">
           <img
-            v-if="app.mainTable.iconx64"
+            v-if="app.mainTable?.iconx64"
             :src="app.mainTable.iconx64"
-            :alt="app.mainTable.name_en"
+            :alt="getApplicationDisplayName(app)"
             class="app-card__img"
           >
           <div
             v-else
             class="app-card__fallback"
-            :aria-label="app.mainTable.name_en"
+            :aria-label="getApplicationDisplayName(app)"
           >
             <IconCustom
               name="apps"
@@ -58,7 +58,7 @@
           </div>
         </div>
         <div class="app-card__name">
-          {{ app.mainTable.name_en }}
+          {{ getApplicationDisplayName(app) }}
         </div>
       </div>
     </div>
@@ -69,36 +69,36 @@
     >
       <div
         v-for="biz in catalogEntries"
-        :key="biz.mainTable.id"
+        :key="getCatalogEntryKey(biz)"
         class="biz-card"
         @click="handleBizClick(biz.mainTable)"
       >
         <div
           class="biz-card__icon"
-          :style="{ color: getBusinessAccentColor(biz.mainTable.name_en, biz.color) }"
+          :style="{ color: getBusinessAccentColor(biz.mainTable?.name_en, biz.color) }"
         >
           <div class="app-card__logo">
             <img
-              v-if="biz.mainTable.iconx64"
+              v-if="biz.mainTable?.iconx64"
               :src="biz.mainTable.iconx64"
-              :alt="biz.mainTable.name_en"
+              :alt="getBusinessDisplayName(biz.mainTable)"
               class="app-card__img"
             >
             <div
               v-else
               class="app-card__fallback app-card__fallback--business"
-              :style="{ color: getBusinessAccentColor(biz.mainTable.name_en, biz.color) }"
-              :aria-label="biz.mainTable.name_en"
+              :style="{ color: getBusinessAccentColor(biz.mainTable?.name_en, biz.color) }"
+              :aria-label="getBusinessDisplayName(biz.mainTable)"
             >
               <IconCustom
-                :name="getBusinessFallbackIcon(biz.mainTable.name_en)"
+                :name="getBusinessFallbackIcon(biz.mainTable?.name_en)"
                 :size="24"
               />
             </div>
           </div>
         </div>
         <div class="biz-card__name">
-          {{ biz.mainTable.name_en }}
+          {{ getBusinessDisplayName(biz.mainTable) }}
         </div>
         <div class="biz-card__desc">
           {{ getBusinessDescription(biz) }}
@@ -109,69 +109,24 @@
 </template>
 
 <script setup lang="ts">
-import { computed, watch } from 'vue'
-import { APPLICATION_BUSINESS_FILTER } from '~/composables/useApplicationCatalog'
-import type { ApplicationCatalogFilters, ApplicationCatalogItem } from '~/composables/useApplicationCatalog'
+import { computed } from 'vue'
+import type {
+  ApplicationCatalogEntry as CatalogEntry,
+  ApplicationPrimaryTab,
+  ApplicationPrimaryTabKey,
+} from '~/types/applicationCatalog'
 
-type CatalogEntry = ApplicationCatalogItem & {
-  color?: string
-  business?: string
-  tag?: string
-  type?: string
-  mainTable?: {
-    id?: string
-    name_en?: string
-    description_en?: string
-    iconx64?: string
-    color?: string
-    mobileurl?: string
-    homepage_url?: string
-    business?: string
-    tag?: string
-    type?: string
-  }
-}
-
-type PrimaryTabKey = 'business' | 'application'
-
-type PrimaryTab = {
-  key: PrimaryTabKey
-  label: string
-}
-
-type SelectedBusinessSummary = {
-  id?: string
-  icon?: string
-  name_en?: string
-  business?: string
-  description_en?: string
-  color?: string
-  intranetLabel?: string
-  intranetUrl?: string
-}
-
-const { t } = useAppI18n()
-const { catalog, getApplicationCatalogData } = useApplicationCatalog()
+const { t, locale } = useAppI18n()
 const { openGuardedUrl } = useNetworkGuard()
 const { addRecentItem } = useRecentItems()
-const primaryTabs: PrimaryTab[] = [
+const applicationsStore = useApplicationsStore()
+const primaryTabs: ApplicationPrimaryTab[] = [
   { key: 'application', label: t('mobile.applications.tabs.byApplication') },
   { key: 'business', label: t('mobile.applications.tabs.byBusiness') },
 ]
-
-const catalogFiltersByTab: Record<PrimaryTabKey, ApplicationCatalogFilters> = {
-  business: APPLICATION_BUSINESS_FILTER,
-  application: { type: 'Application' },
-}
-
-const getCatalogFilters = (tabKey: PrimaryTabKey): ApplicationCatalogFilters => ({
-  ...catalogFiltersByTab[tabKey],
-})
-
-const activePrimaryTab = useState<PrimaryTabKey>('mobile:applications:active-tab', () => 'application')
-const selectedBusiness = useState<SelectedBusinessSummary | null>('mobile:selected-business', () => null)
+const activePrimaryTab = computed(() => applicationsStore.activePrimaryTab)
 const isBusinessTab = computed(() => activePrimaryTab.value === 'business')
-const catalogEntries = computed(() => catalog.value as CatalogEntry[])
+const catalogEntries = computed(() => applicationsStore.activeCatalogEntries)
 const regionOrder = ['HK', 'CN', 'SEA']
 const detailRouteTypes = ['Group']
 
@@ -201,8 +156,12 @@ const sortByKnownOrder = (items: string[], order: string[]) => {
   })
 }
 
-const selectPrimaryTab = (tabKey: PrimaryTabKey) => {
-  activePrimaryTab.value = tabKey
+const selectPrimaryTab = (tabKey: ApplicationPrimaryTabKey) => {
+  void applicationsStore.selectPrimaryTab(tabKey)
+}
+
+const getCatalogEntryKey = (entry: CatalogEntry) => {
+  return entry.mainTable?.id || entry.mobileUrl || entry.homepageUrl || getApplicationDisplayName(entry)
 }
 
 const getApplicationUrl = (app: CatalogEntry) => {
@@ -215,10 +174,12 @@ const handleAppClick = async (app: CatalogEntry) => {
     return
   }
 
+  const displayName = getApplicationDisplayName(app)
+
   addRecentItem({
     id: `application:${app.mainTable?.id || url}`,
     type: 'application',
-    label: app.mainTable?.name_en || app.name || 'Application',
+    label: displayName,
     subtitle: app.mainTable?.type || app.type || 'Application',
     icon: 'apps',
     url,
@@ -227,55 +188,69 @@ const handleAppClick = async (app: CatalogEntry) => {
   await openGuardedUrl(url, '_blank')
 }
 
-const getBusinessDisplayName = (name?: string) => {
-  const normalized = String(name || '').trim()
-  const lowerName = normalized.toLowerCase()
-
-  if (lowerName.includes('digital') || lowerName.includes('technology') || lowerName.includes('it')) {
-    return 'Digital & Technology'
+const getApplicationDisplayName = (app: CatalogEntry) => {
+  if (locale.value === 'zh-CN') {
+    return normalizeString(app.mainTable?.name_sc)
+      || normalizeString(app.mainTable?.name_en)
+      || normalizeString(app.mainTable?.name_tc)
+      || normalizeString(app.name)
+      || 'Application'
   }
 
-  if (lowerName.includes('finance')) {
-    return 'Finance'
+  if (locale.value === 'zh-TW') {
+    return normalizeString(app.mainTable?.name_tc)
+      || normalizeString(app.mainTable?.name_en)
+      || normalizeString(app.mainTable?.name_sc)
+      || normalizeString(app.name)
+      || 'Application'
   }
 
-  if (lowerName.includes('legal') || lowerName.includes('compliance')) {
-    return 'Legal & Compliance'
+  return normalizeString(app.mainTable?.name_en)
+    || normalizeString(app.mainTable?.name_sc)
+    || normalizeString(app.mainTable?.name_tc)
+    || normalizeString(app.name)
+    || 'Application'
+}
+
+const getBusinessDisplayName = (business?: CatalogEntry['mainTable']) => {
+  if (locale.value === 'zh-CN') {
+    return normalizeString(business?.name_sc)
+      || normalizeString(business?.name_en)
+      || normalizeString(business?.name_tc)
+      || 'Business'
   }
 
-  if (lowerName.includes('human resources') || lowerName.includes('hr')) {
-    return 'Human Resources'
+  if (locale.value === 'zh-TW') {
+    return normalizeString(business?.name_tc)
+      || normalizeString(business?.name_en)
+      || normalizeString(business?.name_sc)
+      || 'Business'
   }
 
-  return normalized.replace(/^group\s+/i, '') || 'Business'
+  return normalizeString(business?.name_en)
+    || normalizeString(business?.name_sc)
+    || normalizeString(business?.name_tc)
+    || 'Business'
 }
 
 const getBusinessDescription = (entry: CatalogEntry) => {
-  const description = String(entry.mainTable?.description_en || '').trim()
-  if (description) {
-    return description
+  const business = entry.mainTable
+
+  if (locale.value === 'zh-CN') {
+    return normalizeString(business?.description_sc)
+      || normalizeString(business?.description_en)
+      || normalizeString(business?.description_tc)
   }
 
-  const businessName = String(entry.mainTable?.name_en || '')
-  const lowerName = businessName.toLowerCase()
-
-  if (lowerName.includes('digital') || lowerName.includes('technology') || lowerName.includes('it')) {
-    return 'Core applications for infrastructure, collaboration, and operational support.'
+  if (locale.value === 'zh-TW') {
+    return normalizeString(business?.description_tc)
+      || normalizeString(business?.description_en)
+      || normalizeString(business?.description_sc)
   }
 
-  if (lowerName.includes('finance')) {
-    return 'Finance operations, reporting tools, and workflow entry points.'
-  }
-
-  if (lowerName.includes('legal') || lowerName.includes('compliance')) {
-    return 'Legal, compliance, and governance related applications.'
-  }
-
-  if (lowerName.includes('human resources') || lowerName.includes('hr')) {
-    return 'People operations, leave, payroll, and related HR services.'
-  }
-
-  return 'Business applications, workflows, and related entry points.'
+  return normalizeString(business?.description_en)
+    || normalizeString(business?.description_sc)
+    || normalizeString(business?.description_tc)
 }
 
 const getBusinessRouteParams = (biz: CatalogEntry['mainTable']) => {
@@ -291,11 +266,11 @@ const getBusinessRouteParams = (biz: CatalogEntry['mainTable']) => {
 
 const handleBizClick = async (biz: CatalogEntry['mainTable']) => {
   const businessName = normalizeString(biz?.business || biz?.name_en)
-  const displayName = getBusinessDisplayName(biz?.name_en)
+  const displayName = getBusinessDisplayName(biz)
   const routeParams = getBusinessRouteParams(biz)
   const targetPath = `/mobile/applications/business/${encodeURIComponent(routeParams.business)}/${encodeURIComponent(routeParams.tag)}/${encodeURIComponent(routeParams.type)}`
 
-  selectedBusiness.value = {
+  applicationsStore.setSelectedBusiness({
     id: businessName,
     icon: getBusinessFallbackIcon(biz?.name_en),
     name_en: displayName,
@@ -304,7 +279,7 @@ const handleBizClick = async (biz: CatalogEntry['mainTable']) => {
     color: getBusinessAccentColor(biz?.name_en, biz?.color),
     intranetLabel: `${displayName} Intranet >`,
     intranetUrl: biz?.homepage_url || biz?.mobileurl || 'https://intranet.dch.com.hk/',
-  }
+  })
 
   addRecentItem({
     id: `business:${businessName || biz?.id || displayName}`,
@@ -370,13 +345,7 @@ const getBusinessAccentColor = (name?: string, color?: string) => {
   return '#a60a3a'
 }
 
-watch(
-  activePrimaryTab,
-  async (tabKey) => {
-    await getApplicationCatalogData(getCatalogFilters(tabKey))
-  },
-  { immediate: true },
-)
+void applicationsStore.fetchTabCatalog()
 </script>
 
 <style scoped>

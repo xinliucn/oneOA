@@ -50,6 +50,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { sidebarMenuConfig, type SidebarMenuConfigItem } from '~/constants/sidebarMenu'
+import { getDepartmentIntranetUrl, getEShopUrl } from '~/utils/departmentIntranet'
 
 type SidebarMenuItem = SidebarMenuConfigItem & {
   label: string
@@ -57,7 +58,8 @@ type SidebarMenuItem = SidebarMenuConfigItem & {
 
 defineProps<{ modelValue: boolean }>()
 const emit = defineEmits(['update:modelValue'])
-const { t } = useAppI18n()
+const { locale, t } = useAppI18n()
+const { openGuardedUrl } = useNetworkGuard()
 const activeTab = useState('mobile:activeTab', () => 1)
 
 const menuItems = computed<SidebarMenuItem[]>(() => {
@@ -67,8 +69,18 @@ const menuItems = computed<SidebarMenuItem[]>(() => {
   }))
 })
 
-const onNavigateTo = (item: SidebarMenuItem) => {
+const onNavigateTo = async (item: SidebarMenuItem) => {
   emit('update:modelValue', false)
+
+  if (item.key === 'department-intranets') {
+    await openGuardedUrl(getDepartmentIntranetUrl(locale.value), '_blank')
+    return
+  }
+
+  if (item.key === 'e-shop') {
+    await openGuardedUrl(getEShopUrl(locale.value), '_blank')
+    return
+  }
 
   if (!item.path) {
     return

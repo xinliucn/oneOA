@@ -217,9 +217,9 @@
                   {{ task.createTime }}
                 </div>
               </div>
-              <div class="todo-item__title">
+              <!-- <div class="todo-item__title">
                 {{ getTaskDisplayName(task) }}
-              </div>
+              </div> -->
               <div
                 v-if="getTaskOrganizationLabel(task)"
                 class="todo-item__title"
@@ -255,22 +255,23 @@
                 </div>
               </div>
               <div class="todo-item__title">
-                {{ getTaskDisplayName(task) }} <span
+                {{ getTaskDisplayName(task) }} 
+                <!-- <span
                   class="todo-item__status"
                   :class="`status-pending`"
                 >
                   {{ t(`${task.currentNodeName}`) }}
-                </span>
+                </span> -->
                 <div class="todo-item__date">
                   {{ task.createTime }}
                 </div>
               </div>
-              <div
+              <!-- <div
                 v-if="getTaskOrganizationLabel(task)"
                 class="todo-item__title"
               >
                 {{ getTaskOrganizationLabel(task) }}
-              </div>
+              </div> -->
               <div class="todo-item__subtitle">
                 <span>{{ task.creatorName }}</span>
                 <span>{{ ' | ' }}</span>
@@ -296,9 +297,9 @@
                   {{ task.createTime }}
                 </div>
               </div>
-              <div class="todo-item__title">
+              <!-- <div class="todo-item__title">
                 {{ getTaskDisplayName(task) }}
-              </div>
+              </div> -->
               <div
                 v-if="getTaskOrganizationLabel(task)"
                 class="todo-item__title"
@@ -328,6 +329,7 @@
 <script setup lang="ts">
 import { computed, nextTick, ref } from 'vue'
 import type { TodoItem, TodoView } from '~/composables/useToDoData'
+import type { LocaleMessages } from '~/types/i18n'
 import { formatRequestName } from '~/utils/todo'
 
 const toDoFrom = useState<TodoItem | null>('mobile:todo-form', () => null)
@@ -336,8 +338,6 @@ type TodoOption = {
   label: string
   value: TodoView
 }
-
-type LocaleMessages = Record<string, string>
 
 const { locale, t } = useAppI18n()
 const { addRecentItem } = useRecentItems()
@@ -1165,6 +1165,16 @@ onBeforeUnmount(() => {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  span {
+    font-family: Source Sans Pro;
+font-weight: 400;
+font-style: Regular;
+font-size: 11px;
+leading-trim: NONE;
+line-height: 100%;
+letter-spacing: 0%;
+vertical-align: middle;
+  }
 }
 
 .todo-item__date {
@@ -1181,5 +1191,14 @@ onBeforeUnmount(() => {
 
 .todo-item__portfolio {
   color: #A60A3A;
+  font-family: Source Sans Pro;
+font-weight: 400;
+font-style: Regular;
+font-size: 11px;
+leading-trim: NONE;
+line-height: 100%;
+letter-spacing: 0%;
+vertical-align: middle;
+
 }
 </style>

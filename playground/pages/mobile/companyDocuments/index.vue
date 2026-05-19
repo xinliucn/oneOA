@@ -20,16 +20,23 @@
     <div class="mobile-company-documents__tabs">
       <button
         v-for="tab in tabs"
-        :key="tab"
+        :key="tab.key"
         type="button"
-        :class="['mobile-company-documents__tab', { active: activeTab === tab }]"
-        @click="activeTab = tab"
+        :class="['mobile-company-documents__tab', { active: activeTab === tab.key }]"
+        @click="activeTab = tab.key"
       >
-        {{ tab }}
+        {{ tab.label }}
+        <span v-if="tab.showCount">
+          {{ tab.count }}
+        </span>
       </button>
     </div>
 
-    <main class="mobile-company-documents__list">
+    <main
+      ref="listRef"
+      class="mobile-company-documents__list"
+      @scroll="handleListScroll"
+    >
       <button
         v-for="group in filteredGroups"
         :key="group.slug"
@@ -52,33 +59,7 @@
 </template>
 
 <script setup lang="ts">
-type CompanyDocumentStatus = 'Acknowledged' | 'Not Acknowledged'
-
-interface CompanyDocumentGroupResponseItem {
-  id?: string | number
-  osid?: string | number
-  count?: string | number
-  FolderTitle?: string
-  FolderDescription?: string
-  status?: string
-  readstatus?: string
-  readstatus_display?: string
-  acknowledgedate?: string
-  acknowledgedate_display?: string
-  acknowledgedCount?: string | number
-  notAcknowledgedCount?: string | number
-}
-
-interface CompanyDocumentGroup {
-  slug: string
-  folderbaseid: string
-  title: string
-  category: string
-  count: number
-  acknowledgedCount: number
-  notAcknowledgedCount: number
-  status?: CompanyDocumentStatus
-}
+import type { CompanyDocumentGroup, CompanyDocumentGroupResponseItem, CompanyDocumentStatus, DocumentCategoryTabKey } from '~/types/documentManagement'
 
 definePageMeta({
   layout: 'mobile',
@@ -86,26 +67,39 @@ definePageMeta({
 })
 
 const { t } = useAppI18n()
-
+const documentStore = useDocumentManagementStore()
 const pageTitle = computed(() => t('pages.companyDocuments.title'))
-const tabs = ['All', 'Acknowledged', 'Not Acknowledged']
-const activeTab = ref(tabs[0])
 
-const normalizeCompanyDocumentResponse = (response: any): CompanyDocumentGroupResponseItem[] => {
-  if (Array.isArray(response)) {
-    return response
-  }
+const tabs = computed(() => [
+  {
+    key: 'all' as const,
+    label: 'All',
+    count: documentStore.categoryCounts.all,
+    showCount: true,
+  },
+  {
+    key: 'acknowledged' as const,
+    label: 'Acknowledged',
+    count: documentStore.categoryCounts.acknowledged,
+    showCount: true,
+  },
+  {
+    key: 'notAcknowledged' as const,
+    label: 'Not Acknowledged',
+    count: documentStore.categoryCounts.notAcknowledged,
+    showCount: true,
+  },
+])
+const activeTab = ref<DocumentCategoryTabKey>('all')
+const listRef = ref<HTMLElement | null>(null)
 
-  if (Array.isArray(response?.data)) {
-    return response.data
-  }
-
-  if (Array.isArray(response?.data?.data)) {
-    return response.data.data
-  }
-
-  return []
-}
+await useAsyncData('document-categories', () => {
+  return documentStore.fetchCategoryTabs({
+    page: 1,
+    pageSize: 20,
+    matchingKeyword: '',
+  })
+})
 
 const getNumber = (value: any) => {
   const numberValue = Number(value)
@@ -128,18 +122,8 @@ const getStatus = (item: CompanyDocumentGroupResponseItem): CompanyDocumentStatu
   }
 }
 
-const { data: companyDocumentResponse } = await useAsyncData('company-document-groups', () => {
-  return $fetch('/api/ecologyOa/companyDocument', {
-    method: 'POST',
-    body: {
-      page: 1,
-      pageSize: 100,
-    },
-  })
-})
-
 const companyDocumentGroups = computed<CompanyDocumentGroup[]>(() => {
-  return normalizeCompanyDocumentResponse(companyDocumentResponse.value).map((item) => {
+  return documentStore.categoriesByTab[activeTab.value].map((item) => {
     const count = getNumber(item.count)
     const acknowledgedCount = getNumber(item.acknowledgedCount)
     const notAcknowledgedCount = getNumber(item.notAcknowledgedCount)
@@ -160,27 +144,43 @@ const companyDocumentGroups = computed<CompanyDocumentGroup[]>(() => {
 })
 
 const filteredGroups = computed(() => {
-  if (activeTab.value === 'Acknowledged') {
-    return companyDocumentGroups.value.filter(group =>
-      group.status === 'Acknowledged' || group.acknowledgedCount > 0)
-  }
-
-  if (activeTab.value === 'Not Acknowledged') {
-    return companyDocumentGroups.value.filter(group =>
-      group.status === 'Not Acknowledged' || group.notAcknowledgedCount > 0)
-  }
-
   return companyDocumentGroups.value
+})
+
+const isListNearBottom = () => {
+  const listElement = listRef.value
+
+  if (!listElement) {
+    return false
+  }
+
+  return listElement.scrollTop + listElement.clientHeight >= listElement.scrollHeight - 80
+}
+
+const loadNextPageIfNeeded = async () => {
+  if (!isListNearBottom()) {
+    return
+  }
+
+  await documentStore.fetchNextCategoryPage(activeTab.value)
+}
+
+const handleListScroll = () => {
+  void loadNextPageIfNeeded()
+}
+
+watch(activeTab, async () => {
+  await nextTick()
+  await loadNextPageIfNeeded()
+})
+
+onMounted(() => {
+  void loadNextPageIfNeeded()
 })
 
 const handleGroupClick = (group: CompanyDocumentGroup) => {
   return navigateTo({
-    path: `/mobile/companyDocuments/${encodeURIComponent(group.slug)}`,
-    query: {
-      title: group.title,
-      count: group.count,
-      folderbaseid: group.folderbaseid,
-    },
+    path: `/mobile/companyDocuments/${encodeURIComponent(group.folderbaseid)}`,
   })
 }
 </script>
@@ -244,9 +244,16 @@ const handleGroupClick = (group: CompanyDocumentGroup) => {
   border-radius: 999px;
   background: #ffffff;
   color: #777777;
-  font-size: 12px;
-  line-height: 1;
   white-space: nowrap;
+  font-family: Source Sans Pro;
+  font-weight: 400;
+  font-style: Regular;
+  font-size: 16px;
+  leading-trim: NONE;
+  line-height: 100%;
+  letter-spacing: 0%;
+  vertical-align: middle;
+
 }
 
 .mobile-company-documents__tab.active {
@@ -254,6 +261,7 @@ const handleGroupClick = (group: CompanyDocumentGroup) => {
   background: #a60a3a;
   color: #ffffff;
   font-weight: 700;
+  border: none;
 }
 
 .mobile-company-documents__list {
@@ -284,15 +292,26 @@ const handleGroupClick = (group: CompanyDocumentGroup) => {
 }
 
 .mobile-company-documents__item-title {
-  color: #171717;
-  font-size: 13px;
-  line-height: 1.25;
-  font-weight: 600;
+  color: #000000;
+  font-family: Source Sans Pro;
+  font-weight: 400;
+  font-style: Regular;
+  font-size: 16px;
+  leading-trim: NONE;
+  line-height: 100%;
+  letter-spacing: 0%;
+
 }
 
 .mobile-company-documents__item-category {
   color: #8f8f8f;
-  font-size: 10px;
-  line-height: 1.2;
+  font-family: Source Sans Pro;
+  font-weight: 400;
+  font-style: Regular;
+  font-size: 12px;
+  leading-trim: NONE;
+  line-height: 100%;
+  letter-spacing: 0%;
+
 }
 </style>

@@ -192,7 +192,7 @@
 
 <script setup lang="ts">
 import { computed, nextTick, onMounted, ref } from 'vue'
-import type { ApplicationCatalogItem } from '~/composables/useApplicationCatalog'
+import type { ApplicationCatalogItem } from '~/types/applicationCatalog'
 
 type FavouriteKind = 'application' | 'shortcut' | 'intranet' | 'custom'
 

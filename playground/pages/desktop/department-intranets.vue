@@ -25,7 +25,7 @@
           :key="card.title"
           type="button"
           class="department-intranets-card"
-          @click="handleCardClick(card)"
+          @click="handleCardClick"
         >
           <div
             v-if="card.image"
@@ -58,29 +58,30 @@
 
 <script setup lang="ts">
 import heroImage from '~/assets/images/Rectangle 194.png'
+import { getDepartmentIntranetUrl } from '~/utils/departmentIntranet'
 
 definePageMeta({
   layout: 'desktop',
   middleware: 'auth',
 })
 
+const { locale } = useAppI18n()
 const { openGuardedUrl } = useNetworkGuard()
+const departmentIntranetUrl = computed(() => getDepartmentIntranetUrl(locale.value))
 
 const cards = [
   {
     title: 'Group Human Resources',
     image: heroImage,
-    url: 'https://intranet.dch.com.hk/',
   },
   {
     title: 'Environmental, Social, Governance',
     image: '',
-    url: 'https://intranet.dch.com.hk/',
   },
 ]
 
-const handleCardClick = async (card: typeof cards[number]) => {
-  await openGuardedUrl(card.url, '_blank')
+const handleCardClick = async () => {
+  await openGuardedUrl(departmentIntranetUrl.value, '_blank')
 }
 </script>
 

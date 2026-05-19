@@ -106,10 +106,12 @@
 
 <script setup lang="ts">
 import { createUserWatermark, removeWatermark } from '~/utils/watermark'
+import { getDepartmentIntranetUrl, getEShopUrl } from '~/utils/departmentIntranet'
 
 const { logout, user } = useAuth()
 const { unsubscribe } = usePushSubscription()
-const { t } = useAppI18n()
+const { locale, t } = useAppI18n()
+const { openGuardedUrl } = useNetworkGuard()
 const route = useRoute()
 const isLayoutReady = ref(false)
 const desktopMainRef = ref<HTMLElement | null>(null)
@@ -121,9 +123,9 @@ const menuRoutes: Record<string, string> = {
   3: '/desktop/company-documents',
   4: '/desktop/applications',
   5: '/desktop/department-intranets',
-  6: '/desktop/dashboards',
+  // 6: '/desktop/dashboards',
   7: '/desktop/todo',
-  8: '/desktop/elearning',
+  // 8: '/desktop/elearning',
   9: '/desktop/eshop',
 }
 
@@ -133,9 +135,9 @@ const menuItems = computed(() => [
   { index: '3', icon: 'download', label: t('nav.companyDocuments') },
   { index: '4', icon: 'apps', label: t('nav.applications') },
   { index: '5', icon: 'building', label: t('nav.departmentIntranets') },
-  { index: '6', icon: 'dashboard', label: t('nav.dashboards') },
+  // { index: '6', icon: 'dashboard', label: t('nav.dashboards') },
   { index: '7', icon: 'document', label: t('nav.todo') },
-  { index: '8', icon: 'education', label: t('nav.eLearning') },
+  // { index: '8', icon: 'education', label: t('nav.eLearning') },
   { index: '9', icon: 'shop', label: t('nav.eShop') },
 ])
 
@@ -144,7 +146,17 @@ const activeMenu = computed(() => {
   return matched?.[0] ?? ''
 })
 
-const handleMenuSelect = (index: string) => {
+const handleMenuSelect = async (index: string) => {
+  if (index === '5') {
+    await openGuardedUrl(getDepartmentIntranetUrl(locale.value), '_blank')
+    return
+  }
+
+  if (index === '9') {
+    await openGuardedUrl(getEShopUrl(locale.value), '_blank')
+    return
+  }
+
   const path = menuRoutes[index]
   if (path) navigateTo(path)
 }

@@ -1,57 +1,18 @@
-import type { NewsItem } from '../../../composables/useNewsList'
-
-type CmsCategory = {
-  name?: unknown
-  title?: unknown
-  slug?: unknown
-}
-
-type CmsNewsSettings = {
-  general?: {
-    date?: unknown
-    tags?: unknown
-    image?: unknown
-  }
-}
-
-type CmsNewsItem = {
-  id?: unknown
-  _id?: unknown
-  uuid?: unknown
-  slug?: unknown
-  path?: unknown
-  url?: unknown
-  title?: unknown
-  name?: unknown
-  headline?: unknown
-  displayTitle?: unknown
-  date?: unknown
-  publishDate?: unknown
-  publishedDate?: unknown
-  publishedAt?: unknown
-  published_at?: unknown
-  publishedOn?: unknown
-  createdAt?: unknown
-  created_at?: unknown
-  updatedAt?: unknown
-  updated_at?: unknown
-  category?: unknown
-  images?: unknown
-  image?: unknown
-  coverImage?: unknown
-  cover?: unknown
-  thumbnail?: unknown
-  settings?: CmsNewsSettings
-}
-
-type NewsListResponse = {
-  code: 1
-  data: {
-    list: NewsItem[]
-  }
-}
+import { proxyRequest } from '~/server/utils/requestProxy'
+import type {
+  CmsCategory,
+  CmsNewsItem,
+  MockCmsNewsSeed,
+  NewsItem,
+  NewsListCmsRequestBody,
+  NewsListCmsResponse,
+  NewsListResponse,
+} from '~/types/news'
 
 const fallbackNewsImage = '/mock/news/news1.png'
+const newsListCmsPath = '/api/r/internal/cms/news'
+const newsListLimit = 100
+const newsListTags = ['NewsDetails']
 
 const isRecord = (value: unknown): value is Record<string, unknown> => {
   return !!value && typeof value === 'object' && !Array.isArray(value)
@@ -59,6 +20,24 @@ const isRecord = (value: unknown): value is Record<string, unknown> => {
 
 const asString = (value: unknown) => {
   return typeof value === 'string' ? value.trim() : ''
+}
+
+const resolveCmsLocale = (value: unknown) => {
+  const locale = asString(value).toLowerCase()
+
+  if (locale === 'zh-cn' || locale === 'zh-hans') {
+    return 'zh-CN'
+  }
+
+  if (locale === 'zh-tw' || locale === 'zh-hk' || locale === 'zh-hant') {
+    return 'zh-HK'
+  }
+
+  if (locale.startsWith('en')) {
+    return 'en'
+  }
+
+  return 'zh-HK'
 }
 
 const asCmsNewsItem = (value: unknown): CmsNewsItem | null => {
@@ -137,6 +116,15 @@ const resolveNewsDate = (item: CmsNewsItem) => {
     || asString(item.updated_at)
 }
 
+const resolveNewsUrl = (item: CmsNewsItem) => {
+  return asString(item.url)
+    || asString(item.href)
+    || asString(item.link)
+    || asString(item.pageUrl)
+    || asString(item.page_url)
+    || asString(item.path)
+}
+
 const resolveNewsImageFromRecord = (record: Record<string, unknown>): string => {
   const directImage = asString(record.src) || asString(record.url)
   if (directImage) {
@@ -187,12 +175,16 @@ const resolveNewsCategory = (value: unknown) => {
   return ''
 }
 
-const resolveNewsCategoryFromTags = (tags: unknown) => {
+const resolveNewsTags = (tags: unknown) => {
   if (!Array.isArray(tags)) {
-    return ''
+    return []
   }
 
-  const normalizedTags = tags.map(tag => asString(tag)).filter(Boolean)
+  return tags.map(tag => asString(tag)).filter(Boolean)
+}
+
+const resolveNewsCategoryFromTags = (tags: unknown) => {
+  const normalizedTags = resolveNewsTags(tags)
 
   if (normalizedTags.some(tag => tag === '推廣活動' || tag.toLowerCase() === 'promotion')) {
     return 'Promotion'
@@ -224,11 +216,17 @@ const normalizeNewsItem = (rawItem: unknown, index: number): NewsItem | null => 
     return null
   }
 
+  const tags = resolveNewsTags(item.settings?.general?.tags).length
+    ? resolveNewsTags(item.settings?.general?.tags)
+    : resolveNewsTags(item.tags)
+
   return {
     id: resolveNewsId(item, index),
     title,
     date: resolveNewsDate(item),
-    category: resolveNewsCategoryFromTags(item.settings?.general?.tags)
+    url: resolveNewsUrl(item) || undefined,
+    tags,
+    category: resolveNewsCategoryFromTags(tags)
       || resolveNewsCategory(item.category)
       || undefined,
     image: resolveNewsImage(item.images)
@@ -239,17 +237,6 @@ const normalizeNewsItem = (rawItem: unknown, index: number): NewsItem | null => 
       || resolveNewsImage(item.thumbnail)
       || fallbackNewsImage,
   }
-}
-
-type MockCmsNewsSeed = {
-  id: string
-  url: string
-  path: string
-  title: string
-  imageSrc?: string
-  date: string
-  tags: string[]
-  publishedOn: string
 }
 
 const createMockCmsNewsItem = (seed: MockCmsNewsSeed) => {
@@ -414,8 +401,8 @@ const mockCmsNewsResponse = {
   },
 }
 
-export default defineEventHandler((): NewsListResponse => {
-  const list = collectCmsNewsItems(mockCmsNewsResponse)
+const normalizeNewsListResponse = (response: unknown): NewsListResponse => {
+  const list = collectCmsNewsItems(response)
     .map((item, index) => normalizeNewsItem(item, index))
     .filter((item): item is NewsItem => !!item)
 
@@ -424,5 +411,38 @@ export default defineEventHandler((): NewsListResponse => {
     data: {
       list,
     },
+  }
+}
+
+export default defineEventHandler(async (event): Promise<NewsListResponse> => {
+  const config = useRuntimeConfig()
+
+  if (config.mockEnabled) {
+    return normalizeNewsListResponse(mockCmsNewsResponse)
+  }
+
+  try {
+    const query = getQuery(event)
+    const body: NewsListCmsRequestBody = {
+      tags: newsListTags,
+      limit: newsListLimit,
+      locale: resolveCmsLocale(query.locale),
+    }
+    const response = await proxyRequest<NewsListCmsResponse>(event, newsListCmsPath, {
+      method: 'POST',
+      body,
+      errorMessage: 'Fetch news list failed',
+    })
+
+    return normalizeNewsListResponse(response)
+  }
+  catch (error) {
+    console.log(error)
+    return {
+      code: 1,
+      data: {
+        list: [],
+      },
+    }
   }
 })

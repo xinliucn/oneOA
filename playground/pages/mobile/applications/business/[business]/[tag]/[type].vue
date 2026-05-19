@@ -112,48 +112,21 @@
 
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
-import type { ApplicationCatalogFilters } from '~/composables/useApplicationCatalog'
-
-type BusinessSummary = {
-  id?: string
-  icon?: string
-  name_en?: string
-  business?: string
-  description_en?: string
-  color?: string
-  intranetLabel?: string
-  intranetUrl?: string
-}
-
-type ApplicationCatalogEntry = {
-  tag?: string
-  type?: string
-  business?: string
-  mainTable?: {
-    id?: string
-    tag?: string
-    mobileurl?: string
-    homepage_url?: string
-    name_en?: string
-    name_sc?: string
-    name_tc?: string
-    description_en?: string
-    type?: string
-    business?: string
-    application?: string
-    category?: string
-    iconx64?: string
-    order_number?: string
-  }
-  mobileUrl?: string
-  homepageUrl?: string
-}
+import type {
+  ApplicationCatalogEntry,
+  ApplicationCatalogFilters,
+  SelectedBusinessSummary,
+} from '~/types/applicationCatalog'
 
 const { requestApplicationCatalogData } = useApplicationCatalog()
 const { openGuardedUrl } = useNetworkGuard()
 const { locale } = useAppI18n()
 const route = useRoute()
-const selectedBusiness = useState<BusinessSummary | null>('mobile:selected-business', () => null)
+const applicationsStore = useApplicationsStore()
+const selectedBusiness = computed({
+  get: () => applicationsStore.selectedBusiness,
+  set: (value: SelectedBusinessSummary | null) => applicationsStore.setSelectedBusiness(value),
+})
 const regionOrder = ['HK', 'CN', 'SEA']
 const detailRequestType = 'Group'
 
@@ -163,7 +136,6 @@ definePageMeta({
 })
 
 const activeTab = useState<number>('mobile:activeTab', () => 3)
-const activeApplicationsTab = useState<'business' | 'application'>('mobile:applications:active-tab', () => 'business')
 const selectedRegion = ref<string>('')
 const detailCatalog = ref<ApplicationCatalogEntry[]>([])
 
@@ -223,27 +195,25 @@ const matchesBusinessFamily = (candidate?: string | null, target?: string | null
   return normalizedCandidate === normalizedTarget || normalizedCandidate.startsWith(`${normalizedTarget} -`)
 }
 
-const getBusinessDisplayName = (name?: string) => {
-  const normalized = normalizeString(name)
-  const lowerName = normalized.toLowerCase()
-
-  if (lowerName.includes('digital') || lowerName.includes('technology') || lowerName.includes('it')) {
-    return 'Digital & Technology'
+const getBusinessDisplayName = (business?: ApplicationCatalogEntry['mainTable']) => {
+  if (locale.value === 'zh-CN') {
+    return normalizeString(business?.name_sc)
+      || normalizeString(business?.name_en)
+      || normalizeString(business?.name_tc)
+      || 'Business'
   }
 
-  if (lowerName.includes('finance')) {
-    return 'Finance'
+  if (locale.value === 'zh-TW') {
+    return normalizeString(business?.name_tc)
+      || normalizeString(business?.name_en)
+      || normalizeString(business?.name_sc)
+      || 'Business'
   }
 
-  if (lowerName.includes('legal') || lowerName.includes('compliance')) {
-    return 'Legal & Compliance'
-  }
-
-  if (lowerName.includes('human resources') || lowerName.includes('hr')) {
-    return 'Human Resources'
-  }
-
-  return normalized.replace(/^group\s+/i, '') || 'Business'
+  return normalizeString(business?.name_en)
+    || normalizeString(business?.name_sc)
+    || normalizeString(business?.name_tc)
+    || 'Business'
 }
 
 const getBusinessIcon = (name?: string) => {
@@ -294,47 +264,38 @@ const getBusinessColor = (name?: string) => {
   return '#A60A3A'
 }
 
-const getBusinessDescription = (name?: string, description?: string) => {
-  const normalizedDescription = normalizeString(description)
-  if (normalizedDescription) {
-    return normalizedDescription
+const getBusinessDescription = (business?: ApplicationCatalogEntry['mainTable']) => {
+  if (locale.value === 'zh-CN') {
+    return normalizeString(business?.description_sc)
+      || normalizeString(business?.description_en)
+      || normalizeString(business?.description_tc)
   }
 
-  const normalized = normalizeString(name).toLowerCase()
-
-  if (normalized.includes('digital') || normalized.includes('technology') || normalized.includes('it')) {
-    return 'Core applications for infrastructure, collaboration, and operational support.'
+  if (locale.value === 'zh-TW') {
+    return normalizeString(business?.description_tc)
+      || normalizeString(business?.description_en)
+      || normalizeString(business?.description_sc)
   }
 
-  if (normalized.includes('finance')) {
-    return 'Finance operations, reporting tools, and workflow entry points.'
-  }
-
-  if (normalized.includes('legal') || normalized.includes('compliance')) {
-    return 'Legal, compliance, and governance related applications.'
-  }
-
-  if (normalized.includes('human resources') || normalized.includes('hr')) {
-    return 'People operations, leave, payroll, and related HR services.'
-  }
-
-  return 'Business applications, workflows, and related entry points.'
+  return normalizeString(business?.description_en)
+    || normalizeString(business?.description_sc)
+    || normalizeString(business?.description_tc)
 }
 
 const routeBusiness = computed(() => decodeRouteParam(route.params.business))
 const routeTags = computed(() => sortByKnownOrder(uniq(splitMultiValue(decodeRouteParam(route.params.tag))), regionOrder))
 const regions = computed(() => routeTags.value.length ? routeTags.value : regionOrder)
 
-const mapBusinessSummary = (entry: ApplicationCatalogEntry): BusinessSummary => {
+const mapBusinessSummary = (entry: ApplicationCatalogEntry): SelectedBusinessSummary => {
   const businessName = normalizeString(entry.mainTable?.business || entry.business || entry.mainTable?.name_en)
-  const displayName = getBusinessDisplayName(entry.mainTable?.name_en || businessName)
+  const displayName = getBusinessDisplayName(entry.mainTable)
 
   return {
     id: entry.mainTable?.id,
     icon: getBusinessIcon(entry.mainTable?.name_en || businessName),
     name_en: displayName,
     business: businessName,
-    description_en: getBusinessDescription(entry.mainTable?.name_en || businessName, entry.mainTable?.description_en),
+    description_en: getBusinessDescription(entry.mainTable),
     color: getBusinessColor(entry.mainTable?.name_en || businessName),
     intranetLabel: `${displayName} Intranet >`,
     intranetUrl: entry.mainTable?.homepage_url || entry.mainTable?.mobileurl || 'https://intranet.dch.com.hk/',
@@ -432,7 +393,7 @@ const syncSelectedBusiness = () => {
 
 const handleBack = () => {
   activeTab.value = 3
-  activeApplicationsTab.value = 'business'
+  applicationsStore.activePrimaryTab = 'business'
   return navigateTo('/mobile')
 }
 
@@ -496,7 +457,7 @@ watch(
 )
 
 activeTab.value = 3
-activeApplicationsTab.value = 'business'
+applicationsStore.activePrimaryTab = 'business'
 </script>
 
 <style scoped>
@@ -560,6 +521,11 @@ activeApplicationsTab.value = 'business'
   font-size: 13px;
   line-height: 1.5;
   color: #666666;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
 }
 
 .mobile-app-detail__intranet {

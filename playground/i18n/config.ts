@@ -9,6 +9,7 @@ export const appMessages = {
     common: {
       appName: 'One OA',
       guest: '访客',
+      viewAll: '查看全部',
     },
     locale: {
       ariaLabel: '切换语言',
@@ -108,6 +109,24 @@ export const appMessages = {
       title: '我的收藏',
       edit: '编辑',
     },
+    notification: {
+      filters: {
+        all: '全部',
+        unread: '未读',
+        system: '系统公告',
+        personal: '个人讯息',
+      },
+      push: {
+        title: '通知提醒',
+        on: '已开启',
+        off: '已关闭',
+        enabledTitle: '通知已开启',
+        disabledTitle: '通知已关闭',
+        enabledMessage: '你将收到新的待办事项提醒。',
+        disabledMessage: '你将不会收到待办事项提醒，可在个人信息中重新开启。',
+        dismiss: '知道了',
+      },
+    },
     tasks: {
       title: '待办',
       link: '待办 >',
@@ -150,6 +169,17 @@ export const appMessages = {
       news: {
         title: '新闻',
         placeholder: '新闻内容区域',
+        filters: {
+          all: '全部',
+          groupNews: '集团新闻',
+          internalPublish: '内部公告',
+          promotion: '推广活动',
+        },
+        states: {
+          loading: '新闻加载中...',
+          error: '新闻加载失败。',
+          empty: '暂无新闻。',
+        },
       },
       companyInformation: {
         title: '公司信息',
@@ -158,6 +188,14 @@ export const appMessages = {
       companyDocuments: {
         title: '公司文档',
         placeholder: '公司文档内容区域',
+        fields: {
+          numberVersion: '编号 [版本]',
+          ePolicyName: '电子政策名称',
+          createdBy: '创建人',
+          createdDate: '创建日期',
+          publishedDate: '发布日期',
+          acknowledgedStatus: '签署状态',
+        },
       },
       dashboards: {
         title: '仪表盘',
@@ -189,6 +227,7 @@ export const appMessages = {
     common: {
       appName: 'One OA',
       guest: '訪客',
+      viewAll: '查看全部',
     },
     locale: {
       ariaLabel: '切換語言',
@@ -288,6 +327,24 @@ export const appMessages = {
       title: '我的收藏',
       edit: '編輯',
     },
+    notification: {
+      filters: {
+        all: '全部',
+        unread: '未讀',
+        system: '系統公告',
+        personal: '個人訊息',
+      },
+      push: {
+        title: '通知提醒',
+        on: '已開啟',
+        off: '已關閉',
+        enabledTitle: '通知已開啟',
+        disabledTitle: '通知已關閉',
+        enabledMessage: '你將收到新的待辦事項提醒。',
+        disabledMessage: '你將不會收到待辦事項提醒，可在個人資訊中重新開啟。',
+        dismiss: '知道了',
+      },
+    },
     tasks: {
       title: '待辦',
       link: '待辦 >',
@@ -330,6 +387,17 @@ export const appMessages = {
       news: {
         title: '新聞',
         placeholder: '新聞內容區域',
+        filters: {
+          all: '全部',
+          groupNews: '集團新聞',
+          internalPublish: '內部公告',
+          promotion: '推廣活動',
+        },
+        states: {
+          loading: '新聞載入中...',
+          error: '新聞載入失敗。',
+          empty: '暫無新聞。',
+        },
       },
       companyInformation: {
         title: '公司資訊',
@@ -338,6 +406,14 @@ export const appMessages = {
       companyDocuments: {
         title: '公司文件',
         placeholder: '公司文件內容區域',
+        fields: {
+          numberVersion: '編號 [版本]',
+          ePolicyName: '電子政策名稱',
+          createdBy: '建立人',
+          createdDate: '建立日期',
+          publishedDate: '發布日期',
+          acknowledgedStatus: '簽署狀態',
+        },
       },
       dashboards: {
         title: '儀表板',
@@ -369,6 +445,7 @@ export const appMessages = {
     common: {
       appName: 'One OA',
       guest: 'Guest',
+      viewAll: 'View all',
     },
     locale: {
       ariaLabel: 'Change language',
@@ -468,6 +545,24 @@ export const appMessages = {
       title: 'My Favourites',
       edit: 'Edit',
     },
+    notification: {
+      filters: {
+        all: 'All',
+        unread: 'Unread',
+        system: 'System Announcement',
+        personal: 'Personal Message',
+      },
+      push: {
+        title: 'Notifications',
+        on: 'On',
+        off: 'Off',
+        enabledTitle: 'Notifications Enabled',
+        disabledTitle: 'Notifications Disabled',
+        enabledMessage: 'You will receive alerts for new to-do list items.',
+        disabledMessage: 'You will not receive to-do alerts. You can enable them again in Profile.',
+        dismiss: 'Dismiss',
+      },
+    },
     tasks: {
       title: 'To-Do',
       link: 'To-Do >',
@@ -510,6 +605,17 @@ export const appMessages = {
       news: {
         title: 'News',
         placeholder: 'News content area',
+        filters: {
+          all: 'All',
+          groupNews: 'Group News',
+          internalPublish: 'Internal Publish',
+          promotion: 'Promotion',
+        },
+        states: {
+          loading: 'Loading news...',
+          error: 'Failed to load news.',
+          empty: 'No news found.',
+        },
       },
       companyInformation: {
         title: 'Company Information',
@@ -518,6 +624,14 @@ export const appMessages = {
       companyDocuments: {
         title: 'Company Documents',
         placeholder: 'Company documents content area',
+        fields: {
+          numberVersion: 'Number [version]',
+          ePolicyName: 'ePolicy Name',
+          createdBy: 'Created By',
+          createdDate: 'Created Date',
+          publishedDate: 'Published Date',
+          acknowledgedStatus: 'Acknowledged Status',
+        },
       },
       dashboards: {
         title: 'Dashboards',

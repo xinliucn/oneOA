@@ -28,7 +28,7 @@
     </div>
 
     <div class="mobile-company-document-group__banner">
-      {{ groupTitle }} ({{ documents.length }})
+      {{ groupTitle }} ({{ documentCount }})
     </div>
 
     <main class="mobile-company-document-group__list">
@@ -43,7 +43,9 @@
           <span class="mobile-company-document-group__item-title">{{ document.title }}</span>
           <span class="mobile-company-document-group__item-meta">
             {{ document.code }}{{ document.version }} · {{ document.summaryDate }}
-            <span :class="['mobile-company-document-group__item-status', { 'is-pending': document.status === 'Not Acknowledged' }]">
+            <span
+              :class="['mobile-company-document-group__item-status', { 'is-pending': document.status === 'Not Acknowledged' }]"
+            >
               {{ document.status }}
             </span>
           </span>
@@ -66,29 +68,7 @@
 </template>
 
 <script setup lang="ts">
-type CompanyDocumentStatus = 'Acknowledged' | 'Not Acknowledged'
-
-interface CompanyDocumentDetailResponseItem {
-  mainTable?: {
-    id?: string | number
-    RequestName?: string
-    Number_Version?: string
-    RequestPublishDate?: string
-    createddate?: string
-    readstatus?: string
-    acknowledgedate_display?: string
-  }
-}
-
-interface CompanyDocumentItem {
-  slug: string
-  title: string
-  code: string
-  version: string
-  summaryDate: string
-  status: CompanyDocumentStatus
-  raw: CompanyDocumentDetailResponseItem
-}
+import type { CompanyDocumentDetailResponseItem, CompanyDocumentItem, CompanyDocumentStatus } from '~/types/documentManagement'
 
 definePageMeta({
   layout: 'mobile',
@@ -96,26 +76,11 @@ definePageMeta({
 })
 
 const route = useRoute()
+const documentStore = useDocumentManagementStore()
 const groupSlug = computed(() => String(route.params.group || ''))
-const folderbaseid = computed(() => String(route.query.folderbaseid || groupSlug.value))
-const groupTitle = computed(() => String(route.query.title || 'Company Documents'))
-const selectedDocumentDetail = useState<CompanyDocumentDetailResponseItem | null>('company-document:selected-detail', () => null)
-
-const normalizeCompanyDocumentDetailResponse = (response: any): CompanyDocumentDetailResponseItem[] => {
-  if (Array.isArray(response)) {
-    return response
-  }
-
-  if (Array.isArray(response?.data)) {
-    return response.data
-  }
-
-  if (Array.isArray(response?.data?.data)) {
-    return response.data.data
-  }
-
-  return []
-}
+const folderbaseid = computed(() => groupSlug.value)
+const groupTitle = computed(() => groupSlug.value)
+const pending = ref(false)
 
 const getStatus = (item: CompanyDocumentDetailResponseItem): CompanyDocumentStatus => {
   const readstatus = item.mainTable?.readstatus || ''
@@ -142,25 +107,8 @@ const formatSummaryDate = (date?: string) => {
   return date?.split(' ')[0] || ''
 }
 
-const fetchCompanyDocumentDetail = $fetch as typeof $fetch<any>
-
-const { data: companyDocumentDetailResponse, pending } = await useAsyncData(
-  'company-document-detail',
-  () => fetchCompanyDocumentDetail('/api/ecologyOa/companyDocumentDetail', {
-    method: 'POST',
-    body: {
-      folderbaseid: folderbaseid.value,
-      pageNo: 1,
-      pageSize: 10,
-    },
-  }),
-  {
-    watch: [groupSlug],
-  },
-)
-
 const documents = computed<CompanyDocumentItem[]>(() => {
-  return normalizeCompanyDocumentDetailResponse(companyDocumentDetailResponse.value).map((item) => {
+  return documentStore.documentsList.map((item) => {
     const mainTable = item.mainTable || {}
     const { code, version } = getDocumentCodeAndVersion(mainTable.Number_Version)
     const title = mainTable.RequestName || code || String(mainTable.id || '')
@@ -177,21 +125,34 @@ const documents = computed<CompanyDocumentItem[]>(() => {
   })
 })
 
+const documentCount = computed(() => {
+  return documents.value.length
+})
+
+const loadDocumentsList = async () => {
+  pending.value = true
+
+  try {
+    await documentStore.fetchDocumentList({
+      folderbaseid: folderbaseid.value,
+      pageNo: 1,
+      pageSize: 10,
+    })
+  }
+  finally {
+    pending.value = false
+  }
+}
+
+onMounted(() => {
+  void loadDocumentsList()
+})
+
 const handleBack = () => navigateTo('/mobile/companyDocuments')
 
 const handleDocumentClick = (document: CompanyDocumentItem) => {
-  selectedDocumentDetail.value = document.raw
-
   return navigateTo({
-    path: `/mobile/companyDocuments/${encodeURIComponent(groupSlug.value)}/${encodeURIComponent(document.slug)}`,
-    query: {
-      groupTitle: groupTitle.value,
-      folderbaseid: folderbaseid.value,
-      title: document.title,
-      code: document.code,
-      version: document.version,
-      summaryDate: document.summaryDate,
-    },
+    path: `/mobile/companyDocuments/${encodeURIComponent(folderbaseid.value)}/${encodeURIComponent(document.slug)}`,
   })
 }
 </script>
@@ -222,7 +183,18 @@ const handleDocumentClick = (document: CompanyDocumentItem) => {
   align-items: center;
   gap: 6px;
   color: #b10f49;
-  font-size: 15px;
+
+  span {
+    font-family: Source Sans Pro;
+    font-weight: 400;
+    font-style: Regular;
+    font-size: 16px;
+    leading-trim: NONE;
+    line-height: 100%;
+    letter-spacing: 0%;
+    vertical-align: middle;
+
+  }
 }
 
 .mobile-company-document-group__search {
@@ -272,24 +244,51 @@ const handleDocumentClick = (document: CompanyDocumentItem) => {
 }
 
 .mobile-company-document-group__item-title {
-  font-size: 14px;
-  line-height: 1.3;
-  font-weight: 500;
   color: #171717;
+  font-family: Source Sans Pro;
+  font-weight: 400;
+  font-style: Regular;
+  font-size: 16px;
+  leading-trim: NONE;
+  line-height: 100%;
+  letter-spacing: 0%;
+
 }
 
 .mobile-company-document-group__item-meta {
-  font-size: 10px;
-  line-height: 1.3;
-  color: #8f8f8f;
+  color: #616161;
+  font-family: Source Sans Pro;
+  font-weight: 400;
+  font-style: Regular;
+  font-size: 12px;
+  leading-trim: NONE;
+  line-height: 100%;
+  letter-spacing: 0%;
+
 }
 
 .mobile-company-document-group__item-status {
-  color: #6f6f6f;
+  color: #616161;
+  font-family: Source Sans Pro;
+  font-weight: 400;
+  font-style: Regular;
+  font-size: 12px;
+  leading-trim: NONE;
+  line-height: 100%;
+  letter-spacing: 0%;
+
 }
 
 .mobile-company-document-group__item-status.is-pending {
-  color: #d4586f;
+  color: #FF0000;
+  font-family: Source Sans Pro;
+  font-weight: 400;
+  font-style: Regular;
+  font-size: 12px;
+  leading-trim: NONE;
+  line-height: 100%;
+  letter-spacing: 0%;
+
 }
 
 .mobile-company-document-group__empty {
