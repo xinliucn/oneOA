@@ -1,5 +1,19 @@
 <template>
   <div class="company-docs">
+    <div
+      v-if="approvedToast"
+      class="company-docs__toast"
+    >
+      <span class="company-docs__toast-icon">
+        <IconCustom
+          name="check"
+          :size="18"
+          color="#ffffff"
+        />
+      </span>
+      <span>{{ approvedToast }}</span>
+    </div>
+
     <section
       class="company-docs__hero"
       :style="{ backgroundImage: `url(${heroImage})` }"
@@ -167,6 +181,8 @@ definePageMeta({
 const filters = ['All', 'Acknowledged', 'Not Yet Acknowledged'] as const
 type DocumentFilter = typeof filters[number]
 
+const route = useRoute()
+const { t } = useAppI18n()
 const documentStore = useDocumentManagementStore()
 const activeFilter = ref<DocumentFilter>('All')
 const searchQuery = ref('')
@@ -174,6 +190,8 @@ const currentPage = ref(1)
 const pageSize = 15
 const pageLoading = ref(false)
 const pageError = ref<Error | null>(null)
+const approvedToast = ref('')
+let approvedToastTimer: ReturnType<typeof setTimeout> | null = null
 
 const filterTabByFilter: Record<DocumentFilter, DocumentCategoryTabKey> = {
   'All': 'all',
@@ -341,6 +359,28 @@ const ensureCurrentPageLoaded = async () => {
   }
 }
 
+const showApprovedToast = () => {
+  const approvedTitle = String(route.query.approvedTitle || '')
+
+  if (!approvedTitle) {
+    return
+  }
+
+  approvedToast.value = `${approvedTitle} ${t('pages.companyDocuments.messages.approved')}`
+  approvedToastTimer = setTimeout(() => {
+    approvedToast.value = ''
+    approvedToastTimer = null
+  }, 3000)
+
+  const nextQuery = { ...route.query }
+  delete nextQuery.approvedTitle
+  void navigateTo({
+    path: route.path,
+    query: nextQuery,
+    replace: true,
+  })
+}
+
 watch([activeFilter, searchQuery], () => {
   currentPage.value = 1
 })
@@ -354,6 +394,16 @@ watch(totalPages, (nextTotalPages) => {
 watch([activeTabKey, currentPage], () => {
   void ensureCurrentPageLoaded()
 })
+
+onMounted(() => {
+  showApprovedToast()
+})
+
+onBeforeUnmount(() => {
+  if (approvedToastTimer) {
+    clearTimeout(approvedToastTimer)
+  }
+})
 </script>
 
 <style scoped>
@@ -362,6 +412,39 @@ watch([activeTabKey, currentPage], () => {
   display: flex;
   flex-direction: column;
   background: #ffffff;
+}
+
+.company-docs__toast {
+  position: fixed;
+  top: 78px;
+  right: 18px;
+  z-index: 30;
+  min-width: 176px;
+  min-height: 49px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 14px 8px 10px;
+  border: 1px solid #24a447;
+  border-radius: 8px;
+  background: #d9f2dd;
+  box-shadow: 0 3px 9px rgba(0, 0, 0, 0.16);
+  color: #118a2c;
+  font-family: "Source Sans Pro", sans-serif;
+  font-size: 12px;
+  font-weight: 400;
+  line-height: 1.2;
+}
+
+.company-docs__toast-icon {
+  width: 30px;
+  height: 30px;
+  flex: 0 0 30px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  background: #00820f;
 }
 
 .company-docs__hero {

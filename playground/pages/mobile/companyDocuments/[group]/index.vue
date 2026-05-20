@@ -1,5 +1,12 @@
 <template>
   <div class="mobile-company-document-group">
+    <div
+      v-if="acknowledgedToast"
+      class="mobile-company-document-group__toast"
+    >
+      {{ acknowledgedToast }}
+    </div>
+
     <div class="mobile-company-document-group__toolbar">
       <button
         type="button"
@@ -79,8 +86,10 @@ const route = useRoute()
 const documentStore = useDocumentManagementStore()
 const groupSlug = computed(() => String(route.params.group || ''))
 const folderbaseid = computed(() => groupSlug.value)
-const groupTitle = computed(() => groupSlug.value)
+const groupTitle = computed(() => String(route.query.title || groupSlug.value))
 const pending = ref(false)
+const acknowledgedToast = ref('')
+let toastTimer: ReturnType<typeof setTimeout> | null = null
 
 const getStatus = (item: CompanyDocumentDetailResponseItem): CompanyDocumentStatus => {
   const readstatus = item.mainTable?.readstatus || ''
@@ -126,7 +135,8 @@ const documents = computed<CompanyDocumentItem[]>(() => {
 })
 
 const documentCount = computed(() => {
-  return documents.value.length
+  const routeCount = Number(route.query.count)
+  return documents.value.length || (Number.isFinite(routeCount) ? routeCount : 0)
 })
 
 const loadDocumentsList = async () => {
@@ -146,6 +156,29 @@ const loadDocumentsList = async () => {
 
 onMounted(() => {
   void loadDocumentsList()
+
+  const acknowledgedTitle = String(route.query.acknowledgedTitle || '')
+  if (acknowledgedTitle) {
+    acknowledgedToast.value = `${acknowledgedTitle} acknowledged!`
+    toastTimer = setTimeout(() => {
+      acknowledgedToast.value = ''
+      toastTimer = null
+    }, 2500)
+    void navigateTo({
+      path: route.path,
+      query: {
+        title: groupTitle.value,
+        count: route.query.count,
+      },
+      replace: true,
+    })
+  }
+})
+
+onBeforeUnmount(() => {
+  if (toastTimer) {
+    clearTimeout(toastTimer)
+  }
 })
 
 const handleBack = () => navigateTo('/mobile/companyDocuments')
@@ -153,6 +186,9 @@ const handleBack = () => navigateTo('/mobile/companyDocuments')
 const handleDocumentClick = (document: CompanyDocumentItem) => {
   return navigateTo({
     path: `/mobile/companyDocuments/${encodeURIComponent(folderbaseid.value)}/${encodeURIComponent(document.slug)}`,
+    query: {
+      groupTitle: groupTitle.value,
+    },
   })
 }
 </script>
@@ -163,6 +199,27 @@ const handleDocumentClick = (document: CompanyDocumentItem) => {
   display: flex;
   flex-direction: column;
   background: #ffffff;
+  position: relative;
+}
+
+.mobile-company-document-group__toast {
+  position: absolute;
+  top: 8px;
+  left: 50%;
+  z-index: 2;
+  max-width: calc(100% - 96px);
+  transform: translateX(-50%);
+  padding: 6px 12px;
+  border: 1px solid #62bf74;
+  border-radius: 9px;
+  background: #d8f3dc;
+  color: #008000;
+  font-family: Source Sans Pro;
+  font-size: 14px;
+  line-height: 1.2;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .mobile-company-document-group__toolbar {

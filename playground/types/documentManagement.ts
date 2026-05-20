@@ -96,6 +96,7 @@ export interface CompanyDocumentDetailResponseItem {
     Number_Version?: string
     RequestPublishDate?: string
     readstatus?: string
+    readstatus_display?: string
     acknowledgedate_display?: string
     content_display?: string
     footer_display?: string

@@ -181,6 +181,10 @@ onMounted(() => {
 const handleGroupClick = (group: CompanyDocumentGroup) => {
   return navigateTo({
     path: `/mobile/companyDocuments/${encodeURIComponent(group.folderbaseid)}`,
+    query: {
+      title: group.title,
+      count: group.count,
+    },
   })
 }
 </script>

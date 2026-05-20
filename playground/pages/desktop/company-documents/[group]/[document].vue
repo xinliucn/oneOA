@@ -30,8 +30,10 @@
     <main v-else-if="documentDetail" class="company-document-view__content">
       <section class="company-document-view__summary">
         <div class="company-document-view__status-panel">
-          <div class="company-document-view__status-bar"
-            :class="{ 'is-acknowledged': documentDetail.status === 'Acknowledged' }">
+          <div
+            class="company-document-view__status-bar"
+            :class="{ 'is-acknowledged': documentDetail.status === 'Acknowledged' }"
+          >
             {{ documentDetail.status }}
           </div>
           <div class="company-document-view__status-body">
@@ -62,8 +64,11 @@
             <strong>{{ documentDetail.publishedDateTime }}</strong>
           </div>
 
-          <div v-for="file in previewFileList" :key="file.id || file.osid || file.filename"
-            class="company-document-view__file">
+          <div
+            v-for="file in previewFileList"
+            :key="file.id || file.osid || file.filename"
+            class="company-document-view__file"
+          >
             <IconCustom name="document" :size="19" color="#a60a3a" />
             <span>{{ file.filename }}</span>
             <button type="button" @click="downloadDocument(file)">
@@ -80,14 +85,29 @@
 
         <!-- Sanitized controlled OA/CMS HTML before rendering. -->
         <!-- eslint-disable-next-line vue/no-v-html -->
-        <div v-if="documentDetail.footerHtml" class="company-document-view__paragraphs"
-          v-html="documentDetail.footerHtml" />
-
         <div class="company-document-view__acknowledgement">
           <label>
-            <input v-model="accepted" type="checkbox">
-            <span>{{ acknowledgementText }}</span>
+            <input
+              v-model="accepted"
+              :disabled="isAcknowledged"
+              type="checkbox"
+            >
+            <div
+              v-if="documentDetail.footerHtml"
+              class="company-document-view__paragraphs"
+              v-html="documentDetail.footerHtml"
+            />
           </label>
+          <button
+            v-if="!isAcknowledged"
+            type="button"
+            class="company-document-view__accept"
+            :class="{ 'is-ready': canAccept }"
+            :disabled="!canAccept"
+            @click="acceptDocument"
+          >
+            {{ t('pages.companyDocuments.actions.accept') }}
+          </button>
         </div>
       </section>
     </main>
@@ -111,20 +131,19 @@ import type {
   CompanyDocumentPreviewResponse,
   CompanyDocumentStatus,
 } from '~/types/documentManagement'
-import type { LocaleMessages, PolicyLocale } from '~/types/i18n'
 
 definePageMeta({
   layout: 'desktop',
   middleware: 'auth',
 })
 
-const { locale, t } = useAppI18n()
+const { t } = useAppI18n()
 const documentStore = useDocumentManagementStore()
 
 const route = useRoute()
 const groupSlug = computed(() => String(route.params.group || ''))
 const folderbaseid = computed(() => groupSlug.value)
-const groupTitle = computed(() => groupSlug.value)
+const groupTitle = computed(() => String(route.query.groupTitle || route.query.title || groupSlug.value))
 const documentSlug = computed(() => String(route.params.document || ''))
 const documentTitle = computed(() => String(route.query.title || 'Company Document'))
 const loading = ref(false)
@@ -143,18 +162,6 @@ const groupDetail = computed(() => {
 const previewFileList = computed<CompanyDocumentPreviewFile[]>(() => {
   return currentDocument.value?.detail2 || []
 })
-
-const policyAcknowledgementCopy = {
-  'zh-CN': '我已阅读并愿意遵守本政策内容。',
-  'zh-TW': '我已閱讀並願意遵守本政策內容。',
-  'en': 'I have read and agreed with the policy content.',
-} satisfies LocaleMessages
-
-const getPolicyLocale = (localeCode: string): PolicyLocale => {
-  if (localeCode === 'en') return 'en'
-  if (localeCode === 'zh-TW') return 'zh-TW'
-  return 'zh-CN'
-}
 
 const getStatus = (item: CompanyDocumentDetailResponseItem): CompanyDocumentStatus => {
   const readstatus = item.mainTable?.readstatus || ''
@@ -213,8 +220,12 @@ const documentDetail = computed<CompanyDocumentDetail | null>(() => {
   }
 })
 
-const acknowledgementText = computed(() => {
-  return policyAcknowledgementCopy[getPolicyLocale(locale.value)]
+const isAcknowledged = computed(() => {
+  return documentDetail.value?.status === 'Acknowledged'
+})
+
+const canAccept = computed(() => {
+  return accepted.value && !isAcknowledged.value
 })
 
 const loadDocumentsList = async () => {
@@ -265,9 +276,28 @@ const downloadDocument = async (file: CompanyDocumentPreviewFile) => {
   URL.revokeObjectURL(url)
 }
 
+const acceptDocument = () => {
+  if (!canAccept.value) {
+    return
+  }
+
+  documentStore.acknowledgeDocument(documentSlug.value)
+  accepted.value = true
+  return navigateTo({
+    path: '/desktop/company-documents',
+    query: {
+      approvedTitle: documentDetail.value?.code || documentDetail.value?.title || documentSlug.value,
+    },
+  })
+}
+
 watch([folderbaseid, documentSlug], () => {
   void loadDocumentsList()
 })
+
+watch(isAcknowledged, (value) => {
+  accepted.value = value
+}, { immediate: true })
 
 onMounted(() => {
   void loadDocumentsList()
@@ -426,20 +456,21 @@ onMounted(() => {
 
 .company-document-view__creator-copy {
   min-width: 0;
-  time {
-  display: block;
-  color: #a3aab2;
-  font-family: "Source Sans Pro", sans-serif;
-  font-family: Source Sans Pro;
-  font-weight: 400;
-  font-style: Regular;
-  font-size: 16px;
-  leading-trim: NONE;
-  line-height: 100%;
-  letter-spacing: 0%;
-  vertical-align: middle;
 
-}
+  time {
+    display: block;
+    color: #a3aab2;
+    font-family: "Source Sans Pro", sans-serif;
+    font-family: Source Sans Pro;
+    font-weight: 400;
+    font-style: Regular;
+    font-size: 16px;
+    leading-trim: NONE;
+    line-height: 100%;
+    letter-spacing: 0%;
+    vertical-align: middle;
+
+  }
 }
 
 .company-document-view__creator-copy span,
@@ -485,13 +516,13 @@ onMounted(() => {
   gap: 8px;
   color: #666666;
   font-family: Source Sans Pro;
-font-weight: 400;
-font-style: Regular;
-font-size: 16px;
-leading-trim: NONE;
-line-height: 100%;
-letter-spacing: 0%;
-vertical-align: middle;
+  font-weight: 400;
+  font-style: Regular;
+  font-size: 16px;
+  leading-trim: NONE;
+  line-height: 100%;
+  letter-spacing: 0%;
+  vertical-align: middle;
 
 }
 
@@ -508,13 +539,13 @@ vertical-align: middle;
   background: transparent;
   color: #a60a3a;
   font-family: Source Sans Pro;
-font-weight: 400;
-font-style: Regular;
-font-size: 16px;
-leading-trim: NONE;
-line-height: 100%;
-letter-spacing: 0%;
-vertical-align: middle;
+  font-weight: 400;
+  font-style: Regular;
+  font-size: 16px;
+  leading-trim: NONE;
+  line-height: 100%;
+  letter-spacing: 0%;
+  vertical-align: middle;
 
 }
 
@@ -571,7 +602,7 @@ vertical-align: middle;
   width: 14px;
   height: 14px;
   margin: 0;
-  accent-color: #a60a3a;
+  accent-color: #A60A3A;
 }
 
 .company-document-view__accept {
@@ -588,6 +619,17 @@ vertical-align: middle;
   font-weight: 700;
   line-height: 100%;
   cursor: pointer;
+}
+
+.company-document-view__accept:disabled {
+  cursor: not-allowed;
+  opacity: 0.7;
+}
+
+.company-document-view__accept.is-ready {
+  background: #a60a3a;
+  color: #ffffff;
+  opacity: 1;
 }
 
 .company-document-view__state {

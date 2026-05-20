@@ -37,6 +37,7 @@ const createPagination = (): DocumentCategoryPagination => ({
 
 export const useDocumentManagementStore = defineStore('documentManagement', () => {
   const documentsList = ref<CompanyDocumentDetailResponseItem[]>([])
+  const acknowledgedDocumentIds = ref<string[]>([])
   const categoriesByTab = reactive<Record<DocumentCategoryTabKey, CompanyDocumentGroupResponseItem[]>>({
     all: [],
     acknowledged: [],
@@ -64,6 +65,30 @@ export const useDocumentManagementStore = defineStore('documentManagement', () =
 
     return pagination.page < pagination.totalPages
       && categoriesByTab[tabKey].length < pagination.total
+  }
+
+  const markDocumentAcknowledged = (document: CompanyDocumentDetailResponseItem) => {
+    if (!document.mainTable) {
+      return
+    }
+
+    document.mainTable.readstatus = 'Acknowledged'
+    document.mainTable.readstatus_display = 'Acknowledged'
+    document.mainTable.acknowledgedate_display ||= new Date().toISOString()
+  }
+
+  const applyLocalAcknowledgements = (documents: CompanyDocumentDetailResponseItem[]) => {
+    const acknowledgedIds = new Set(acknowledgedDocumentIds.value)
+
+    documents.forEach((document) => {
+      const documentId = String(document.mainTable?.id || '')
+
+      if (acknowledgedIds.has(documentId)) {
+        markDocumentAcknowledged(document)
+      }
+    })
+
+    return documents
   }
 
   const fetchCategories = async (options: FetchDocumentCategoriesOptions = {}) => {
@@ -125,9 +150,25 @@ export const useDocumentManagementStore = defineStore('documentManagement', () =
         pageSize,
       },
     })
-    documentsList.value = response
+    const documents = applyLocalAcknowledgements(response)
+    documentsList.value = documents
 
-    return response
+    return documents
+  }
+
+  const acknowledgeDocument = (documentId: string | number) => {
+    const normalizedId = String(documentId)
+    if (!acknowledgedDocumentIds.value.includes(normalizedId)) {
+      acknowledgedDocumentIds.value = [...acknowledgedDocumentIds.value, normalizedId]
+    }
+
+    const document = documentsList.value.find(item => String(item.mainTable?.id || '') === normalizedId)
+
+    if (!document?.mainTable) {
+      return
+    }
+
+    markDocumentAcknowledged(document)
   }
 
   const fetchCategoryTabs = async (options: Omit<FetchDocumentCategoriesOptions, 'status'> = {}) => {
@@ -142,6 +183,8 @@ export const useDocumentManagementStore = defineStore('documentManagement', () =
   }
 
   return {
+    acknowledgeDocument,
+    acknowledgedDocumentIds,
     categories,
     categoriesByTab,
     categoryCounts,

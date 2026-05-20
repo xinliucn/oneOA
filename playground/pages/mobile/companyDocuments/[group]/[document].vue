@@ -60,18 +60,15 @@
 
       <div class="mobile-company-document-detail__meta">
         <div class="mobile-company-document-detail__meta-item">
-          <span class="mobile-company-document-detail__meta-label">{{ t('pages.companyDocuments.fields.createdBy')
-          }}</span>
+          <span class="mobile-company-document-detail__meta-label">{{ t('pages.companyDocuments.fields.createdBy') }}</span>
           <span class="mobile-company-document-detail__meta-value">{{ groupDetail.createdby }}</span>
         </div>
         <div class="mobile-company-document-detail__meta-item">
-          <span class="mobile-company-document-detail__meta-label">{{ t('pages.companyDocuments.fields.createdDate')
-          }}</span>
+          <span class="mobile-company-document-detail__meta-label">{{ t('pages.companyDocuments.fields.createdDate') }}</span>
           <span class="mobile-company-document-detail__meta-value">{{ groupDetail.createddate }}</span>
         </div>
         <div class="mobile-company-document-detail__meta-item">
-          <span class="mobile-company-document-detail__meta-label">{{ t('pages.companyDocuments.fields.publishedDate')
-          }}</span>
+          <span class="mobile-company-document-detail__meta-label">{{ t('pages.companyDocuments.fields.publishedDate') }}</span>
           <span class="mobile-company-document-detail__meta-value">{{ groupDetail.RequestPublishDate }}</span>
         </div>
       </div>
@@ -83,6 +80,7 @@
         <label class="mobile-company-document-detail__checkbox-row">
           <input
             v-model="accepted"
+            :disabled="isAcknowledged"
             type="checkbox"
             class="mobile-company-document-detail__checkbox"
           >
@@ -92,6 +90,22 @@
             v-html="groupDetail.footer_display"
           />
         </label>
+        <button
+          v-if="!isAcknowledged"
+          type="button"
+          class="mobile-company-document-detail__accept"
+          :class="{ 'is-ready': canAccept }"
+          :disabled="!canAccept"
+          @click="acceptDocument"
+        >
+          <span>{{ t('pages.companyDocuments.actions.accept') }}</span>
+          <IconCustom
+            name="check"
+            :size="20"
+            color="currentColor"
+            class="mobile-company-document-detail__accept-icon"
+          />
+        </button>
       </div>
     </main>
   </div>
@@ -117,7 +131,7 @@ const documentStore = useDocumentManagementStore()
 
 const route = useRoute()
 const groupSlug = computed(() => String(route.params.group || ''))
-const groupTitle = computed(() => groupSlug.value)
+const groupTitle = computed(() => String(route.query.groupTitle || groupSlug.value))
 const documentSlug = computed(() => String(route.params.document || ''))
 const isChildRoute = computed(() => route.path.endsWith('/preview') || route.path.endsWith('/list'))
 const accepted = ref(false)
@@ -132,6 +146,14 @@ const groupDetail = computed<any>(() => {
   return currentDocument.value?.mainTable
 })
 
+const isAcknowledged = computed(() => {
+  return groupDetail.value?.readstatus === '已签署'
+    || groupDetail.value?.readstatus === 'Acknowledged'
+    || Boolean(groupDetail.value?.acknowledgedate_display)
+})
+
+const canAccept = computed(() => accepted.value && !isAcknowledged.value)
+
 const previewFileList = computed<CompanyDocumentPreviewFile[]>(() => {
   return currentDocument.value?.detail2 || []
 })
@@ -145,7 +167,12 @@ const morePreviewFileCount = computed(() => {
 })
 
 const handleBack = () => {
-  return navigateTo(`/mobile/companyDocuments/${encodeURIComponent(groupSlug.value)}`)
+  return navigateTo({
+    path: `/mobile/companyDocuments/${encodeURIComponent(groupSlug.value)}`,
+    query: {
+      title: groupTitle.value,
+    },
+  })
 }
 
 const openAttachmentList = () => {
@@ -159,6 +186,26 @@ const openPreview = () => {
     path: `/mobile/companyDocuments/${encodeURIComponent(groupSlug.value)}/${encodeURIComponent(documentSlug.value)}/list`,
   })
 }
+
+const acceptDocument = () => {
+  if (!canAccept.value) {
+    return
+  }
+
+  documentStore.acknowledgeDocument(documentSlug.value)
+  accepted.value = true
+  return navigateTo({
+    path: `/mobile/companyDocuments/${encodeURIComponent(groupSlug.value)}`,
+    query: {
+      title: groupTitle.value,
+      acknowledgedTitle: groupDetail.value?.Number_Version || groupDetail.value?.RequestName || documentSlug.value,
+    },
+  })
+}
+
+watch(isAcknowledged, (value) => {
+  accepted.value = value
+}, { immediate: true })
 </script>
 
 <style scoped>
@@ -378,7 +425,7 @@ const openPreview = () => {
   width: 16px;
   height: 16px;
   margin: 2px 0 0;
-  accent-color: #a60a3a;
+  accent-color: #A60A3A;
   flex-shrink: 0;
 }
 
@@ -394,15 +441,36 @@ const openPreview = () => {
   border-radius: 6px;
   background: #a60a3a;
   color: #ffffff;
-  font-size: 14px;
-  font-weight: 700;
-  box-shadow: 0 5px 10px rgba(166, 10, 58, 0.22);
+
+  span {
+    font-family: Source Sans Pro;
+    font-weight: 600;
+    font-style: SemiBold;
+    font-size: 16px;
+    leading-trim: NONE;
+    line-height: 100%;
+    letter-spacing: 0%;
+    text-align: center;
+    box-shadow: 0 5px 10px rgba(166, 10, 58, 0.22);
+    transition: background-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
+  }
+}
+
+.mobile-company-document-detail__accept.is-ready {
+  background: #b10f49;
+  color: #ffffff;
+  box-shadow: 0 6px 14px rgba(177, 15, 73, 0.32);
+}
+
+.mobile-company-document-detail__accept.is-ready:active {
+  transform: translateY(1px);
 }
 
 .mobile-company-document-detail__accept:disabled {
   background: #f2f2f2;
   color: #b4b4b4;
   box-shadow: none;
+  transform: none;
 }
 
 .mobile-company-document-detail__accept-icon {

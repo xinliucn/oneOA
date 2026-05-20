@@ -195,132 +195,44 @@
                { 'zh-CN': '暂无消息', 'zh-TW': '暫無消息', "en": 'No items' }) }}
       </div>
       <template v-else>
-        <template v-if="selectedViewValue === 'approvals' || selectedViewValue === 'approved'">
-          <div
-            v-for="task in filteredTasks"
-            :key="task.id"
-            class="todo-item"
-            @click="handleTaskClick(selectedViewValue, task)"
-          >
-            <div class="todo-item__content">
-              <div class="todo-item__header">
-                <div class="todo-item__meta">
-                  <span class="todo-item__code">{{ getTaskReference(task) }}</span>
-                  <span
-                    class="todo-item__status"
-                    :class="getTaskStatusClass(task)"
-                  >
-                    {{ getTaskStatusLabel(task) || t('tasks.status.pending') }}
-                  </span>
-                </div>
-                <div class="todo-item__date">
-                  {{ task.createTime }}
-                </div>
-              </div>
-              <!-- <div class="todo-item__title">
-                {{ getTaskDisplayName(task) }}
-              </div> -->
-              <div
-                v-if="getTaskOrganizationLabel(task)"
-                class="todo-item__title"
-              >
-                {{ getTaskOrganizationLabel(task) }}
-              </div>
-              <div class="todo-item__subtitle">
-                <span>{{ task.creatorName }}</span>
-                <span>{{ ' | ' }}</span>
-                <span class="todo-item__portfolio">{{ task.workflowBaseInfo?.workflowName
-                }}</span>
-              </div>
-            </div>
-            <IconCustom
-              name="chevron-right"
-              :size="20"
-              color="#A60A3A"
-              class="todo-item__arrow"
-            />
-          </div>
-        </template>
-        <template v-if="selectedViewValue === 'requests'">
-          <div
-            v-for="task in filteredTasks"
-            :key="task.id"
-            class="todo-item"
-            @click="handleTaskClick(selectedViewValue, task)"
-          >
-            <div class="todo-item__content">
-              <div class="todo-item__header">
-                <div class="todo-item__meta">
-                  <span class="todo-item__code">{{ task.requestmark }}</span>
-                </div>
-              </div>
-              <div class="todo-item__title">
-                {{ getTaskDisplayName(task) }} 
-                <!-- <span
+        <div
+          v-for="task in filteredTasks"
+          :key="task.id"
+          class="todo-item"
+          @click="handleTaskClick(selectedViewValue, task)"
+        >
+          <div class="todo-item__content">
+            <div class="todo-item__header">
+              <div class="todo-item__meta">
+                <span class="todo-item__code">{{ getTaskReference(task) }}</span>
+                <span
                   class="todo-item__status"
-                  :class="`status-pending`"
+                  :class="getTaskStatusClass(task)"
                 >
-                  {{ t(`${task.currentNodeName}`) }}
-                </span> -->
-                <div class="todo-item__date">
-                  {{ task.createTime }}
-                </div>
+                  {{ getTaskStatusLabel(task) || t('tasks.status.pending') }}
+                </span>
               </div>
-              <!-- <div
-                v-if="getTaskOrganizationLabel(task)"
-                class="todo-item__title"
-              >
-                {{ getTaskOrganizationLabel(task) }}
-              </div> -->
-              <div class="todo-item__subtitle">
-                <span>{{ task.creatorName }}</span>
-                <span>{{ ' | ' }}</span>
-                <span class="todo-item__portfolio">{{ task.workflowBaseInfo?.workflowName
-                }}</span>
+              <div class="todo-item__date">
+                {{ getTaskDate(task) }}
               </div>
             </div>
-          </div>
-        </template>
-        <template v-if="selectedViewValue === 'tasks'">
-          <div
-            v-for="task in filteredTasks"
-            :key="task.id"
-            class="todo-item"
-            @click="handleTaskClick(selectedViewValue, task)"
-          >
-            <div class="todo-item__content">
-              <div class="todo-item__header">
-                <div class="todo-item__meta">
-                  <span class="todo-item__code">{{ getTaskReference(task) }}</span>
-                </div>
-                <div class="todo-item__date">
-                  {{ task.createTime }}
-                </div>
-              </div>
-              <!-- <div class="todo-item__title">
-                {{ getTaskDisplayName(task) }}
-              </div> -->
-              <div
-                v-if="getTaskOrganizationLabel(task)"
-                class="todo-item__title"
-              >
-                {{ getTaskOrganizationLabel(task) }}
-              </div>
-              <span
-                class="todo-item__status"
-                :class="`status-pending`"
-              >
-                {{ t(`${task.status}`) }}
-              </span>
-              <div class="todo-item__subtitle">
-                <span>{{ task.creatorName }}</span>
-                <span>{{ ' | ' }}</span>
-                <span class="todo-item__portfolio">{{ task.workflowBaseInfo?.workflowName
-                }}</span>
-              </div>
+            <div class="todo-item__title">
+              {{ getTaskListTitle(task, selectedViewValue) }}
+            </div>
+            <div class="todo-item__subtitle">
+              <span>{{ task.creatorName }}</span>
+              <span>{{ ' | ' }}</span>
+              <span class="todo-item__portfolio">{{ task.workflowBaseInfo?.workflowName
+              }}</span>
             </div>
           </div>
-        </template>
+          <IconCustom
+            name="chevron-right"
+            :size="20"
+            color="#A60A3A"
+            class="todo-item__arrow"
+          />
+        </div>
       </template>
     </div>
   </div>
@@ -468,11 +380,20 @@ const getTaskDisplayName = (task: TodoItem) => {
   return formatRequestName(task.requestName || task.title)
 }
 
-const getTaskOrganizationLabel = (task: TodoItem) => {
-  return [task.creatorSubcompanyName, task.creatorDepartmentName]
-    .map(value => String(value || '').trim())
-    .filter(Boolean)
-    .join(' -> ')
+const getTaskRawDisplayName = (task: TodoItem) => {
+  return String(task.requestName || task.title || '').trim()
+}
+
+const getTaskListTitle = (task: TodoItem, view: TodoView) => {
+  if (view === 'approvals' || view === 'requests' || view === 'approved') {
+    return getTaskDisplayName(task) || getTaskRawDisplayName(task) || getTaskReference(task)
+  }
+
+  return getTaskRawDisplayName(task) || getTaskDisplayName(task) || getTaskReference(task)
+}
+
+const getTaskDate = (task: TodoItem) => {
+  return String(task.createTime || '').split(/[ T]/)[0]
 }
 
 const getTaskTitle = (task: TodoItem) => {

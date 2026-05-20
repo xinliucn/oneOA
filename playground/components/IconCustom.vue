@@ -43,6 +43,7 @@ import StarIcon from './icons/svg/StarIcon.vue'
 import ClockIcon from './icons/svg/ColckIcon.vue'
 import DownArrowIcon from './icons/svg/DownArrowIcon.vue'
 import RightArrowIcon from './icons/svg/RightArrowIcon.vue'
+import CheckIcon from './icons/svg/CheckIcon.vue'
 
 const props = withDefaults(
   defineProps<{
@@ -98,6 +99,7 @@ const iconMap: Record<string, Component> = {
   'rightArrowIcon': RightArrowIcon,
   'right-arrow': RightArrowIcon,
   'arrow-right': RightArrowIcon,
+  'check': CheckIcon,
 }
 
 // 动态获取图标组件

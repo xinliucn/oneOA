@@ -196,6 +196,12 @@ export const appMessages = {
           publishedDate: '发布日期',
           acknowledgedStatus: '签署状态',
         },
+        actions: {
+          accept: '同意',
+        },
+        messages: {
+          approved: '已同意！',
+        },
       },
       dashboards: {
         title: '仪表盘',
@@ -414,6 +420,12 @@ export const appMessages = {
           publishedDate: '發布日期',
           acknowledgedStatus: '簽署狀態',
         },
+        actions: {
+          accept: '同意',
+        },
+        messages: {
+          approved: '已同意！',
+        },
       },
       dashboards: {
         title: '儀表板',
@@ -631,6 +643,12 @@ export const appMessages = {
           createdDate: 'Created Date',
           publishedDate: 'Published Date',
           acknowledgedStatus: 'Acknowledged Status',
+        },
+        actions: {
+          accept: 'Accept',
+        },
+        messages: {
+          approved: 'Approved!',
         },
       },
       dashboards: {
