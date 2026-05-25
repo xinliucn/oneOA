@@ -563,14 +563,14 @@ watch(
   align-items: center;
   gap: 5px;
   color: #a60a3a;
-  font-family: "Source Sans Pro", sans-serif;
+  font-family: var(--font-source-sans-pro);
   font-size: 12px;
   line-height: 100%;
 }
 
 .todo-detail__breadcrumb a {
   color: inherit;
-  font-family: "Source Sans Pro", sans-serif;
+  font-family: var(--font-source-sans-pro);
   font-size: 12px;
   font-weight: 400;
   line-height: 100%;
@@ -578,7 +578,7 @@ watch(
 }
 
 .todo-detail__breadcrumb span {
-  font-family: "Source Sans Pro", sans-serif;
+  font-family: var(--font-source-sans-pro);
   font-size: 12px;
   font-weight: 400;
   line-height: 100%;
@@ -591,7 +591,7 @@ watch(
 .todo-detail__header h1 {
   margin: 28px 0 0;
   color: #000000;
-  font-family: "Source Sans Pro", sans-serif;
+  font-family: var(--font-source-sans-pro);
   font-size: 28px;
   font-weight: 700;
   line-height: 110%;
@@ -820,7 +820,7 @@ watch(
   border: 1px solid #a3aab2;
   border-radius: 3px;
   color: #666666;
-  font-family: "Source Sans Pro", sans-serif;
+  font-family: var(--font-source-sans-pro);
   font-size: 14px;
 }
 
@@ -849,12 +849,12 @@ watch(
   border-radius: 7px;
   background: #a60a3a;
   color: #ffffff;
-  font-family: "Source Sans Pro", sans-serif;
+  font-family: var(--font-source-sans-pro);
   font-size: 16px;
   font-weight: 600;
   font-style: normal;
   line-height: 100%;
-  letter-spacing: 0%;
+  letter-spacing: 0;
   text-align: center;
   vertical-align: middle;
 }

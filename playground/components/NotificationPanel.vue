@@ -3,7 +3,7 @@
     <div class="notification-panel__header">
       <div class="notification-panel__title-row">
         <h1 class="notification-panel__title">
-          Notifications
+          {{ t('notification.title') }}
         </h1>
       </div>
 
@@ -33,13 +33,13 @@
         v-if="loading && filteredNotifications.length === 0"
         class="notification-panel__state"
       >
-        加载中...
+        {{ t('notification.states.loading') }}
       </div>
       <div
         v-else-if="filteredNotifications.length === 0"
         class="notification-panel__state"
       >
-        暂无消息
+        {{ t('notification.states.empty') }}
       </div>
       <div
         v-else
@@ -356,7 +356,7 @@ onMounted(async () => {
 
 .notification-panel__filter-label,
 .notification-panel__filter-count {
-  font-family: 'Source Sans Pro', sans-serif;
+  font-family: var(--font-source-sans-pro);
   font-weight: 400;
   line-height: 1;
   letter-spacing: 0;

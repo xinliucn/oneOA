@@ -1,8 +1,13 @@
 <template>
-  <div class="mobile-home" :class="{ 'is-favourites-editing': isFavouritesEditOpen }">
+  <div
+    class="mobile-home"
+    :class="{ 'is-favourites-editing': isFavouritesEditOpen }"
+  >
     <template v-if="!isFavouritesEditOpen">
-      <section class="home-hero"
-        :style="{ backgroundImage: `linear-gradient(90deg, rgba(0, 0, 0, 0.62), rgba(0, 0, 0, 0.12)), url(${heroImage})` }">
+      <section
+        class="home-hero"
+        :style="{ backgroundImage: `linear-gradient(90deg, rgba(0, 0, 0, 0.62), rgba(0, 0, 0, 0.12)), url(${heroImage})` }"
+      >
         <div class="home-hero__greeting">
           <span>{{ greetingLabel }}</span>
           <strong>{{ displayName }}</strong>
@@ -14,43 +19,93 @@
       </section>
       <section class="home-section">
         <div class="home-shortcuts">
-          <form class="home-search-card" @submit.prevent="openSearch">
-            <input v-model="homeSearchQuery" type="search" class="home-search-card__input"
-              :placeholder="t('home.searchPlaceholder')">
-            <button type="submit" class="home-search-card__submit" :aria-label="t('home.searchPlaceholder')">
-              <IconCustom name="search" :size="22" color="#6f6f6f" />
+          <form
+            class="home-search-card"
+            @submit.prevent="openSearch"
+          >
+            <input
+              v-model="homeSearchQuery"
+              type="search"
+              class="home-search-card__input"
+              :placeholder="t('home.searchPlaceholder')"
+            >
+            <button
+              type="submit"
+              class="home-search-card__submit"
+              :aria-label="t('home.searchPlaceholder')"
+            >
+              <IconCustom
+                name="search"
+                :size="22"
+                color="#6f6f6f"
+              />
             </button>
           </form>
         </div>
       </section>
       <section class="home-section">
         <div class="home-section__header">
-          <div class="home-section__tabs" role="tablist" aria-label="Favourite views">
-            <button type="button" class="home-section__tab" :class="{ 'is-active': favouriteView === 'favourites' }"
-              role="tab" :aria-selected="favouriteView === 'favourites'" @click="favouriteView = 'favourites'">
-              Favourites
+          <div
+            class="home-section__tabs"
+            role="tablist"
+            :aria-label="t('favourites.viewsAriaLabel')"
+          >
+            <button
+              type="button"
+              class="home-section__tab"
+              :class="{ 'is-active': favouriteView === 'favourites' }"
+              role="tab"
+              :aria-selected="favouriteView === 'favourites'"
+              @click="favouriteView = 'favourites'"
+            >
+              {{ t('favourites.tabs.favourites') }}
             </button>
-            <button type="button" class="home-section__tab" :class="{ 'is-active': favouriteView === 'recents' }"
-              role="tab" :aria-selected="favouriteView === 'recents'" @click="favouriteView = 'recents'">
-              Recents
+            <button
+              type="button"
+              class="home-section__tab"
+              :class="{ 'is-active': favouriteView === 'recents' }"
+              role="tab"
+              :aria-selected="favouriteView === 'recents'"
+              @click="favouriteView = 'recents'"
+            >
+              {{ t('favourites.tabs.recents') }}
             </button>
           </div>
-          <button type="button" :disabled="favouriteLoading" @click="openFavouritesEdit">
+          <button
+            type="button"
+            :disabled="favouriteLoading"
+            @click="openFavouritesEdit"
+          >
             {{ t('favourites.edit') }}
           </button>
         </div>
         <div class="favourites-grid">
-          <div v-if="favouriteView === 'favourites' && favouriteLoading" class="home-empty-state">
-            Loading...
+          <div
+            v-if="favouriteView === 'favourites' && favouriteLoading"
+            class="home-empty-state"
+          >
+            {{ t('favourites.states.loading') }}
           </div>
           <template v-else-if="visibleFavouriteItems.length">
-            <button v-for="item in visibleFavouriteItems" :key="item.id" type="button" class="favourite-item"
-              @click="handleShortcutClick(item)">
-              <IconCustom :name="item.icon" :size="39" color="#A60A3A" />
+            <button
+              v-for="item in visibleFavouriteItems"
+              :key="item.id"
+              type="button"
+              class="favourite-item"
+              @click="handleShortcutClick(item)"
+            >
+              <IconCustom
+                :name="item.icon"
+                :size="39"
+                color="#A60A3A"
+              />
               <span>{{ item.label }}</span>
             </button>
           </template>
-          <div v-else class="home-empty-state">
+          <div
+            v-else
+            class="home-empty-state"
+          >
             {{ visibleShortcutEmptyCopy }}
           </div>
         </div>
@@ -59,14 +114,27 @@
       <section class="home-section">
         <div class="home-section__header">
           <h2>{{ t('desktopApps.title') }}</h2>
-          <button type="button" @click="openApplicationsPage">
+          <button
+            type="button"
+            @click="openApplicationsPage"
+          >
             {{ t('common.viewAll') }}
           </button>
         </div>
         <div class="applications-grid">
-          <button v-for="item in applicationItems" :key="item.title" type="button" class="application-card"
-            :class="{ 'application-card--centered': !item.description }" @click="openBusinessDetail(item.entry)">
-            <IconCustom :name="item.icon" :size="39" :color="item.color" />
+          <button
+            v-for="item in applicationItems"
+            :key="item.title"
+            type="button"
+            class="application-card"
+            :class="{ 'application-card--centered': !item.description }"
+            @click="openBusinessDetail(item.entry)"
+          >
+            <IconCustom
+              :name="item.icon"
+              :size="39"
+              :color="item.color"
+            />
             <strong>{{ item.title }}</strong>
             <span v-if="item.description">{{ item.description }}</span>
           </button>
@@ -76,13 +144,24 @@
       <section class="home-section home-section--news">
         <div class="home-section__header">
           <h2>{{ t('groupNews.title') }}</h2>
-          <button type="button" @click="navigateTo('/mobile/news')">
+          <button
+            type="button"
+            @click="navigateTo('/mobile/news')"
+          >
             {{ t('common.viewAll') }}
           </button>
         </div>
         <div class="news-strip">
-          <article v-for="item in newsItems" :key="item.id" class="news-card" @click="openNewsItem(item)">
-            <img :src="item.image" :alt="item.title">
+          <article
+            v-for="item in newsItems"
+            :key="item.id"
+            class="news-card"
+            @click="openNewsItem(item)"
+          >
+            <img
+              :src="item.image"
+              :alt="item.title"
+            >
             <div class="news-card__body">
               <h3>{{ item.title }}</h3>
               <time>{{ formatNewsDate(item.date, locale) }}</time>
@@ -92,26 +171,58 @@
       </section>
     </template>
 
-    <section v-else class="home-favourites-page">
+    <section
+      v-else
+      class="home-favourites-page"
+    >
       <div class="home-favourites-page__header">
-        <div v-if="isFavouritesSearchOpen" class="home-favourites-page__search-row">
+        <div
+          v-if="isFavouritesSearchOpen"
+          class="home-favourites-page__search-row"
+        >
           <label class="home-favourites-page__search">
-            <IconCustom name="search" :size="16" class="home-favourites-page__search-icon" />
-            <input v-model.trim="favouritesSearchQuery" type="text" :placeholder="copy.searchPlaceholder">
+            <IconCustom
+              name="search"
+              :size="16"
+              class="home-favourites-page__search-icon"
+            />
+            <input
+              v-model.trim="favouritesSearchQuery"
+              type="text"
+              :placeholder="copy.searchPlaceholder"
+            >
           </label>
-          <button type="button" class="home-favourites-page__action-text" @click="closeFavouritesSearch">
+          <button
+            type="button"
+            class="home-favourites-page__action-text"
+            @click="closeFavouritesSearch"
+          >
             {{ copy.cancel }}
           </button>
         </div>
 
-        <div v-else class="home-favourites-page__title-row">
+        <div
+          v-else
+          class="home-favourites-page__title-row"
+        >
           <h1>{{ t('favourites.title') }}</h1>
           <div class="home-favourites-page__actions">
-            <button type="button" class="home-favourites-page__icon-btn" @click="openFavouritesSearch">
-              <IconCustom name="search" :size="18" />
+            <button
+              type="button"
+              class="home-favourites-page__icon-btn"
+              @click="openFavouritesSearch"
+            >
+              <IconCustom
+                name="search"
+                :size="18"
+              />
             </button>
-            <button type="button" class="home-favourites-page__action-text" :disabled="favouriteSaving"
-              @click="completeFavouritesEdit">
+            <button
+              type="button"
+              class="home-favourites-page__action-text"
+              :disabled="favouriteSaving"
+              @click="completeFavouritesEdit"
+            >
               {{ favouriteSaving ? copy.saving : copy.done }}
             </button>
           </div>
@@ -123,9 +234,17 @@
           <div class="home-favourites-section__title">
             {{ copy.myFavourites }}
           </div>
-          <button v-for="item in selectedEditableFavourites" :key="item.itemId" type="button"
-            class="home-favourites-row is-selected" @click="toggleDraftFavourite(item.itemId)">
-            <span class="home-favourites-row__check" aria-hidden="true">
+          <button
+            v-for="item in selectedEditableFavourites"
+            :key="item.itemId"
+            type="button"
+            class="home-favourites-row is-selected"
+            @click="toggleDraftFavourite(item.itemId)"
+          >
+            <span
+              class="home-favourites-row__check"
+              aria-hidden="true"
+            >
               <span />
             </span>
             <span class="home-favourites-row__body">
@@ -133,7 +252,10 @@
               <span class="home-favourites-row__subtitle">{{ item.subtitle }}</span>
             </span>
           </button>
-          <div v-if="!selectedEditableFavourites.length" class="home-favourites-empty-row">
+          <div
+            v-if="!selectedEditableFavourites.length"
+            class="home-favourites-empty-row"
+          >
             {{ copy.selectAtLeastOne }}
           </div>
         </div>
@@ -142,24 +264,41 @@
           <div class="home-favourites-section__title">
             {{ copy.allItems }}
           </div>
-          <button v-for="item in unselectedEditableFavourites" :key="item.itemId" type="button"
-            class="home-favourites-row" :class="{ 'is-disabled': isMaxSelected }"
-            @click="toggleDraftFavourite(item.itemId)">
-            <span class="home-favourites-row__check" aria-hidden="true" />
+          <button
+            v-for="item in unselectedEditableFavourites"
+            :key="item.itemId"
+            type="button"
+            class="home-favourites-row"
+            :class="{ 'is-disabled': isMaxSelected }"
+            @click="toggleDraftFavourite(item.itemId)"
+          >
+            <span
+              class="home-favourites-row__check"
+              aria-hidden="true"
+            />
             <span class="home-favourites-row__body">
               <span class="home-favourites-row__title">{{ item.label }}</span>
               <span class="home-favourites-row__subtitle">{{ item.subtitle }}</span>
             </span>
-            <IconCustom v-if="item.kind === 'custom'" name="chevron-right" :size="16"
-              class="home-favourites-row__arrow" />
+            <IconCustom
+              v-if="item.kind === 'custom'"
+              name="chevron-right"
+              :size="16"
+              class="home-favourites-row__arrow"
+            />
           </button>
         </div>
 
-        <div v-if="catalogLoading" class="home-favourites-page__empty">
-          Loading...
+        <div
+          v-if="catalogLoading"
+          class="home-favourites-page__empty"
+        >
+          {{ t('favourites.states.loading') }}
         </div>
-        <div v-else-if="!selectedEditableFavourites.length && !unselectedEditableFavourites.length"
-          class="home-favourites-page__empty">
+        <div
+          v-else-if="!selectedEditableFavourites.length && !unselectedEditableFavourites.length"
+          class="home-favourites-page__empty"
+        >
           {{ copy.searchEmpty }}
         </div>
       </div>
@@ -239,47 +378,19 @@ let timer: ReturnType<typeof setInterval> | null = null
 
 const maxSelected = 8
 
-const copyMap = {
-  'en': {
-    allItems: 'All Items',
-    cancel: 'Cancel',
-    done: 'Done',
-    empty: 'No favourites selected yet.',
-    myFavourites: 'My Favourites',
-    recentsEmpty: 'No recent items yet.',
-    saving: 'Saving...',
-    searchEmpty: 'No favourites match your search.',
-    selectAtLeastOne: 'No favourites selected.',
-    searchPlaceholder: 'Search All Items',
-  },
-  'zh-CN': {
-    allItems: '全部项目',
-    cancel: '取消',
-    done: '完成',
-    empty: '暂未选择收藏项目',
-    myFavourites: '我的收藏',
-    recentsEmpty: '暂无最近访问',
-    saving: '保存中...',
-    searchEmpty: '没有符合搜索条件的收藏项目',
-    selectAtLeastOne: '暂未选择收藏项目',
-    searchPlaceholder: '搜索全部项目',
-  },
-  'zh-TW': {
-    allItems: '全部項目',
-    cancel: '取消',
-    done: '完成',
-    empty: '暫未選擇收藏項目',
-    myFavourites: '我的收藏',
-    recentsEmpty: '暫無最近訪問',
-    saving: '儲存中...',
-    searchEmpty: '沒有符合搜尋條件的收藏項目',
-    selectAtLeastOne: '暫未選擇收藏項目',
-    searchPlaceholder: '搜尋全部項目',
-  },
-} as const
-
 const copy = computed(() => {
-  return copyMap[locale.value as keyof typeof copyMap] || copyMap.en
+  return {
+    allItems: t('favourites.editPanel.allItems'),
+    cancel: t('favourites.editPanel.cancel'),
+    done: t('favourites.editPanel.done'),
+    empty: t('favourites.states.empty'),
+    myFavourites: t('favourites.editPanel.myFavourites'),
+    recentsEmpty: t('favourites.states.recentsEmpty'),
+    saving: t('favourites.editPanel.saving'),
+    searchEmpty: t('favourites.states.searchEmpty'),
+    selectAtLeastOne: t('favourites.states.selectAtLeastOne'),
+    searchPlaceholder: t('favourites.editPanel.searchPlaceholder'),
+  }
 })
 
 const displayName = computed(() => {
@@ -359,14 +470,14 @@ const getCatalogItemName = (item?: ApplicationCatalogItem) => {
   const record = getCatalogRecord(item)
   const mainTable = getCatalogMainTable(item)
 
-  return getFirstString(record.name, record.name_en, mainTable.name_en, mainTable.name, mainTable.application) || 'Application'
+  return getFirstString(record.name, record.name_en, mainTable.name_en, mainTable.name, mainTable.application) || t('favourites.fallback.application')
 }
 
 const getCatalogItemType = (item?: ApplicationCatalogItem) => {
   const record = getCatalogRecord(item)
   const mainTable = getCatalogMainTable(item)
 
-  return getFirstString(record.type, mainTable.type, 'Application')
+  return getFirstString(record.type, mainTable.type, t('favourites.fallback.application'))
 }
 
 const getCatalogItemBusiness = (item?: ApplicationCatalogItem) => {
@@ -455,7 +566,7 @@ const apiFavouriteSource = computed<FavouriteItem[]>(() => {
     id: `api-${item.itemId}`,
     itemId: item.itemId,
     label: item.name,
-    subtitle: item.description || 'Application',
+    subtitle: item.description || t('favourites.fallback.application'),
     icon: 'apps',
     kind: 'application',
     url: item.mobileUrl || item.homepageUrl,
@@ -566,20 +677,20 @@ const getBusinessDisplayName = (business?: {
     return normalizeString(business?.name_sc)
       || normalizeString(business?.name_en)
       || normalizeString(business?.name_tc)
-      || 'Business'
+      || t('favourites.fallback.business')
   }
 
   if (locale.value === 'zh-TW') {
     return normalizeString(business?.name_tc)
       || normalizeString(business?.name_en)
       || normalizeString(business?.name_sc)
-      || 'Business'
+      || t('favourites.fallback.business')
   }
 
   return normalizeString(business?.name_en)
     || normalizeString(business?.name_sc)
     || normalizeString(business?.name_tc)
-    || 'Business'
+    || t('favourites.fallback.business')
 }
 
 const getBusinessDescription = (business?: {
@@ -679,7 +790,7 @@ const isGroupNewsItem = (item: NewsItem) => {
   return item.tags?.some(tag => tag.toLowerCase() === 'group news') || item.category === 'Group News'
 }
 
-const newsItems = computed(() => {
+const sortedHomeNewsItems = computed(() => {
   return [...newsList.value]
     .sort((left, right) => {
       const rightPriority = isGroupNewsItem(right) ? 1 : 0
@@ -691,7 +802,37 @@ const newsItems = computed(() => {
 
       return getNewsTimestamp(right) - getNewsTimestamp(left)
     })
-    .slice(0, 2)
+})
+
+const preferredHomeNewsMatchers = [
+  ['大昌行捐血日'],
+  ['格力創新', '格力创新', '綠色未來', '绿色未来', '成就美好生活'],
+]
+
+const normalizeNewsTitle = (value: string) => {
+  return value.toLowerCase().replace(/\s+/g, '')
+}
+
+const isPreferredNewsMatch = (item: NewsItem, matchers: string[]) => {
+  const normalizedTitle = normalizeNewsTitle(item.title)
+
+  return matchers.some(matcher => normalizedTitle.includes(normalizeNewsTitle(matcher)))
+}
+
+const newsItems = computed(() => {
+  const selectedItems: NewsItem[] = []
+
+  for (const matchers of preferredHomeNewsMatchers) {
+    const matchedItem = sortedHomeNewsItems.value.find(item => isPreferredNewsMatch(item, matchers))
+    if (matchedItem && !selectedItems.some(item => item.id === matchedItem.id)) {
+      selectedItems.push(matchedItem)
+    }
+  }
+
+  const selectedItemIds = new Set(selectedItems.map(item => item.id))
+  const fallbackItems = sortedHomeNewsItems.value.filter(item => !selectedItemIds.has(item.id))
+
+  return [...selectedItems, ...fallbackItems].slice(0, 2)
 })
 
 const openApplicationsPage = async () => {
@@ -1081,25 +1222,25 @@ onBeforeUnmount(() => {
 }
 
 .home-section__header h2 {
-  font-family: Source Sans Pro;
+  font-family: var(--font-source-sans-pro);
   font-weight: 600;
-  font-style: SemiBold;
+  font-style: normal;
   font-size: 24px;
   leading-trim: NONE;
   line-height: 100%;
-  letter-spacing: 0%;
+  letter-spacing: 0;
   vertical-align: middle;
 
 }
 
 .home-section__header>button {
-  font-family: Source Sans Pro;
+  font-family: var(--font-source-sans-pro);
   font-weight: 400;
-  font-style: Regular;
+  font-style: normal;
   font-size: 16px;
   leading-trim: NONE;
   line-height: 100%;
-  letter-spacing: 0%;
+  letter-spacing: 0;
   text-align: right;
   vertical-align: middle;
   border: none;
@@ -1183,13 +1324,13 @@ onBeforeUnmount(() => {
   left: 36px;
   angle: 0 deg;
   opacity: 1;
-  font-family: Source Sans Pro;
+  font-family: var(--font-source-sans-pro);
   font-weight: 600;
-  font-style: SemiBold;
+  font-style: normal;
   font-size: 16px;
   leading-trim: NONE;
   line-height: 100%;
-  letter-spacing: 0%;
+  letter-spacing: 0;
   text-align: center;
   vertical-align: middle;
   color: #000000;
@@ -1197,13 +1338,13 @@ onBeforeUnmount(() => {
 }
 
 .application-card span {
-  font-family: Source Sans Pro;
+  font-family: var(--font-source-sans-pro);
   font-weight: 400;
-  font-style: Regular;
+  font-style: normal;
   font-size: 12px;
   leading-trim: NONE;
   line-height: 100%;
-  letter-spacing: 0%;
+  letter-spacing: 0;
   display: -webkit-box;
   -webkit-line-clamp: 2;
   line-clamp: 2;
@@ -1244,7 +1385,7 @@ onBeforeUnmount(() => {
   margin: 0;
   padding-bottom: 9px;
   border-bottom: 1px solid #d9d9d9;
-  font-family: 'Source Sans Pro', sans-serif;
+  font-family: var(--font-source-sans-pro);
   font-weight: 600;
   font-size: 16px;
   line-height: 1.18;
@@ -1258,7 +1399,7 @@ onBeforeUnmount(() => {
 
 .news-card__body time {
   margin-top: auto;
-  font-family: 'Source Sans Pro', sans-serif;
+  font-family: var(--font-source-sans-pro);
   font-weight: 400;
   font-size: 12px;
   line-height: 1.2;

@@ -39,7 +39,7 @@ useHead(() => ({
 }
 
 body {
-  font-family: 'PingFang SC', 'Noto Sans TC', 'Segoe UI', sans-serif;
+  font-family: var(--font-source-sans-pro);
   line-height: 1.6;
   color: #333;
   opacity: 1;

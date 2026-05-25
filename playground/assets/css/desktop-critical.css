@@ -1,3 +1,74 @@
+@font-face {
+  font-family: 'Source Sans Pro';
+  src: url('/fonts/SourceSans3-Regular.ttf') format('truetype');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Source Sans Pro';
+  src: url('/fonts/SourceSans3-SemiBold.ttf') format('truetype');
+  font-weight: 600;
+  font-style: normal;
+  font-display: swap;
+}
+
+:root {
+  --font-source-sans-pro: 'Source Sans Pro', sans-serif;
+  --el-font-family: var(--font-source-sans-pro) !important;
+}
+
+html,
+body,
+#__nuxt {
+  font-family: var(--font-source-sans-pro) !important;
+}
+
+body,
+body::before,
+body::after,
+body :where(*:not(svg):not(path):not(g):not(rect):not(circle):not(line):not(polyline):not(polygon):not(ellipse)),
+body :where(*:not(svg):not(path):not(g):not(rect):not(circle):not(line):not(polyline):not(polygon):not(ellipse))::before,
+body :where(*:not(svg):not(path):not(g):not(rect):not(circle):not(line):not(polyline):not(polygon):not(ellipse))::after {
+  font-family: var(--font-source-sans-pro) !important;
+}
+
+button,
+input,
+textarea,
+select,
+option,
+optgroup {
+  font-family: var(--font-source-sans-pro) !important;
+}
+
+.typography-header-01 {
+  font-family: var(--font-source-sans-pro);
+  font-size: 24px;
+  font-weight: 600;
+}
+
+.typography-title-01 {
+  font-family: var(--font-source-sans-pro);
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.typography-subtitle-01,
+.typography-body-01 {
+  font-family: var(--font-source-sans-pro);
+  font-size: 16px;
+  font-weight: 400;
+}
+
+.typography-description,
+.typography-body-02 {
+  font-family: var(--font-source-sans-pro);
+  font-size: 12px;
+  font-weight: 400;
+}
+
 .desktop-layout {
   display: flex;
   flex-direction: column;

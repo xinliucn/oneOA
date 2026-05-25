@@ -9,6 +9,10 @@ export const appMessages = {
     common: {
       appName: 'One OA',
       guest: '访客',
+      home: '首页',
+      loading: '加载中...',
+      breadcrumb: '面包屑导航',
+      copyright: 'Copyright © {year} Dah Chong Hong Holdings Limited. 版权所有。',
       viewAll: '查看全部',
     },
     locale: {
@@ -50,6 +54,27 @@ export const appMessages = {
         tabs: {
           byApplication: '按应用',
           byBusiness: '按业务',
+        },
+        navigator: {
+          eyebrow: 'SERVICE NAVIGATOR',
+          title: '服务',
+          description: '按服务主题浏览入口，支持搜索、主题筛选、展开/收合，并保留跨主题标签（例如：探购、供应商、提醒）。',
+          searchPlaceholder: '搜索服务，例如：报销、合同、IT、报表',
+          allTopics: '全部主题',
+          topicCount: '主题数',
+          serviceCount: '服务数',
+          itemCount: '{count} 项',
+          loading: '服务加载中...',
+          empty: '未找到相关服务。',
+          fallbackGroup: '服务主题',
+          fallbackService: '服务',
+          defaultGroupDescription: '可跨主题使用的服务入口',
+          badges: {
+            portal: '主题入口',
+            application: '应用',
+            data: '资料',
+            process: '流程服务',
+          },
         },
       },
       todo: {
@@ -108,13 +133,42 @@ export const appMessages = {
     favourites: {
       title: '我的收藏',
       edit: '编辑',
+      viewsAriaLabel: '收藏视图',
+      tabs: {
+        favourites: '收藏',
+        recents: '最近访问',
+      },
+      states: {
+        loading: '加载中...',
+        empty: '暂未选择收藏项目',
+        recentsEmpty: '暂无最近访问',
+        searchEmpty: '没有符合搜索条件的收藏项目',
+        selectAtLeastOne: '暂未选择收藏项目',
+      },
+      editPanel: {
+        allItems: '全部项目',
+        cancel: '取消',
+        done: '完成',
+        myFavourites: '我的收藏',
+        saving: '保存中...',
+        searchPlaceholder: '搜索全部项目',
+      },
+      fallback: {
+        application: '应用',
+        business: '业务',
+      },
     },
     notification: {
+      title: '通知',
       filters: {
         all: '全部',
         unread: '未读',
         system: '系统公告',
         personal: '个人讯息',
+      },
+      states: {
+        loading: '加载中...',
+        empty: '暂无消息',
       },
       push: {
         title: '通知提醒',
@@ -146,6 +200,15 @@ export const appMessages = {
     desktopApps: {
       title: '应用中心',
       viewAll: '查看全部 >',
+      intranetLabel: '{name} 内网 >',
+      states: {
+        loading: '加载中...',
+        empty: '未找到应用。',
+      },
+      fallback: {
+        application: '应用',
+        business: '业务',
+      },
       categories: {
         digitalTechnology: {
           name: '数字化与科技',
@@ -188,7 +251,18 @@ export const appMessages = {
       companyDocuments: {
         title: '公司文档',
         placeholder: '公司文档内容区域',
+        searchPlaceholder: '搜索公司文档',
+        searchInformationPlaceholder: '搜索文档信息',
+        documentFallback: '公司文档',
+        documentNotFound: '未找到文档',
+        articleCount: '文章数',
+        recordCount: '{start} 至 {end}，共 {total} 条记录',
+        recordCountTotal: '共 {total} 条记录',
+        zeroRecords: '0 条记录',
+        previewTitle: '公司文档预览',
         fields: {
+          folderTitle: '文件夹标题',
+          folderDescription: '文件夹描述',
           numberVersion: '编号 [版本]',
           ePolicyName: '电子政策名称',
           createdBy: '创建人',
@@ -198,9 +272,24 @@ export const appMessages = {
         },
         actions: {
           accept: '同意',
+          download: '下载',
+        },
+        filters: {
+          all: '全部',
+          acknowledged: '已签署',
+          notAcknowledged: '未签署',
         },
         messages: {
           approved: '已同意！',
+          acknowledged: '已签署！',
+        },
+        states: {
+          loading: '公司文档加载中...',
+          loadError: '公司文档加载失败。',
+          detailLoadError: '文档信息加载失败。',
+          empty: '未找到公司文档。',
+          detailEmpty: '未找到文档。',
+          acknowledgmentRequired: '需要签署',
         },
       },
       dashboards: {
@@ -233,6 +322,10 @@ export const appMessages = {
     common: {
       appName: 'One OA',
       guest: '訪客',
+      home: '主頁',
+      loading: '載入中...',
+      breadcrumb: '麵包屑導航',
+      copyright: 'Copyright © {year} Dah Chong Hong Holdings Limited. 版權所有。',
       viewAll: '查看全部',
     },
     locale: {
@@ -254,7 +347,7 @@ export const appMessages = {
     nav: {
       news: '新聞',
       companyInformation: '公司資訊',
-      companyDocuments: '公司文件',
+      companyDocuments: '公司文檔',
       applications: '應用中心',
       departmentIntranets: '部門內網',
       dashboards: '儀表板',
@@ -274,6 +367,27 @@ export const appMessages = {
         tabs: {
           byApplication: '按應用',
           byBusiness: '按業務',
+        },
+        navigator: {
+          eyebrow: 'SERVICE NAVIGATOR',
+          title: '服務',
+          description: '按服務主題瀏覽入口，支援搜尋、主題篩選、展開/收合，並保留跨主題標籤（例如：採購、供應商、提醒）。',
+          searchPlaceholder: '搜尋服務，例如：報銷、合同、IT、報表',
+          allTopics: '全部主題',
+          topicCount: '主題數',
+          serviceCount: '服務數',
+          itemCount: '{count} 項',
+          loading: '服務載入中...',
+          empty: '未找到相關服務。',
+          fallbackGroup: '服務主題',
+          fallbackService: '服務',
+          defaultGroupDescription: '可跨主題使用的服務入口',
+          badges: {
+            portal: '主題入口',
+            application: '應用',
+            data: '資料',
+            process: '流程服務',
+          },
         },
       },
       todo: {
@@ -332,13 +446,42 @@ export const appMessages = {
     favourites: {
       title: '我的收藏',
       edit: '編輯',
+      viewsAriaLabel: '收藏視圖',
+      tabs: {
+        favourites: '收藏',
+        recents: '最近訪問',
+      },
+      states: {
+        loading: '載入中...',
+        empty: '暫未選擇收藏項目',
+        recentsEmpty: '暫無最近訪問',
+        searchEmpty: '沒有符合搜尋條件的收藏項目',
+        selectAtLeastOne: '暫未選擇收藏項目',
+      },
+      editPanel: {
+        allItems: '全部項目',
+        cancel: '取消',
+        done: '完成',
+        myFavourites: '我的收藏',
+        saving: '儲存中...',
+        searchPlaceholder: '搜尋全部項目',
+      },
+      fallback: {
+        application: '應用',
+        business: '業務',
+      },
     },
     notification: {
+      title: '通知',
       filters: {
         all: '全部',
         unread: '未讀',
         system: '系統公告',
         personal: '個人訊息',
+      },
+      states: {
+        loading: '載入中...',
+        empty: '暫無消息',
       },
       push: {
         title: '通知提醒',
@@ -370,6 +513,15 @@ export const appMessages = {
     desktopApps: {
       title: '應用中心',
       viewAll: '查看全部 >',
+      intranetLabel: '{name} 內網 >',
+      states: {
+        loading: '載入中...',
+        empty: '未找到應用。',
+      },
+      fallback: {
+        application: '應用',
+        business: '業務',
+      },
       categories: {
         digitalTechnology: {
           name: '數碼科技',
@@ -410,9 +562,20 @@ export const appMessages = {
         placeholder: '公司資訊內容區域',
       },
       companyDocuments: {
-        title: '公司文件',
-        placeholder: '公司文件內容區域',
+        title: '公司文檔',
+        placeholder: '公司文檔內容區域',
+        searchPlaceholder: '搜尋公司文檔',
+        searchInformationPlaceholder: '搜尋文檔資訊',
+        documentFallback: '公司文檔',
+        documentNotFound: '未找到文檔',
+        articleCount: '文章數',
+        recordCount: '{start} 至 {end}，共 {total} 條記錄',
+        recordCountTotal: '共 {total} 條記錄',
+        zeroRecords: '0 條記錄',
+        previewTitle: '公司文檔預覽',
         fields: {
+          folderTitle: '資料夾標題',
+          folderDescription: '資料夾描述',
           numberVersion: '編號 [版本]',
           ePolicyName: '電子政策名稱',
           createdBy: '建立人',
@@ -422,9 +585,24 @@ export const appMessages = {
         },
         actions: {
           accept: '同意',
+          download: '下載',
+        },
+        filters: {
+          all: '全部',
+          acknowledged: '已簽署',
+          notAcknowledged: '未簽署',
         },
         messages: {
           approved: '已同意！',
+          acknowledged: '已簽署！',
+        },
+        states: {
+          loading: '公司文檔載入中...',
+          loadError: '公司文檔載入失敗。',
+          detailLoadError: '文檔資訊載入失敗。',
+          empty: '未找到公司文檔。',
+          detailEmpty: '未找到文檔。',
+          acknowledgmentRequired: '需要簽署',
         },
       },
       dashboards: {
@@ -457,6 +635,10 @@ export const appMessages = {
     common: {
       appName: 'One OA',
       guest: 'Guest',
+      home: 'Home',
+      loading: 'Loading...',
+      breadcrumb: 'Breadcrumb',
+      copyright: 'Copyright © {year} Dah Chong Hong Holdings Limited. All rights reserved.',
       viewAll: 'View all',
     },
     locale: {
@@ -498,6 +680,27 @@ export const appMessages = {
         tabs: {
           byApplication: 'By Application',
           byBusiness: 'By Business',
+        },
+        navigator: {
+          eyebrow: 'SERVICE NAVIGATOR',
+          title: 'Services',
+          description: 'Browse service entries by topic, with search, topic filters, expand/collapse, and cross-topic tags such as procurement, suppliers, and reminders.',
+          searchPlaceholder: 'Search services, e.g. claims, contracts, IT, reports',
+          allTopics: 'All Topics',
+          topicCount: 'Topics',
+          serviceCount: 'Services',
+          itemCount: '{count}',
+          loading: 'Loading services...',
+          empty: 'No services found.',
+          fallbackGroup: 'Service Topic',
+          fallbackService: 'Service',
+          defaultGroupDescription: 'Service entries available across topics',
+          badges: {
+            portal: 'Topic Entry',
+            application: 'Application',
+            data: 'Data',
+            process: 'Workflow',
+          },
         },
       },
       todo: {
@@ -556,13 +759,42 @@ export const appMessages = {
     favourites: {
       title: 'My Favourites',
       edit: 'Edit',
+      viewsAriaLabel: 'Favourite views',
+      tabs: {
+        favourites: 'Favourites',
+        recents: 'Recents',
+      },
+      states: {
+        loading: 'Loading...',
+        empty: 'No favourites selected yet.',
+        recentsEmpty: 'No recent items yet.',
+        searchEmpty: 'No favourites match your search.',
+        selectAtLeastOne: 'No favourites selected.',
+      },
+      editPanel: {
+        allItems: 'All Items',
+        cancel: 'Cancel',
+        done: 'Done',
+        myFavourites: 'My Favourites',
+        saving: 'Saving...',
+        searchPlaceholder: 'Search All Items',
+      },
+      fallback: {
+        application: 'Application',
+        business: 'Business',
+      },
     },
     notification: {
+      title: 'Notifications',
       filters: {
         all: 'All',
         unread: 'Unread',
         system: 'System Announcement',
         personal: 'Personal Message',
+      },
+      states: {
+        loading: 'Loading...',
+        empty: 'No messages',
       },
       push: {
         title: 'Notifications',
@@ -594,6 +826,15 @@ export const appMessages = {
     desktopApps: {
       title: 'Applications',
       viewAll: 'View All >',
+      intranetLabel: '{name} Intranet >',
+      states: {
+        loading: 'Loading...',
+        empty: 'No applications found.',
+      },
+      fallback: {
+        application: 'Application',
+        business: 'Business',
+      },
       categories: {
         digitalTechnology: {
           name: 'Digital & Technology',
@@ -636,7 +877,18 @@ export const appMessages = {
       companyDocuments: {
         title: 'Company Documents',
         placeholder: 'Company documents content area',
+        searchPlaceholder: 'Search Company Documents',
+        searchInformationPlaceholder: 'Search Document Information',
+        documentFallback: 'Company Document',
+        documentNotFound: 'Document not found',
+        articleCount: 'No of Articles',
+        recordCount: '{start} to {end} of {total} records',
+        recordCountTotal: '{total} records',
+        zeroRecords: '0 records',
+        previewTitle: 'Company document preview',
         fields: {
+          folderTitle: 'Folder Title',
+          folderDescription: 'Folder Description',
           numberVersion: 'Number [version]',
           ePolicyName: 'ePolicy Name',
           createdBy: 'Created By',
@@ -646,9 +898,24 @@ export const appMessages = {
         },
         actions: {
           accept: 'Accept',
+          download: 'Download',
+        },
+        filters: {
+          all: 'All',
+          acknowledged: 'Acknowledged',
+          notAcknowledged: 'Not Yet Acknowledged',
         },
         messages: {
           approved: 'Approved!',
+          acknowledged: 'acknowledged!',
+        },
+        states: {
+          loading: 'Loading company documents...',
+          loadError: 'Failed to load company documents.',
+          detailLoadError: 'Failed to load document information.',
+          empty: 'No company documents found.',
+          detailEmpty: 'No documents found.',
+          acknowledgmentRequired: 'Acknowledgment required',
         },
       },
       dashboards: {

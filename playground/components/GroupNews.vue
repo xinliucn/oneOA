@@ -138,13 +138,13 @@ onMounted(() => {
 }
 
 .group-news__title {
-  font-family: Source Sans Pro;
+  font-family: var(--font-source-sans-pro);
   font-weight: 600;
-  font-style: SemiBold;
+  font-style: normal;
   font-size: 24px;
   leading-trim: NONE;
   line-height: 100%;
-  letter-spacing: 0%;
+  letter-spacing: 0;
   vertical-align: middle;
 
 }
@@ -156,13 +156,13 @@ onMounted(() => {
   text-decoration: underline;
   text-underline-offset: 2px;
   cursor: pointer;
-  font-family: Source Sans Pro;
+  font-family: var(--font-source-sans-pro);
   font-weight: 400;
-  font-style: Regular;
+  font-style: normal;
   font-size: 16px;
   leading-trim: NONE;
   line-height: 100%;
-  letter-spacing: 0%;
+  letter-spacing: 0;
   text-align: right;
   vertical-align: middle;
   text-decoration-style: solid;

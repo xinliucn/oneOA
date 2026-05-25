@@ -332,7 +332,7 @@ const statusColor = computed(() => statusColorMap[notification.value.status] || 
   border-bottom: 1px solid #d9d9d9;
   background: #f5f5f5;
   color: #a60a3a;
-  font-family: "Source Sans Pro", sans-serif;
+  font-family: var(--font-source-sans-pro);
   font-size: 16px;
   font-weight: 400;
   line-height: 100%;
@@ -342,7 +342,7 @@ const statusColor = computed(() => statusColorMap[notification.value.status] || 
 :deep(.el-breadcrumb) {
   display: flex;
   align-items: center;
-  font-family: "Source Sans Pro", sans-serif;
+  font-family: var(--font-source-sans-pro);
   font-size: 16px !important;
   font-weight: 400;
   line-height: 100%;
@@ -365,12 +365,12 @@ const statusColor = computed(() => statusColorMap[notification.value.status] || 
 
 :deep(.notification-detail__breadcrumb .el-breadcrumb__item:first-child .el-breadcrumb__inner.is-link) {
   color: #a60a3a !important;
-  font-family: "Source Sans Pro", sans-serif;
+  font-family: var(--font-source-sans-pro);
   font-weight: 400;
   font-style: normal;
   font-size: 16px;
   line-height: 100%;
-  letter-spacing: 0%;
+  letter-spacing: 0;
   vertical-align: middle;
   text-decoration: underline;
   text-decoration-style: solid;
@@ -381,12 +381,12 @@ const statusColor = computed(() => statusColorMap[notification.value.status] || 
 
 :deep(.notification-detail__breadcrumb .el-breadcrumb__inner.is-link) {
   color: #a60a3a !important;
-  font-family: "Source Sans Pro", sans-serif;
+  font-family: var(--font-source-sans-pro);
   font-weight: 400;
   font-style: normal;
   font-size: 16px;
   line-height: 100%;
-  letter-spacing: 0%;
+  letter-spacing: 0;
   vertical-align: middle;
   text-decoration: underline;
   text-decoration-style: solid;
@@ -397,7 +397,7 @@ const statusColor = computed(() => statusColorMap[notification.value.status] || 
 
 :deep(.notification-detail__breadcrumb .el-breadcrumb__item:last-child .el-breadcrumb__inner) {
   color: #a60a3a !important;
-  font-family: "Source Sans Pro", sans-serif;
+  font-family: var(--font-source-sans-pro);
   font-size: 16px;
   font-weight: 700;
   line-height: 100%;
@@ -420,7 +420,7 @@ const statusColor = computed(() => statusColorMap[notification.value.status] || 
   font-weight: 600;
   margin: 28px 0 0;
   color: #000000;
-  font-family: "Source Sans Pro", sans-serif;
+  font-family: var(--font-source-sans-pro);
   line-height: 110%;
 }
 

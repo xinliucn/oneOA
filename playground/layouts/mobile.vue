@@ -11,7 +11,7 @@
         <button
           type="button"
           class="mobile__logo"
-          aria-label="Back to mobile home"
+          :aria-label="t('common.home')"
           @click="handleLogoClick"
         >
           <img
@@ -44,7 +44,7 @@
       >
         <div class="mobile__loading-content">
           <div class="mobile__loading-title">
-            Loading...
+            {{ t('common.loading') }}
           </div>
           <div
             class="mobile__loading-track"
@@ -101,7 +101,7 @@ const route = useRoute()
 const activeTab = useState('mobile:activeTab', () => 1)
 const isSidebarOpen = useState('mobile:isSidebarOpen', () => false)
 const isLayoutReady = ref(false)
-const displayName = computed(() => user.value?.name || user.value?.displayName || user.value?.username || 'Profile')
+const displayName = computed(() => user.value?.name || user.value?.displayName || user.value?.username || t('user.profile'))
 const profileInitials = computed(() => {
   const source = displayName.value.trim()
   if (!source) {
@@ -116,7 +116,7 @@ const tabs = computed(() => [
   { index: 1, icon: 'home', label: t('mobile.tabs.home') },
   { index: 2, icon: 'todo', label: t('mobile.tabs.todo') },
   { index: 3, icon: 'apps', label: t('mobile.tabs.applications') },
-  { index: 4, icon: 'search', label: 'Profile', type: 'profile' },
+  { index: 4, icon: 'search', label: t('user.profile'), type: 'profile' },
 ])
 
 const displayActiveTab = computed<number | null>(() => {

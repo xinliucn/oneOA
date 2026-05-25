@@ -55,6 +55,8 @@ export type ApplicationCatalogEntry = Partial<Omit<ApplicationCatalogItem, 'main
   type?: string
   mobileUrl?: string
   homepageUrl?: string
+  orderNumber?: string | number
+  order_number?: string | number
   mainTable?: ApplicationCatalogMainTable
 }
 
@@ -75,6 +77,27 @@ export interface ApplicationBusiness {
   regions: string[]
   groups: ApplicationCatalogGroup[]
   items: ApplicationCatalogItem[]
+}
+
+export interface DesktopApplication {
+  id: string
+  name: string
+  subtitle: string
+  url: string
+  icon: string
+}
+
+export interface DesktopApplicationCategory {
+  id: string
+  name: string
+  business?: string
+  icon: string
+  color: string
+  description: string
+  intranetLabel: string
+  intranetUrl: string
+  detailPath?: string
+  apps: DesktopApplication[]
 }
 
 export interface ApplicationPrimaryTab {

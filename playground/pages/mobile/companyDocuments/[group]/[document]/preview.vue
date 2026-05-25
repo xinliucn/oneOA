@@ -24,7 +24,7 @@
         v-if="loading"
         class="mobile-company-document-preview__state"
       >
-        Loading...
+        {{ t('pages.companyDocuments.states.loading') }}
       </div>
 
       <div
@@ -42,7 +42,7 @@
           v-else-if="blobUrl && isPdf"
           :src="blobUrl"
           class="mobile-company-document-preview__page mobile-company-document-preview__frame"
-          title="Company document preview"
+          :title="t('pages.companyDocuments.previewTitle')"
         />
 
         <article
@@ -77,7 +77,7 @@
             :download="previewFile?.fileName || fileName"
             class="mobile-company-document-preview__download"
           >
-            Download
+            {{ t('pages.companyDocuments.actions.download') }}
           </a>
         </div>
       </div>
@@ -94,6 +94,7 @@ definePageMeta({
 })
 
 const route = useRoute()
+const { t } = useAppI18n()
 const groupSlug = computed(() => String(route.params.group || ''))
 const documentSlug = computed(() => String(route.params.document || ''))
 const fixedPreviewFileName = 'testpdf.pdf'

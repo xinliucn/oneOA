@@ -7,7 +7,7 @@
       <button
         type="button"
         class="mobile-company-documents__search"
-        aria-label="Search documents"
+        :aria-label="t('pages.companyDocuments.searchPlaceholder')"
       >
         <IconCustom
           name="search"
@@ -73,19 +73,19 @@ const pageTitle = computed(() => t('pages.companyDocuments.title'))
 const tabs = computed(() => [
   {
     key: 'all' as const,
-    label: 'All',
+    label: t('pages.companyDocuments.filters.all'),
     count: documentStore.categoryCounts.all,
     showCount: true,
   },
   {
     key: 'acknowledged' as const,
-    label: 'Acknowledged',
+    label: t('pages.companyDocuments.filters.acknowledged'),
     count: documentStore.categoryCounts.acknowledged,
     showCount: true,
   },
   {
     key: 'notAcknowledged' as const,
-    label: 'Not Acknowledged',
+    label: t('pages.companyDocuments.filters.notAcknowledged'),
     count: documentStore.categoryCounts.notAcknowledged,
     showCount: true,
   },
@@ -249,13 +249,13 @@ const handleGroupClick = (group: CompanyDocumentGroup) => {
   background: #ffffff;
   color: #777777;
   white-space: nowrap;
-  font-family: Source Sans Pro;
+  font-family: var(--font-source-sans-pro);
   font-weight: 400;
-  font-style: Regular;
+  font-style: normal;
   font-size: 16px;
   leading-trim: NONE;
   line-height: 100%;
-  letter-spacing: 0%;
+  letter-spacing: 0;
   vertical-align: middle;
 
 }
@@ -297,25 +297,25 @@ const handleGroupClick = (group: CompanyDocumentGroup) => {
 
 .mobile-company-documents__item-title {
   color: #000000;
-  font-family: Source Sans Pro;
+  font-family: var(--font-source-sans-pro);
   font-weight: 400;
-  font-style: Regular;
+  font-style: normal;
   font-size: 16px;
   leading-trim: NONE;
   line-height: 100%;
-  letter-spacing: 0%;
+  letter-spacing: 0;
 
 }
 
 .mobile-company-documents__item-category {
   color: #8f8f8f;
-  font-family: Source Sans Pro;
+  font-family: var(--font-source-sans-pro);
   font-weight: 400;
-  font-style: Regular;
+  font-style: normal;
   font-size: 12px;
   leading-trim: NONE;
   line-height: 100%;
-  letter-spacing: 0%;
+  letter-spacing: 0;
 
 }
 </style>

@@ -164,6 +164,163 @@ const businessMockItems: ApplicationCatalogEntry[] = [
   },
 ]
 
+const groupMockItems: ApplicationCatalogEntry[] = [
+  {
+    mainTable: {
+      id: 'legal-form-1',
+      tag: 'HK',
+      type: 'Weaver Process',
+      iconx64: '',
+      name_en: 'Order Engagement Approval',
+      name_sc: '订单委聘审批',
+      name_tc: '訂單委聘審批',
+      business: 'Group Legal & Compliance',
+      category: 'New Forms',
+      isactive: '是',
+      mobileurl: '',
+      allowroles: '安全级别为0-100的所有人',
+      application: 'Order Engagement Approval',
+      homepage_url: '/',
+      order_number: '1',
+      description_en: '',
+      description_sc: '',
+      description_tc: '',
+    },
+  },
+  {
+    mainTable: {
+      id: 'legal-form-2',
+      tag: 'HK',
+      type: 'Weaver Process Form',
+      iconx64: '',
+      name_en: 'IT Demand Creation',
+      name_sc: 'IT需求创建',
+      name_tc: 'IT需求建立',
+      business: 'Group Legal & Compliance',
+      category: 'New Forms',
+      isactive: '是',
+      mobileurl: '',
+      allowroles: '安全级别为0-100的所有人',
+      application: 'IT Demand Creation',
+      homepage_url: '/',
+      order_number: '2',
+      description_en: '',
+      description_sc: '',
+      description_tc: '',
+    },
+  },
+  {
+    mainTable: {
+      id: 'legal-form-3',
+      tag: 'HK',
+      type: 'Weaver Process Form',
+      iconx64: '',
+      name_en: 'IT Project Change Submission',
+      name_sc: 'IT项目变更提交',
+      name_tc: 'IT項目變更提交',
+      business: 'Group Legal & Compliance',
+      category: 'New Forms',
+      isactive: '是',
+      mobileurl: '',
+      allowroles: '安全级别为0-100的所有人',
+      application: 'IT Project Change Submission',
+      homepage_url: '/',
+      order_number: '3',
+      description_en: '',
+      description_sc: '',
+      description_tc: '',
+    },
+  },
+  {
+    mainTable: {
+      id: 'legal-form-4',
+      tag: 'HK',
+      type: 'Weaver Process Form',
+      iconx64: '',
+      name_en: 'IT Project Creation',
+      name_sc: 'IT项目创建',
+      name_tc: 'IT項目建立',
+      business: 'Group Legal & Compliance',
+      category: 'New Forms',
+      isactive: '是',
+      mobileurl: '',
+      allowroles: '安全级别为0-100的所有人',
+      application: 'IT Project Creation',
+      homepage_url: '/',
+      order_number: '4',
+      description_en: '',
+      description_sc: '',
+      description_tc: '',
+    },
+  },
+  {
+    mainTable: {
+      id: 'legal-data-1',
+      tag: 'HK',
+      type: 'Weaver Data',
+      iconx64: '',
+      name_en: 'Order List',
+      name_sc: '订单列表',
+      name_tc: '訂單列表',
+      business: 'Group Legal & Compliance',
+      category: 'Data',
+      isactive: '是',
+      mobileurl: '',
+      allowroles: '安全级别为0-100的所有人',
+      application: 'Order List',
+      homepage_url: '/',
+      order_number: '5',
+      description_en: '',
+      description_sc: '',
+      description_tc: '',
+    },
+  },
+  {
+    mainTable: {
+      id: 'legal-data-2',
+      tag: 'HK',
+      type: 'Weaver Data',
+      iconx64: '',
+      name_en: 'IT Demand List',
+      name_sc: 'IT需求列表',
+      name_tc: 'IT需求列表',
+      business: 'Group Legal & Compliance',
+      category: 'Data',
+      isactive: '是',
+      mobileurl: '',
+      allowroles: '安全级别为0-100的所有人',
+      application: 'IT Demand List',
+      homepage_url: '/',
+      order_number: '6',
+      description_en: '',
+      description_sc: '',
+      description_tc: '',
+    },
+  },
+  {
+    mainTable: {
+      id: 'legal-data-3',
+      tag: 'HK',
+      type: 'Weaver Data',
+      iconx64: '',
+      name_en: 'IT Project List',
+      name_sc: 'IT项目列表',
+      name_tc: 'IT項目列表',
+      business: 'Group Legal & Compliance',
+      category: 'Data',
+      isactive: '是',
+      mobileurl: '',
+      allowroles: '安全级别为0-100的所有人',
+      application: 'IT Project List',
+      homepage_url: '/',
+      order_number: '7',
+      description_en: '',
+      description_sc: '',
+      description_tc: '',
+    },
+  },
+]
+
 const normalizeRequestValue = (value: unknown) => {
   if (Array.isArray(value)) {
     return value.map(item => String(item).trim()).filter(Boolean)
@@ -176,24 +333,71 @@ const normalizeRequestValue = (value: unknown) => {
   return ''
 }
 
-const getMockItems = (type: unknown) => {
+const matchesMockValue = (candidate: unknown, target: unknown) => {
+  const normalizedTarget = normalizeRequestValue(target)
+  if (!normalizedTarget) {
+    return true
+  }
+
+  const normalizedCandidate = String(candidate || '').trim().toLowerCase()
+  if (!normalizedCandidate) {
+    return false
+  }
+
+  if (Array.isArray(normalizedTarget)) {
+    return normalizedTarget.some(item => normalizedCandidate === item.toLowerCase())
+  }
+
+  return normalizedCandidate === normalizedTarget.toLowerCase()
+}
+
+const matchesMockTag = (candidate: unknown, target: unknown) => {
+  const normalizedTarget = normalizeRequestValue(target)
+  if (!normalizedTarget) {
+    return true
+  }
+
+  const candidateTags = String(candidate || '')
+    .split(/[/,]/)
+    .map(item => item.trim().toLowerCase())
+    .filter(Boolean)
+
+  if (Array.isArray(normalizedTarget)) {
+    return normalizedTarget.some(item => candidateTags.includes(item.toLowerCase()))
+  }
+
+  return candidateTags.includes(normalizedTarget.toLowerCase())
+}
+
+const getMockItems = (body: ApplicationCatalogRequestBody) => {
+  const type = body.type
   const normalizedType = normalizeRequestValue(type)
   const typeValues = Array.isArray(normalizedType) ? normalizedType : [normalizedType]
   const normalizedTypes = typeValues.map(item => item.toLowerCase())
+  const baseItems = (() => {
+    if (normalizedTypes.includes('application')) {
+      return applicationMockItems
+    }
 
-  if (normalizedTypes.includes('application')) {
-    return applicationMockItems
-  }
+    if (normalizedTypes.includes('business')) {
+      return businessMockItems
+    }
 
-  if (normalizedTypes.includes('business')) {
-    return businessMockItems
-  }
+    if (normalizedTypes.includes('group')) {
+      return groupMockItems
+    }
 
-  if (normalizedTypes.some(Boolean)) {
-    return []
-  }
+    if (normalizedTypes.some(Boolean)) {
+      return []
+    }
 
-  return [...applicationMockItems, ...businessMockItems]
+    return [...applicationMockItems, ...businessMockItems, ...groupMockItems]
+  })()
+
+  return baseItems.filter((item) => {
+    return matchesMockValue(item.mainTable?.business || item.business, body.business)
+      && matchesMockTag(item.mainTable?.tag || item.tag, body.tag)
+  })
 }
 
 export default defineEventHandler(async (event) => {
@@ -201,7 +405,7 @@ export default defineEventHandler(async (event) => {
   const body = await readBody<ApplicationCatalogRequestBody>(event).catch<ApplicationCatalogRequestBody>(() => ({}))
 
   if (config.mockEnabled) {
-    return getMockItems(body.type)
+    return getMockItems(body)
   }
 
   try {

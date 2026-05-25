@@ -18,19 +18,19 @@
       class="company-docs__hero"
       :style="{ backgroundImage: `url(${heroImage})` }"
     >
-      <h1>Company Documents</h1>
+      <h1>{{ t('pages.companyDocuments.title') }}</h1>
     </section>
 
     <main class="company-docs__body">
       <nav
         class="company-docs__breadcrumb"
-        aria-label="Breadcrumb"
+        :aria-label="t('common.breadcrumb')"
       >
         <NuxtLink to="/desktop">
-          Home
+          {{ t('common.home') }}
         </NuxtLink>
         <span>&gt;</span>
-        <span>Company Documents</span>
+        <span>{{ t('pages.companyDocuments.title') }}</span>
       </nav>
 
       <div class="company-docs__toolbar">
@@ -42,22 +42,22 @@
           <input
             v-model.trim="searchQuery"
             type="search"
-            placeholder="Search Company Documents"
+            :placeholder="t('pages.companyDocuments.searchPlaceholder')"
           >
         </label>
 
         <div
           class="company-docs__filters"
-          aria-label="Document status"
+          :aria-label="t('pages.companyDocuments.fields.acknowledgedStatus')"
         >
           <button
             v-for="filter in filters"
-            :key="filter"
+            :key="filter.key"
             type="button"
-            :class="['company-docs__filter', { 'is-active': activeFilter === filter }]"
-            @click="handleFilterClick(filter)"
+            :class="['company-docs__filter', { 'is-active': activeFilter === filter.key }]"
+            @click="handleFilterClick(filter.key)"
           >
-            {{ filter }}
+            {{ filter.label }}
           </button>
         </div>
       </div>
@@ -65,13 +65,13 @@
       <div class="company-docs-table">
         <div class="company-docs-table__row company-docs-table__row--head">
           <button type="button">
-            Folder Title
+            {{ t('pages.companyDocuments.fields.folderTitle') }}
           </button>
           <button type="button">
-            Folder Description
+            {{ t('pages.companyDocuments.fields.folderDescription') }}
           </button>
           <button type="button">
-            No of Articles
+            {{ t('pages.companyDocuments.articleCount') }}
           </button>
         </div>
 
@@ -79,19 +79,19 @@
           v-if="loading"
           class="company-docs-table__state"
         >
-          Loading...
+          {{ t('pages.companyDocuments.states.loading') }}
         </div>
         <div
           v-else-if="error"
           class="company-docs-table__state company-docs-table__state--error"
         >
-          Failed to load company documents.
+          {{ t('pages.companyDocuments.states.loadError') }}
         </div>
         <div
           v-else-if="paginatedFolders.length === 0"
           class="company-docs-table__state"
         >
-          No company documents found.
+          {{ t('pages.companyDocuments.states.empty') }}
         </div>
         <template v-else>
           <div
@@ -164,7 +164,7 @@
     </main>
 
     <footer class="company-docs__copyright">
-      Copyright © 2026 Dah Chong Hong Holdings Limited. All rights reserved.
+      {{ t('common.copyright', { year: 2026 }) }}
     </footer>
   </div>
 </template>
@@ -178,8 +178,7 @@ definePageMeta({
   middleware: 'auth',
 })
 
-const filters = ['All', 'Acknowledged', 'Not Yet Acknowledged'] as const
-type DocumentFilter = typeof filters[number]
+type DocumentFilter = 'All' | 'Acknowledged' | 'Not Yet Acknowledged'
 
 const route = useRoute()
 const { t } = useAppI18n()
@@ -192,6 +191,11 @@ const pageLoading = ref(false)
 const pageError = ref<Error | null>(null)
 const approvedToast = ref('')
 let approvedToastTimer: ReturnType<typeof setTimeout> | null = null
+const filters = computed<Array<{ key: DocumentFilter, label: string }>>(() => [
+  { key: 'All', label: t('pages.companyDocuments.filters.all') },
+  { key: 'Acknowledged', label: t('pages.companyDocuments.filters.acknowledged') },
+  { key: 'Not Yet Acknowledged', label: t('pages.companyDocuments.filters.notAcknowledged') },
+])
 
 const filterTabByFilter: Record<DocumentFilter, DocumentCategoryTabKey> = {
   'All': 'all',
@@ -296,13 +300,17 @@ const visiblePages = computed(() => {
 
 const recordCountLabel = computed(() => {
   if (totalRecords.value === 0) {
-    return '0 records'
+    return t('pages.companyDocuments.zeroRecords')
   }
 
   const startRecord = (currentPage.value - 1) * pageSize + 1
   const endRecord = Math.min(currentPage.value * pageSize, totalRecords.value)
 
-  return `${startRecord} to ${endRecord} of ${totalRecords.value} records`
+  return t('pages.companyDocuments.recordCount', {
+    start: startRecord,
+    end: endRecord,
+    total: totalRecords.value,
+  })
 })
 
 const goToPage = (page: number) => {
@@ -430,7 +438,7 @@ onBeforeUnmount(() => {
   background: #d9f2dd;
   box-shadow: 0 3px 9px rgba(0, 0, 0, 0.16);
   color: #118a2c;
-  font-family: "Source Sans Pro", sans-serif;
+  font-family: var(--font-source-sans-pro);
   font-size: 12px;
   font-weight: 400;
   line-height: 1.2;
@@ -477,7 +485,7 @@ onBeforeUnmount(() => {
   padding: 22px 110px;
   border-bottom: 1px solid #d9d9d9;
   color: #a60a3a;
-  font-family: "Source Sans Pro", sans-serif;
+  font-family: var(--font-source-sans-pro);
   font-size: 16px;
   font-weight: 400;
   line-height: 100%;
@@ -487,12 +495,12 @@ onBeforeUnmount(() => {
 
 .company-docs__breadcrumb a {
   color: inherit;
-  font-family: "Source Sans Pro", sans-serif;
+  font-family: var(--font-source-sans-pro);
   font-weight: 400;
   font-style: normal;
   font-size: 16px;
   line-height: 100%;
-  letter-spacing: 0%;
+  letter-spacing: 0;
   vertical-align: middle;
   text-decoration: underline;
   text-decoration-style: solid;
@@ -502,7 +510,7 @@ onBeforeUnmount(() => {
 }
 
 .company-docs__breadcrumb span {
-  font-family: "Source Sans Pro", sans-serif;
+  font-family: var(--font-source-sans-pro);
   font-size: 16px;
   font-weight: 400;
   line-height: 100%;
@@ -546,13 +554,13 @@ onBeforeUnmount(() => {
 
 .company-docs__search input::placeholder {
   color: #A3AAB2;
-  font-family: Source Sans Pro;
+  font-family: var(--font-source-sans-pro);
   font-weight: 400;
-  font-style: Regular;
+  font-style: normal;
   font-size: 16px;
   leading-trim: NONE;
   line-height: 100%;
-  letter-spacing: 0%;
+  letter-spacing: 0;
 
 }
 
@@ -570,13 +578,13 @@ onBeforeUnmount(() => {
   color: #616161;
   line-height: 1;
   cursor: pointer;
-  font-family: Source Sans Pro;
+  font-family: var(--font-source-sans-pro);
   font-weight: 400;
-  font-style: Regular;
+  font-style: normal;
   font-size: 16px;
   leading-trim: NONE;
   line-height: 100%;
-  letter-spacing: 0%;
+  letter-spacing: 0;
   vertical-align: middle;
 
 }
@@ -589,7 +597,7 @@ onBeforeUnmount(() => {
 
 .company-docs-table {
   width: 100%;
-  font-family: "Source Sans Pro", sans-serif;
+  font-family: var(--font-source-sans-pro);
 }
 
 .company-docs-table__row {
@@ -640,7 +648,7 @@ onBeforeUnmount(() => {
   align-items: center;
   justify-content: center;
   color: #666666;
-  font-family: "Source Sans Pro", sans-serif;
+  font-family: var(--font-source-sans-pro);
   font-size: 12px;
   line-height: 100%;
 }
@@ -651,7 +659,7 @@ onBeforeUnmount(() => {
 
 .company-docs-table__link {
   color: #a60a3a;
-  font-family: "Source Sans Pro", sans-serif;
+  font-family: var(--font-source-sans-pro);
   font-size: 12px;
   font-weight: 400;
   line-height: 100%;
@@ -666,7 +674,7 @@ onBeforeUnmount(() => {
 
 .company-docs-table__row > span {
   color: #000000;
-  font-family: "Source Sans Pro", sans-serif;
+  font-family: var(--font-source-sans-pro);
   font-size: 12px;
   font-weight: 400;
   line-height: 100%;
@@ -684,7 +692,7 @@ onBeforeUnmount(() => {
 
 .company-docs__record-count {
   color: #555555;
-  font-family: "Source Sans Pro", sans-serif;
+  font-family: var(--font-source-sans-pro);
   font-size: 12px;
   line-height: 100%;
 }
@@ -703,7 +711,7 @@ onBeforeUnmount(() => {
   border-radius: 8px;
   background: #ffffff;
   color: #666666;
-  font-family: "Source Sans Pro", sans-serif;
+  font-family: var(--font-source-sans-pro);
   font-size: 16px;
   line-height: 100%;
 }

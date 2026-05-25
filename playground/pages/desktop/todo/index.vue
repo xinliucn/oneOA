@@ -480,7 +480,7 @@ watch(
   gap: 5px;
   margin-bottom: 28px;
   color: #a60a3a;
-  font-family: "Source Sans Pro", sans-serif;
+  font-family: var(--font-source-sans-pro);
   font-size: 16px;
   font-weight: 400;
   line-height: 100%;
@@ -489,12 +489,12 @@ watch(
 
 .todo-page__breadcrumb a {
   color: inherit;
-  font-family: "Source Sans Pro", sans-serif;
+  font-family: var(--font-source-sans-pro);
   font-weight: 400;
   font-style: normal;
   font-size: 16px;
   line-height: 100%;
-  letter-spacing: 0%;
+  letter-spacing: 0;
   vertical-align: middle;
   text-decoration: underline;
   text-decoration-style: solid;
@@ -504,7 +504,7 @@ watch(
 }
 
 .todo-page__breadcrumb span {
-  font-family: "Source Sans Pro", sans-serif;
+  font-family: var(--font-source-sans-pro);
   font-size: 16px;
   font-weight: 400;
   line-height: 100%;
@@ -593,23 +593,23 @@ watch(
   flex-direction: column;
   gap: 8px;
   color: #4f4f4f;
-  font-family: "Source Sans Pro", sans-serif;
+  font-family: var(--font-source-sans-pro);
   font-size: 12px;
   font-weight: 400;
   font-style: normal;
   line-height: 100%;
-  letter-spacing: 0%;
+  letter-spacing: 0;
 }
 
 .todo-page__filter > span {
   display: block;
   color: #4f4f4f;
-  font-family: "Source Sans Pro", sans-serif;
+  font-family: var(--font-source-sans-pro);
   font-size: 12px !important;
   font-weight: 400;
   font-style: normal;
   line-height: 100%;
-  letter-spacing: 0%;
+  letter-spacing: 0;
   vertical-align: middle;
 }
 
@@ -629,23 +629,23 @@ watch(
   border-radius: 8px;
   background: #ffffff;
   color: #666666;
-  font-family: "Source Sans Pro", sans-serif;
+  font-family: var(--font-source-sans-pro);
   font-size: 16px;
   font-weight: 400;
   font-style: normal;
   line-height: 100%;
-  letter-spacing: 0%;
+  letter-spacing: 0;
   cursor: pointer;
 }
 
 .todo-page__select > span {
   color: #666666;
-  font-family: "Source Sans Pro", sans-serif;
+  font-family: var(--font-source-sans-pro);
   font-size: 16px !important;
   font-weight: 400;
   font-style: normal;
   line-height: 100%;
-  letter-spacing: 0%;
+  letter-spacing: 0;
 }
 
 .todo-page__select svg {
@@ -678,7 +678,7 @@ watch(
   padding: 0 12px;
   background: #ffffff;
   color: #666666;
-  font-family: "Source Sans Pro", sans-serif;
+  font-family: var(--font-source-sans-pro);
   font-size: 16px;
   font-weight: 400;
   line-height: 100%;
@@ -708,7 +708,7 @@ watch(
   padding: 0 24px;
   column-gap: 16px;
   color: #000000;
-  font-family: "Source Sans Pro", sans-serif;
+  font-family: var(--font-source-sans-pro);
   font-size: 12px;
   font-weight: 400;
   line-height: 100%;
@@ -717,12 +717,12 @@ watch(
 
 .todo-table__row:not(.todo-table__row--head) > span,
 .todo-table__row:not(.todo-table__row--head) > button {
-  font-family: "Source Sans Pro", sans-serif;
+  font-family: var(--font-source-sans-pro);
   font-size: 12px;
   font-weight: 400;
   font-style: normal;
   line-height: 100%;
-  letter-spacing: 0%;
+  letter-spacing: 0;
   vertical-align: middle;
 }
 
@@ -746,7 +746,7 @@ watch(
   border-bottom: 1px solid #d9d9d9;
   background: transparent;
   border-radius: 0;
-  font-family: "Source Sans Pro", sans-serif;
+  font-family: var(--font-source-sans-pro);
   font-size: 12px;
   font-weight: 600;
   line-height: 100%;
@@ -761,7 +761,7 @@ watch(
   padding: 0;
   background: transparent;
   color: #000000;
-  font-family: "Source Sans Pro", sans-serif;
+  font-family: var(--font-source-sans-pro);
   font-size: 12px;
   font-weight: 600;
   line-height: 100%;
@@ -784,12 +784,12 @@ watch(
   padding: 0;
   background: transparent;
   color: #a60a3a;
-  font-family: "Source Sans Pro", sans-serif;
+  font-family: var(--font-source-sans-pro);
   font-size: 12px;
   font-weight: 400;
   font-style: normal;
   line-height: 100%;
-  letter-spacing: 0%;
+  letter-spacing: 0;
   text-align: left;
   text-decoration: underline;
   text-underline-offset: 2px;
@@ -802,7 +802,7 @@ watch(
   align-items: center;
   justify-content: center;
   color: #666666;
-  font-family: "Source Sans Pro", sans-serif;
+  font-family: var(--font-source-sans-pro);
   font-size: 14px;
   line-height: 1.2;
 }
@@ -816,12 +816,12 @@ watch(
   justify-content: center;
   padding: 0 10px;
   border-radius: 6px;
-  font-family: "Source Sans Pro", sans-serif;
+  font-family: var(--font-source-sans-pro);
   font-size: 12px;
   font-weight: 400;
   font-style: normal;
   line-height: 100%;
-  letter-spacing: 0%;
+  letter-spacing: 0;
   vertical-align: middle;
   text-align: center;
 }

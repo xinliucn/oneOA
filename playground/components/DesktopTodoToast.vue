@@ -39,7 +39,7 @@ const actionLabel = computed(() => toast.value.type === 'rejected' ? 'Rejected!'
   padding: 10px 16px 10px 12px;
   border-radius: 8px;
   box-shadow: 0 6px 14px rgb(0 0 0 / 18%);
-  font-family: "Source Sans Pro", sans-serif;
+  font-family: var(--font-source-sans-pro);
   pointer-events: none;
 }
 

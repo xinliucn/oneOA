@@ -3,14 +3,14 @@
     <header class="company-docs-detail__header">
       <nav
         class="company-docs-detail__breadcrumb"
-        aria-label="Breadcrumb"
+        :aria-label="t('common.breadcrumb')"
       >
         <NuxtLink to="/desktop">
-          Home
+          {{ t('common.home') }}
         </NuxtLink>
         <span>&gt;</span>
         <NuxtLink to="/desktop/company-documents">
-          Company Documents
+          {{ t('pages.companyDocuments.title') }}
         </NuxtLink>
         <span>&gt;</span>
         <span>{{ groupTitle }}</span>
@@ -29,7 +29,7 @@
           <input
             v-model.trim="searchQuery"
             type="search"
-            placeholder="Search Document Information"
+            :placeholder="t('pages.companyDocuments.searchInformationPlaceholder')"
           >
         </label>
       </div>
@@ -54,19 +54,19 @@
           v-if="loading"
           class="company-docs-detail-table__state"
         >
-          Loading...
+          {{ t('pages.companyDocuments.states.loading') }}
         </div>
         <div
           v-else-if="error"
           class="company-docs-detail-table__state company-docs-detail-table__state--error"
         >
-          Failed to load document information.
+          {{ t('pages.companyDocuments.states.detailLoadError') }}
         </div>
         <div
           v-else-if="filteredDocuments.length === 0"
           class="company-docs-detail-table__state"
         >
-          No documents found.
+          {{ t('pages.companyDocuments.states.detailEmpty') }}
         </div>
         <template v-else>
           <div
@@ -90,7 +90,7 @@
             </NuxtLink>
             <span>{{ document.publishedDate }}</span>
             <span :class="['company-docs-detail-table__status', { 'is-pending': document.status === 'Not Acknowledged' }]">
-              {{ document.status }}
+              {{ formatDocumentStatus(document.status) }}
             </span>
           </div>
         </template>
@@ -104,7 +104,7 @@
     </main>
 
     <footer class="company-docs-detail__copyright">
-      Copyright © 2026 Dah Chong Hong Holdings Limited. All rights reserved.
+      {{ t('common.copyright', { year: 2026 }) }}
     </footer>
   </div>
 </template>
@@ -122,7 +122,7 @@ const { t } = useAppI18n()
 const documentStore = useDocumentManagementStore()
 const groupSlug = computed(() => String(route.params.group || ''))
 const folderbaseid = computed(() => groupSlug.value)
-const groupTitle = computed(() => String(route.query.title || 'Company Documents'))
+const groupTitle = computed(() => String(route.query.title || t('pages.companyDocuments.title')))
 const searchQuery = ref('')
 const loading = ref(true)
 const error = ref<Error | null>(null)
@@ -136,6 +136,12 @@ const getStatus = (item: CompanyDocumentDetailResponseItem): CompanyDocumentStat
   }
 
   return 'Not Acknowledged'
+}
+
+const formatDocumentStatus = (status: CompanyDocumentStatus) => {
+  return status === 'Acknowledged'
+    ? t('pages.companyDocuments.filters.acknowledged')
+    : t('pages.companyDocuments.filters.notAcknowledged')
 }
 
 const getDocumentCodeAndVersion = (numberVersion?: string) => {
@@ -190,7 +196,13 @@ const filteredDocuments = computed(() => {
   })
 })
 
-const recordCountLabel = computed(() => `${filteredDocuments.value.length} records`)
+const recordCountLabel = computed(() => {
+  const total = filteredDocuments.value.length
+
+  return total === 0
+    ? t('pages.companyDocuments.zeroRecords')
+    : t('pages.companyDocuments.recordCountTotal', { total })
+})
 
 const getDocumentRoute = (document: CompanyDocumentItem) => ({
   path: `/desktop/company-documents/${encodeURIComponent(groupSlug.value)}/${encodeURIComponent(document.slug)}`,
@@ -250,7 +262,7 @@ onMounted(() => {
 .company-docs-detail__header h1 {
   margin: 29px 0 0;
   color: #000000;
-  font-family: "Source Sans Pro", sans-serif;
+  font-family: var(--font-source-sans-pro);
   font-size: 26px;
   line-height: 100%;
   font-weight: 700;
@@ -267,7 +279,7 @@ onMounted(() => {
   align-items: center;
   gap: 5px;
   color: #a60a3a;
-  font-family: "Source Sans Pro", sans-serif;
+  font-family: var(--font-source-sans-pro);
   font-size: 12px;
   font-weight: 400;
   line-height: 100%;
@@ -276,7 +288,7 @@ onMounted(() => {
 
 .company-docs-detail__breadcrumb a {
   color: inherit;
-  font-family: "Source Sans Pro", sans-serif;
+  font-family: var(--font-source-sans-pro);
   font-weight: 400;
   font-style: normal;
   font-size: 12px;
@@ -291,7 +303,7 @@ onMounted(() => {
 }
 
 .company-docs-detail__breadcrumb span {
-  font-family: "Source Sans Pro", sans-serif;
+  font-family: var(--font-source-sans-pro);
   font-size: 12px;
   font-weight: 400;
   line-height: 100%;
@@ -330,14 +342,14 @@ onMounted(() => {
   outline: 0;
   background: transparent;
   color: #333333;
-  font-family: "Source Sans Pro", sans-serif;
+  font-family: var(--font-source-sans-pro);
   font-size: 14px;
   line-height: 100%;
 }
 
 .company-docs-detail__search input::placeholder {
   color: #a3aab2;
-  font-family: "Source Sans Pro", sans-serif;
+  font-family: var(--font-source-sans-pro);
   font-size: 14px;
   font-weight: 400;
   line-height: 100%;
@@ -345,7 +357,7 @@ onMounted(() => {
 
 .company-docs-detail-table {
   width: 100%;
-  font-family: "Source Sans Pro", sans-serif;
+  font-family: var(--font-source-sans-pro);
 }
 
 .company-docs-detail-table__row {
@@ -396,7 +408,7 @@ onMounted(() => {
   align-items: center;
   justify-content: center;
   color: #666666;
-  font-family: "Source Sans Pro", sans-serif;
+  font-family: var(--font-source-sans-pro);
   font-size: 12px;
   line-height: 100%;
 }
@@ -407,7 +419,7 @@ onMounted(() => {
 
 .company-docs-detail-table__link {
   color: #a60a3a;
-  font-family: "Source Sans Pro", sans-serif;
+  font-family: var(--font-source-sans-pro);
   font-size: 12px;
   font-weight: 400;
   line-height: 100%;
@@ -422,7 +434,7 @@ onMounted(() => {
 
 .company-docs-detail-table__row > span {
   color: #000000;
-  font-family: "Source Sans Pro", sans-serif;
+  font-family: var(--font-source-sans-pro);
   font-size: 12px;
   font-weight: 400;
   line-height: 100%;
@@ -443,7 +455,7 @@ onMounted(() => {
   height: 15px;
   display: inline-flex;
   align-items: center;
-  font-family: "Source Sans Pro", sans-serif;
+  font-family: var(--font-source-sans-pro);
   font-size: 12px;
   font-weight: 400;
   line-height: 100%;
@@ -466,7 +478,7 @@ onMounted(() => {
 
 .company-docs-detail__record-count {
   color: #555555;
-  font-family: "Source Sans Pro", sans-serif;
+  font-family: var(--font-source-sans-pro);
   font-size: 12px;
   line-height: 100%;
 }

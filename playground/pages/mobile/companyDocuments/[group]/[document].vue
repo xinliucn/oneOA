@@ -114,7 +114,7 @@
     v-else
     class="mobile-company-document-detail__empty"
   >
-    Document not found
+    {{ t('pages.companyDocuments.documentNotFound') }}
   </div>
 </template>
 
@@ -232,13 +232,13 @@ watch(isAcknowledged, (value) => {
   font-size: 15px;
 
   span {
-    font-family: Source Sans Pro;
+    font-family: var(--font-source-sans-pro);
     font-weight: 400;
-    font-style: Regular;
+    font-style: normal;
     font-size: 16px;
     leading-trim: NONE;
     line-height: 100%;
-    letter-spacing: 0%;
+    letter-spacing: 0;
     vertical-align: middle;
     color: #A60A3A;
   }
@@ -253,26 +253,26 @@ watch(isAcknowledged, (value) => {
 .mobile-company-document-detail__code {
   margin-bottom: 8px;
   color: #000000;
-  font-family: Source Sans Pro;
+  font-family: var(--font-source-sans-pro);
   font-weight: 400;
-  font-style: Regular;
+  font-style: normal;
   font-size: 16px;
   leading-trim: NONE;
   line-height: 100%;
-  letter-spacing: 0%;
+  letter-spacing: 0;
   vertical-align: middle;
 
 }
 
 .mobile-company-document-detail__title {
   margin: 0 0 16px;
-  font-family: Source Sans Pro;
+  font-family: var(--font-source-sans-pro);
   font-weight: 600;
-  font-style: SemiBold;
+  font-style: normal;
   font-size: 24px;
   leading-trim: NONE;
   line-height: 100%;
-  letter-spacing: 0%;
+  letter-spacing: 0;
   color: #000000;
 }
 
@@ -305,13 +305,13 @@ watch(isAcknowledged, (value) => {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  font-family: Source Sans Pro;
+  font-family: var(--font-source-sans-pro);
   font-weight: 400;
-  font-style: Regular;
+  font-style: normal;
   font-size: 16px;
   leading-trim: NONE;
   line-height: 100%;
-  letter-spacing: 0%;
+  letter-spacing: 0;
   vertical-align: middle;
   color: #616161;
 
@@ -347,25 +347,25 @@ watch(isAcknowledged, (value) => {
 
 .mobile-company-document-detail__meta-label {
   color: #000000;
-  font-family: Source Sans Pro;
+  font-family: var(--font-source-sans-pro);
   font-weight: 600;
-  font-style: SemiBold;
+  font-style: normal;
   font-size: 16px;
   leading-trim: NONE;
   line-height: 20px;
-  letter-spacing: 0%;
+  letter-spacing: 0;
 
 }
 
 .mobile-company-document-detail__meta-value {
   color: #000000;
-  font-family: Source Sans Pro;
+  font-family: var(--font-source-sans-pro);
   font-weight: 4000;
-  font-style: SemiBold;
+  font-style: normal;
   font-size: 16px;
   leading-trim: NONE;
   line-height: 20px;
-  letter-spacing: 0%;
+  letter-spacing: 0;
 }
 
 .mobile-company-document-detail__paragraphs {
@@ -443,13 +443,13 @@ watch(isAcknowledged, (value) => {
   color: #ffffff;
 
   span {
-    font-family: Source Sans Pro;
+    font-family: var(--font-source-sans-pro);
     font-weight: 600;
-    font-style: SemiBold;
+    font-style: normal;
     font-size: 16px;
     leading-trim: NONE;
     line-height: 100%;
-    letter-spacing: 0%;
+    letter-spacing: 0;
     text-align: center;
     box-shadow: 0 5px 10px rgba(166, 10, 58, 0.22);
     transition: background-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;

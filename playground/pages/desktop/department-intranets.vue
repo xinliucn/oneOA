@@ -123,7 +123,7 @@ const handleCardClick = async () => {
   padding: 22px 110px;
   border-bottom: 1px solid #d9d9d9;
   color: #a60a3a;
-  font-family: "Source Sans Pro", sans-serif;
+  font-family: var(--font-source-sans-pro);
   font-size: 16px;
   font-weight: 400;
   line-height: 100%;
@@ -132,12 +132,12 @@ const handleCardClick = async () => {
 
 .department-intranets__breadcrumb a {
   color: inherit;
-  font-family: "Source Sans Pro", sans-serif;
+  font-family: var(--font-source-sans-pro);
   font-weight: 400;
   font-style: normal;
   font-size: 16px;
   line-height: 100%;
-  letter-spacing: 0%;
+  letter-spacing: 0;
   vertical-align: middle;
   text-decoration: underline;
   text-decoration-style: solid;
@@ -147,7 +147,7 @@ const handleCardClick = async () => {
 }
 
 .department-intranets__breadcrumb span {
-  font-family: "Source Sans Pro", sans-serif;
+  font-family: var(--font-source-sans-pro);
   font-size: 16px;
   font-weight: 400;
   line-height: 100%;
@@ -233,7 +233,7 @@ const handleCardClick = async () => {
 .department-intranets-card__body h2 {
   margin: 0;
   color: #000000;
-  font-family: "Source Sans Pro", sans-serif;
+  font-family: var(--font-source-sans-pro);
   font-size: 12px;
   line-height: 130%;
   font-weight: 700;

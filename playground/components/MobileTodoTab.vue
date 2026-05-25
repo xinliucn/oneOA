@@ -1,112 +1,51 @@
 <template>
   <div class="mobile-todo">
-    <div
-      v-if="!isLoadingScreenVisible"
-      class="mobile-todo__header"
-    >
+    <div v-if="!isLoadingScreenVisible" class="mobile-todo__header">
       <template v-if="isSearchOpen">
         <div class="mobile-todo__search">
-          <IconCustom
-            name="search"
-            :size="20"
-            class="mobile-todo__search-icon"
-          />
-          <input
-            ref="searchInputRef"
-            v-model.trim="searchQuery"
-            type="text"
-            class="mobile-todo__search-input"
-            :placeholder="searchPlaceholder"
-          >
+          <IconCustom name="search" :size="20" class="mobile-todo__search-icon" />
+          <input ref="searchInputRef" v-model.trim="searchQuery" type="text" class="mobile-todo__search-input"
+            :placeholder="searchPlaceholder">
         </div>
-        <button
-          type="button"
-          class="mobile-todo__search-cancel"
-          @click="closeSearch"
-        >
+        <button type="button" class="mobile-todo__search-cancel" @click="closeSearch">
           {{ text('mobile.todo.actions.cancel', { 'zh-CN': '取消', 'zh-TW': '取消', "en": 'Cancel' }) }}
         </button>
       </template>
 
       <template v-else>
-        <div
-          ref="dropdownRef"
-          class="mobile-todo__dropdown"
-        >
-          <button
-            type="button"
-            class="mobile-todo__title"
-            @click="toggleDropdown"
-          >
+        <div ref="dropdownRef" class="mobile-todo__dropdown">
+          <button type="button" class="mobile-todo__title" @click="toggleDropdown">
             <h2>{{ selectedView.label }}</h2>
-            <span
-              class="mobile-todo__arrow"
-              :class="{ 'is-open': isDropdownOpen }"
-            >
-              <IconCustom
-                name="downArrowIcon"
-                :size="20"
-              />
+            <span class="mobile-todo__arrow" :class="{ 'is-open': isDropdownOpen }">
+              <IconCustom name="downArrowIcon" :size="20" />
             </span>
           </button>
 
-          <div
-            v-if="isDropdownOpen"
-            class="mobile-todo__menu"
-          >
-            <button
-              v-for="option in todoOptions"
-              :key="option.value"
-              type="button"
-              class="mobile-todo__menu-item"
-              :class="{ 'is-active': selectedView.value === option.value }"
-              @click="selectView(option)"
-            >
-              <span
-                class="mobile-todo__menu-check"
-                :class="{ 'is-visible': selectedView.value === option.value }"
-              />
+          <div v-if="isDropdownOpen" class="mobile-todo__menu">
+            <button v-for="option in todoOptions" :key="option.value" type="button" class="mobile-todo__menu-item"
+              :class="{ 'is-active': selectedView.value === option.value }" @click="selectView(option)">
+              <span class="mobile-todo__menu-check" :class="{ 'is-visible': selectedView.value === option.value }" />
               <span>{{ option.label }}</span>
             </button>
           </div>
         </div>
 
         <div class="mobile-todo__actions">
-          <div
-            ref="filterTriggerRef"
-            class="mobile-todo__filter-trigger"
-          >
-            <el-button
-              circle
-              class="action-btn_left"
-              :class="{ 'is-active': isFilterPanelOpen }"
-              @click="toggleFilterPanel"
-            >
-              <IconCustom
-                name="filterIcon"
-                :size="20"
-              />
+          <div ref="filterTriggerRef" class="mobile-todo__filter-trigger">
+            <el-button circle class="action-btn_left" :class="{ 'is-active': isFilterPanelOpen }"
+              @click="toggleFilterPanel">
+              <IconCustom name="filterIcon" :size="20" />
             </el-button>
           </div>
-          <el-button
-            circle
-            class="action-btn"
-            @click="openSearch"
-          >
-            <IconCustom
-              name="search"
-              :size="20"
-            />
+          <el-button circle class="action-btn" @click="openSearch">
+            <IconCustom name="search" :size="20" />
           </el-button>
         </div>
       </template>
     </div>
 
-    <div
-      v-if="!isLoadingScreenVisible && isFilterPanelOpen && !isSearchOpen"
-      ref="filterPanelRef"
-      class="mobile-todo__filter-panel"
-    >
+    <div v-if="!isLoadingScreenVisible && isFilterPanelOpen && !isSearchOpen" ref="filterPanelRef"
+      class="mobile-todo__filter-panel">
       <div class="mobile-todo__filter-group">
         <div class="mobile-todo__filter-label">
           {{ text('mobile.todo.filters.category', {
@@ -116,14 +55,8 @@
           }) }}
         </div>
         <div class="mobile-todo__filter-options">
-          <button
-            v-for="filter in categoryFilters"
-            :key="filter.value"
-            type="button"
-            class="mobile-todo__filter-chip"
-            :class="{ 'is-active': draftCategoryFilter === filter.value }"
-            @click="draftCategoryFilter = filter.value"
-          >
+          <button v-for="filter in categoryFilters" :key="filter.value" type="button" class="mobile-todo__filter-chip"
+            :class="{ 'is-active': draftCategoryFilter === filter.value }" @click="draftCategoryFilter = filter.value">
             {{ filter.label }}{{ filter.count ? ` ${filter.count}` : '' }}
           </button>
         </div>
@@ -138,77 +71,47 @@
           }) }}
         </div>
         <div class="mobile-todo__filter-options">
-          <button
-            v-for="filter in statusFilters"
-            :key="filter.value"
-            type="button"
-            class="mobile-todo__filter-chip"
-            :class="{ 'is-active': draftStatusFilter === filter.value }"
-            @click="draftStatusFilter = filter.value"
-          >
+          <button v-for="filter in statusFilters" :key="filter.value" type="button" class="mobile-todo__filter-chip"
+            :class="{ 'is-active': draftStatusFilter === filter.value }" @click="draftStatusFilter = filter.value">
             {{ filter.label }}{{ filter.count ? ` ${filter.count}` : '' }}
           </button>
         </div>
       </div>
 
       <div class="mobile-todo__filter-actions">
-        <button
-          type="button"
-          class="mobile-todo__panel-btn"
-          @click="cancelFilters"
-        >
+        <button type="button" class="mobile-todo__panel-btn" @click="cancelFilters">
           {{ text('mobile.todo.actions.cancel', { 'zh-CN': '取消', 'zh-TW': '取消', "en": 'Cancel' }) }}
         </button>
-        <button
-          type="button"
-          class="mobile-todo__panel-btn"
-          @click="applyFilters"
-        >
+        <button type="button" class="mobile-todo__panel-btn" @click="applyFilters">
           {{ text('mobile.todo.actions.apply', { 'zh-CN': '应用', 'zh-TW': '套用', "en": 'Apply' }) }}
         </button>
       </div>
     </div>
 
     <div class="mobile-todo__list">
-      <div
-        v-if="isLoadingScreenVisible"
-        class="mobile-todo__loading-screen"
-      >
+      <div v-if="isLoadingScreenVisible" class="mobile-todo__loading-screen">
         <div class="mobile-todo__loading-content">
           <div class="mobile-todo__loading-title">
             {{ loadingLabel }}
           </div>
-          <div
-            class="mobile-todo__loading-track"
-            aria-hidden="true"
-          >
+          <div class="mobile-todo__loading-track" aria-hidden="true">
             <span class="mobile-todo__loading-bar" />
           </div>
         </div>
       </div>
-      <div
-        v-else-if="!loading && filteredTasks.length === 0"
-        class="mobile-todo__state"
-      >
+      <div v-else-if="!loading && filteredTasks.length === 0" class="mobile-todo__state">
         {{
           text('mobile.todo.states.empty',
-               { 'zh-CN': '暂无消息', 'zh-TW': '暫無消息', "en": 'No items' }) }}
+            { 'zh-CN': '暂无消息', 'zh-TW': '暫無消息', "en": 'No items' }) }}
       </div>
       <template v-else>
-        <div
-          v-for="task in filteredTasks"
-          :key="task.id"
-          class="todo-item"
-          @click="handleTaskClick(selectedViewValue, task)"
-        >
+        <div v-for="task in filteredTasks" :key="task.id" class="todo-item"
+          @click="handleTaskClick(selectedViewValue, task)">
           <div class="todo-item__content">
             <div class="todo-item__header">
               <div class="todo-item__meta">
                 <span class="todo-item__code">{{ getTaskReference(task) }}</span>
-                <span
-                  class="todo-item__status"
-                  :class="getTaskStatusClass(task)"
-                >
+                <span class="todo-item__status" :class="getTaskStatusClass(task)">
                   {{ getTaskStatusLabel(task) || t('tasks.status.pending') }}
                 </span>
               </div>
@@ -223,15 +126,10 @@
               <span>{{ task.creatorName }}</span>
               <span>{{ ' | ' }}</span>
               <span class="todo-item__portfolio">{{ task.workflowBaseInfo?.workflowName
-              }}</span>
+                }}</span>
             </div>
           </div>
-          <IconCustom
-            name="chevron-right"
-            :size="20"
-            color="#A60A3A"
-            class="todo-item__arrow"
-          />
+          <IconCustom name="chevron-right" :size="20" color="#A60A3A" class="todo-item__arrow" />
         </div>
       </template>
     </div>
@@ -1086,15 +984,16 @@ onBeforeUnmount(() => {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+
   span {
-    font-family: Source Sans Pro;
-font-weight: 400;
-font-style: Regular;
-font-size: 11px;
-leading-trim: NONE;
-line-height: 100%;
-letter-spacing: 0%;
-vertical-align: middle;
+    font-family: var(--font-source-sans-pro);
+    font-weight: 400;
+    font-style: normal;
+    font-size: 11px;
+    leading-trim: NONE;
+    line-height: 100%;
+    letter-spacing: 0;
+    vertical-align: middle;
   }
 }
 
@@ -1112,14 +1011,14 @@ vertical-align: middle;
 
 .todo-item__portfolio {
   color: #A60A3A;
-  font-family: Source Sans Pro;
-font-weight: 400;
-font-style: Regular;
-font-size: 11px;
-leading-trim: NONE;
-line-height: 100%;
-letter-spacing: 0%;
-vertical-align: middle;
+  font-family: var(--font-source-sans-pro);
+  font-weight: 400;
+  font-style: normal;
+  font-size: 11px;
+  leading-trim: NONE;
+  line-height: 100%;
+  letter-spacing: 0;
+  vertical-align: middle;
 
 }
 </style>

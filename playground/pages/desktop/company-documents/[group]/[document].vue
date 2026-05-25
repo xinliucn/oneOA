@@ -2,18 +2,27 @@
   <!-- eslint-disable vue/no-v-html -->
   <div class="company-document-view">
     <header class="company-document-view__header">
-      <nav class="company-document-view__breadcrumb" aria-label="Breadcrumb">
-        <NuxtLink to="/desktop">Home</NuxtLink>
+      <nav
+        class="company-document-view__breadcrumb"
+        :aria-label="t('common.breadcrumb')"
+      >
+        <NuxtLink to="/desktop">
+          {{ t('common.home') }}
+        </NuxtLink>
         <span>&gt;</span>
-        <NuxtLink to="/desktop/company-documents">Company Documents</NuxtLink>
+        <NuxtLink to="/desktop/company-documents">
+          {{ t('pages.companyDocuments.title') }}
+        </NuxtLink>
         <span>&gt;</span>
-        <NuxtLink :to="{
-          path: `/desktop/company-documents/${encodeURIComponent(groupSlug)}`,
-          query: {
-            folderbaseid,
-            title: groupTitle,
-          },
-        }">
+        <NuxtLink
+          :to="{
+            path: `/desktop/company-documents/${encodeURIComponent(groupSlug)}`,
+            query: {
+              folderbaseid,
+              title: groupTitle,
+            },
+          }"
+        >
           {{ groupTitle }}
         </NuxtLink>
         <span>&gt;</span>
@@ -23,31 +32,45 @@
       <h1>{{ documentDetail?.title || documentTitle }}</h1>
     </header>
 
-    <main v-if="loading" class="company-document-view__state">
-      Loading...
+    <main
+      v-if="loading"
+      class="company-document-view__state"
+    >
+      {{ t('pages.companyDocuments.states.loading') }}
     </main>
 
-    <main v-else-if="documentDetail" class="company-document-view__content">
+    <main
+      v-else-if="documentDetail"
+      class="company-document-view__content"
+    >
       <section class="company-document-view__summary">
         <div class="company-document-view__status-panel">
           <div
             class="company-document-view__status-bar"
             :class="{ 'is-acknowledged': documentDetail.status === 'Acknowledged' }"
           >
-            {{ documentDetail.status }}
+            {{ formatDocumentStatus(documentDetail.status) }}
           </div>
           <div class="company-document-view__status-body">
             <span class="company-document-view__status-icon">
-              <IconCustom name="personnel" :size="23" color="#666666" />
+              <IconCustom
+                name="personnel"
+                :size="23"
+                color="#666666"
+              />
             </span>
-            <span>{{ documentDetail.status === 'Acknowledged' ? 'Acknowledged' : 'Acknowledgment required' }}</span>
+            <span>{{ formatStatusSummary(documentDetail.status) }}</span>
           </div>
         </div>
 
         <aside class="company-document-view__meta">
           <div class="company-document-view__creator">
             <span class="company-document-view__avatar">
-              <IconCustom name="personnel" :size="20" color="#ffffff" />
+              <IconCustom
+                name="personnel"
+                :size="20"
+                color="#ffffff"
+              />
             </span>
             <div class="company-document-view__creator-copy">
               <span>{{ t('pages.companyDocuments.fields.createdBy') }}:</span>
@@ -69,10 +92,17 @@
             :key="file.id || file.osid || file.filename"
             class="company-document-view__file"
           >
-            <IconCustom name="document" :size="19" color="#a60a3a" />
+            <IconCustom
+              name="document"
+              :size="19"
+              color="#a60a3a"
+            />
             <span>{{ file.filename }}</span>
-            <button type="button" @click="downloadDocument(file)">
-              Download
+            <button
+              type="button"
+              @click="downloadDocument(file)"
+            >
+              {{ t('pages.companyDocuments.actions.download') }}
             </button>
           </div>
         </aside>
@@ -81,7 +111,10 @@
       <section class="company-document-view__policy">
         <!-- Sanitized controlled OA/CMS HTML before rendering. -->
         <!-- eslint-disable-next-line vue/no-v-html -->
-        <div class="company-document-view__paragraphs" v-html="documentDetail.contentHtml" />
+        <div
+          class="company-document-view__paragraphs"
+          v-html="documentDetail.contentHtml"
+        />
 
         <!-- Sanitized controlled OA/CMS HTML before rendering. -->
         <!-- eslint-disable-next-line vue/no-v-html -->
@@ -112,12 +145,15 @@
       </section>
     </main>
 
-    <main v-else class="company-document-view__state">
-      Document not found
+    <main
+      v-else
+      class="company-document-view__state"
+    >
+      {{ t('pages.companyDocuments.documentNotFound') }}
     </main>
 
     <footer class="company-document-view__footer">
-      Copyright © 2026 Dah Chong Hong Holdings Limited. All rights reserved.
+      {{ t('common.copyright', { year: 2026 }) }}
     </footer>
   </div>
 </template>
@@ -145,7 +181,7 @@ const groupSlug = computed(() => String(route.params.group || ''))
 const folderbaseid = computed(() => groupSlug.value)
 const groupTitle = computed(() => String(route.query.groupTitle || route.query.title || groupSlug.value))
 const documentSlug = computed(() => String(route.params.document || ''))
-const documentTitle = computed(() => String(route.query.title || 'Company Document'))
+const documentTitle = computed(() => String(route.query.title || t('pages.companyDocuments.documentFallback')))
 const loading = ref(false)
 const accepted = ref(false)
 
@@ -171,6 +207,18 @@ const getStatus = (item: CompanyDocumentDetailResponseItem): CompanyDocumentStat
   }
 
   return 'Not Acknowledged'
+}
+
+const formatDocumentStatus = (status?: CompanyDocumentStatus) => {
+  return status === 'Acknowledged'
+    ? t('pages.companyDocuments.filters.acknowledged')
+    : t('pages.companyDocuments.filters.notAcknowledged')
+}
+
+const formatStatusSummary = (status?: CompanyDocumentStatus) => {
+  return status === 'Acknowledged'
+    ? t('pages.companyDocuments.filters.acknowledged')
+    : t('pages.companyDocuments.states.acknowledgmentRequired')
 }
 
 const getDocumentCodeAndVersion = (numberVersion?: string) => {
@@ -323,14 +371,14 @@ onMounted(() => {
   align-items: center;
   gap: 5px;
   color: #a60a3a;
-  font-family: "Source Sans Pro", sans-serif;
+  font-family: var(--font-source-sans-pro);
   font-size: 12px;
   line-height: 100%;
 }
 
 .company-document-view__breadcrumb a {
   color: inherit;
-  font-family: "Source Sans Pro", sans-serif;
+  font-family: var(--font-source-sans-pro);
   font-size: 12px;
   font-weight: 400;
   line-height: 100%;
@@ -349,7 +397,7 @@ onMounted(() => {
 .company-document-view__header h1 {
   margin: 25px 0 0;
   color: #000000;
-  font-family: "Source Sans Pro", sans-serif;
+  font-family: var(--font-source-sans-pro);
   font-size: 24px;
   font-weight: 700;
   line-height: 110%;
@@ -380,13 +428,13 @@ onMounted(() => {
   padding: 0 13px;
   background: #ff0000;
   color: #ffffff;
-  font-family: Source Sans Pro;
+  font-family: var(--font-source-sans-pro);
   font-weight: 600;
-  font-style: SemiBold;
+  font-style: normal;
   font-size: 16px;
   leading-trim: NONE;
   line-height: 100%;
-  letter-spacing: 0%;
+  letter-spacing: 0;
   vertical-align: middle;
 
 }
@@ -403,18 +451,18 @@ onMounted(() => {
   padding: 0 12px;
   background: #f5f5f5;
   color: #000000;
-  font-family: "Source Sans Pro", sans-serif;
+  font-family: var(--font-source-sans-pro);
   font-size: 12px;
   line-height: 100%;
 
   span {
-    font-family: Source Sans Pro;
+    font-family: var(--font-source-sans-pro);
     font-weight: 400;
-    font-style: Regular;
+    font-style: normal;
     font-size: 16px;
     leading-trim: NONE;
     line-height: 100%;
-    letter-spacing: 0%;
+    letter-spacing: 0;
     vertical-align: middle;
 
   }
@@ -460,14 +508,14 @@ onMounted(() => {
   time {
     display: block;
     color: #a3aab2;
-    font-family: "Source Sans Pro", sans-serif;
-    font-family: Source Sans Pro;
+    font-family: var(--font-source-sans-pro);
+    font-family: var(--font-source-sans-pro);
     font-weight: 400;
-    font-style: Regular;
+    font-style: normal;
     font-size: 16px;
     leading-trim: NONE;
     line-height: 100%;
-    letter-spacing: 0%;
+    letter-spacing: 0;
     vertical-align: middle;
 
   }
@@ -478,14 +526,14 @@ onMounted(() => {
 /* .company-document-view__creator time {
   display: block;
   color: #a3aab2;
-  font-family: "Source Sans Pro", sans-serif;
-  font-family: Source Sans Pro;
+  font-family: var(--font-source-sans-pro);
+  font-family: var(--font-source-sans-pro);
   font-weight: 400;
-  font-style: Regular;
+  font-style: normal;
   font-size: 16px;
   leading-trim: NONE;
   line-height: 100%;
-  letter-spacing: 0%;
+  letter-spacing: 0;
   vertical-align: middle;
 
 }
@@ -494,13 +542,13 @@ onMounted(() => {
 .company-document-view__published strong {
   display: block;
   color: #000000;
-  font-family: Source Sans Pro;
+  font-family: var(--font-source-sans-pro);
   font-weight: 400;
-  font-style: Regular;
+  font-style: normal;
   font-size: 16px;
   leading-trim: NONE;
   line-height: 100%;
-  letter-spacing: 0%;
+  letter-spacing: 0;
   vertical-align: middle;
 
 } */
@@ -515,13 +563,13 @@ onMounted(() => {
   align-items: start;
   gap: 8px;
   color: #666666;
-  font-family: Source Sans Pro;
+  font-family: var(--font-source-sans-pro);
   font-weight: 400;
-  font-style: Regular;
+  font-style: normal;
   font-size: 16px;
   leading-trim: NONE;
   line-height: 100%;
-  letter-spacing: 0%;
+  letter-spacing: 0;
   vertical-align: middle;
 
 }
@@ -538,13 +586,13 @@ onMounted(() => {
   padding: 0;
   background: transparent;
   color: #a60a3a;
-  font-family: Source Sans Pro;
+  font-family: var(--font-source-sans-pro);
   font-weight: 400;
-  font-style: Regular;
+  font-style: normal;
   font-size: 16px;
   leading-trim: NONE;
   line-height: 100%;
-  letter-spacing: 0%;
+  letter-spacing: 0;
   vertical-align: middle;
 
 }
@@ -556,7 +604,7 @@ onMounted(() => {
   border-radius: 7px;
   background: #f5f5f5;
   color: #000000;
-  font-family: "Source Sans Pro", sans-serif;
+  font-family: var(--font-source-sans-pro);
   line-height: 150%;
 }
 
@@ -615,7 +663,7 @@ onMounted(() => {
   border-radius: 6px;
   background: #edccd7;
   color: #a60a3a;
-  font-family: "Source Sans Pro", sans-serif;
+  font-family: var(--font-source-sans-pro);
   font-weight: 700;
   line-height: 100%;
   cursor: pointer;
@@ -638,7 +686,7 @@ onMounted(() => {
   align-items: center;
   justify-content: center;
   color: #666666;
-  font-family: "Source Sans Pro", sans-serif;
+  font-family: var(--font-source-sans-pro);
 }
 
 .company-document-view__footer {
@@ -647,7 +695,7 @@ onMounted(() => {
   background: #a60a3a;
   color: #ffffff;
   text-align: center;
-  font-family: "Source Sans Pro", sans-serif;
+  font-family: var(--font-source-sans-pro);
   line-height: 100%;
 }
 </style>

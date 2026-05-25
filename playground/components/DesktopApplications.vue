@@ -16,13 +16,13 @@
       v-if="loading"
       class="desktop-apps__state"
     >
-      Loading...
+      {{ t('desktopApps.states.loading') }}
     </div>
     <div
       v-else-if="visibleCategories.length === 0"
       class="desktop-apps__state"
     >
-      No applications found.
+      {{ t('desktopApps.states.empty') }}
     </div>
     <div
       v-else
@@ -84,7 +84,7 @@
           <button
             type="button"
             class="app-column__view-all"
-            @click="navigateTo('/desktop/applications')"
+            @click="handleViewAll(category)"
           >
             {{ t('desktopApps.viewAll') }}
           </button>
@@ -95,50 +95,21 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, ref } from 'vue'
-import type { ApplicationCatalogItem } from '~/types/applicationCatalog'
+import { computed, onMounted } from 'vue'
+import type {
+  ApplicationCatalogEntry,
+  DesktopApplication,
+  DesktopApplicationCategory,
+} from '~/types/applicationCatalog'
 
-const { t } = useAppI18n()
+const { t, locale } = useAppI18n()
 const { openGuardedUrl } = useNetworkGuard()
-const { requestApplicationCatalogData } = useApplicationCatalog()
 const { addRecentItem } = useRecentItems('desktop')
+const applicationsStore = useApplicationsStore()
+const loading = computed(() => applicationsStore.activeLoading)
+const visibleCategories = computed(() => applicationsStore.activeCatalogEntries.slice(0, 3).map(toDesktopCategory))
 
-type DesktopApplication = {
-  id: string
-  name: string
-  subtitle: string
-  url: string
-  icon: string
-}
-
-type DesktopApplicationCategory = {
-  id: string
-  name: string
-  icon: string
-  color: string
-  description: string
-  intranetLabel: string
-  intranetUrl: string
-  apps: DesktopApplication[]
-}
-
-type CatalogRecord = ApplicationCatalogItem & Record<string, any>
-
-const preferredBusinessOrder = ['digital-technology', 'finance', 'legal-compliance']
-const businessCategoryNames = [
-  'group digital & technology',
-  'digital & technology',
-  'group finance',
-  'finance',
-  'group legal & compliance',
-  'legal & compliance',
-  'group human resources',
-  'human resources',
-]
-const desktopCatalog = ref<ApplicationCatalogItem[]>([])
-const loading = ref(true)
-
-const normalizeString = (value?: any) => {
+const normalizeString = (value?: unknown) => {
   if (typeof value === 'string') {
     return value.trim()
   }
@@ -150,281 +121,161 @@ const normalizeString = (value?: any) => {
   return ''
 }
 
-const getFirstString = (...values: any[]) => {
-  for (const value of values) {
-    const normalizedValue = normalizeString(value)
-    if (normalizedValue) {
-      return normalizedValue
-    }
-  }
-
-  return ''
+const getEntryUrl = (entry: ApplicationCatalogEntry) => {
+  return normalizeString(entry.homepageUrl)
+    || normalizeString(entry.mobileUrl)
+    || normalizeString(entry.mainTable?.homepage_url)
+    || normalizeString(entry.mainTable?.mobileurl)
 }
 
-const slugify = (value: string) => {
+const splitMultiValue = (value?: string | null) => {
   return normalizeString(value)
-    .toLowerCase()
-    .replace(/&/g, 'and')
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/^-+|-+$/g, '')
+    .split(/[/,]/)
+    .map(item => item.trim())
+    .filter(Boolean)
 }
 
-const getItemRecord = (app?: ApplicationCatalogItem) => (app || {}) as CatalogRecord
+const getBusinessDetailPath = (entry: ApplicationCatalogEntry) => {
+  const businessName = normalizeString(entry.mainTable?.business || entry.business || entry.mainTable?.name_en)
+  const tags = splitMultiValue(entry.mainTable?.tag || entry.tag)
+  const routeTags = tags.length ? tags : ['HK', 'CN', 'SEA']
 
-const getItemMainTable = (app?: ApplicationCatalogItem) => {
-  const record = getItemRecord(app)
-
-  return record.mainTable || record.main_table || record.main_table_value || record.raw?.mainTable || record.raw?.main_table || {}
+  return `/desktop/applications/business/${encodeURIComponent(businessName)}/${encodeURIComponent(routeTags.join('/'))}/${encodeURIComponent('Group')}`
 }
 
-const getItemId = (app?: ApplicationCatalogItem, fallback = '') => {
-  const record = getItemRecord(app)
-  const mainTable = getItemMainTable(app)
-
-  return getFirstString(record.id, mainTable.id, mainTable.requestid, fallback)
-}
-
-const getItemName = (app?: ApplicationCatalogItem) => {
-  const record = getItemRecord(app)
-  const mainTable = getItemMainTable(app)
-
-  return getFirstString(record.name, record.name_en, mainTable.name_en, mainTable.name, mainTable.application) || '-'
-}
-
-const getItemType = (app?: ApplicationCatalogItem) => {
-  const record = getItemRecord(app)
-  const mainTable = getItemMainTable(app)
-
-  return getFirstString(record.type, record.catalogType, mainTable.type)
-}
-
-const getItemBusiness = (app?: ApplicationCatalogItem) => {
-  const record = getItemRecord(app)
-  const mainTable = getItemMainTable(app)
-
-  return getFirstString(
-    record.business,
-    record.business_name,
-    record.businessName,
-    record.applicationBusiness,
-    record.application_business,
-    mainTable.business,
-    mainTable.business_name,
-    mainTable.businessName,
-    mainTable.applicationBusiness,
-    mainTable.application_business,
-    record.application,
-    mainTable.application,
-    getItemName(app),
-  ) || 'Others'
-}
-
-const getItemDescription = (app?: ApplicationCatalogItem) => {
-  const record = getItemRecord(app)
-  const mainTable = getItemMainTable(app)
-
-  return getFirstString(record.description, record.description_en, mainTable.description_en, mainTable.description, mainTable.description_sc)
-}
-
-const getBusinessMeta = (business: string) => {
-  const normalizedBusiness = normalizeString(business)
-  const lowerBusiness = normalizedBusiness.toLowerCase()
-
-  if (
-    lowerBusiness.includes('digital')
-    || lowerBusiness.includes('technology')
-    || lowerBusiness.includes('it')
-    || lowerBusiness.includes('service portal')
-    || lowerBusiness.includes('service request')
-    || lowerBusiness.includes('servicenow')
-  ) {
-    return {
-      slug: 'digital-technology',
-      name: 'Digital & Technology',
-      icon: 'digital-technology',
-      color: '#3C8AFF',
-    }
+const getBusinessDisplayName = (business?: ApplicationCatalogEntry['mainTable']) => {
+  if (locale.value === 'zh-CN') {
+    return normalizeString(business?.name_sc)
+      || normalizeString(business?.name_en)
+      || normalizeString(business?.name_tc)
+      || t('desktopApps.fallback.business')
   }
 
-  if (
-    lowerBusiness.includes('finance')
-    || lowerBusiness.includes('yonyou')
-    || lowerBusiness.includes('treasury')
-    || lowerBusiness.includes('filing')
-    || lowerBusiness.includes('bounced cheque')
-    || lowerBusiness.includes('claim')
-    || lowerBusiness.includes('travel')
-  ) {
-    return {
-      slug: 'finance',
-      name: 'Finance',
-      icon: 'finance-bars',
-      color: '#009A88',
-    }
+  if (locale.value === 'zh-TW') {
+    return normalizeString(business?.name_tc)
+      || normalizeString(business?.name_en)
+      || normalizeString(business?.name_sc)
+      || t('desktopApps.fallback.business')
   }
 
-  if (
-    lowerBusiness.includes('legal')
-    || lowerBusiness.includes('compliance')
-    || lowerBusiness.includes('contract')
-    || lowerBusiness.includes('dispute')
-    || lowerBusiness.includes('trademark')
-  ) {
-    return {
-      slug: 'legal-compliance',
-      name: 'Legal & Compliance',
-      icon: 'legal-compliance',
-      color: '#D7008F',
-    }
+  return normalizeString(business?.name_en)
+    || normalizeString(business?.name_sc)
+    || normalizeString(business?.name_tc)
+    || t('desktopApps.fallback.business')
+}
+
+const getBusinessDescription = (business?: ApplicationCatalogEntry['mainTable']) => {
+  if (locale.value === 'zh-CN') {
+    return normalizeString(business?.description_sc)
+      || normalizeString(business?.description_en)
+      || normalizeString(business?.description_tc)
   }
 
-  if (lowerBusiness.includes('human resources') || lowerBusiness.includes('hr')) {
-    return {
-      slug: 'human-resources',
-      name: 'Human Resources',
-      icon: 'personnel',
-      color: '#A60A3A',
-    }
+  if (locale.value === 'zh-TW') {
+    return normalizeString(business?.description_tc)
+      || normalizeString(business?.description_en)
+      || normalizeString(business?.description_sc)
   }
 
-  if (lowerBusiness.includes('china')) {
-    return {
-      slug: 'china-business',
-      name: 'China Business',
-      icon: 'building',
-      color: '#C77800',
-    }
+  return normalizeString(business?.description_en)
+    || normalizeString(business?.description_sc)
+    || normalizeString(business?.description_tc)
+}
+
+const getBusinessFallbackIcon = (name?: string) => {
+  const normalized = normalizeString(name).toLowerCase()
+
+  if (normalized.includes('digital') || normalized.includes('technology') || normalized.includes('it')) {
+    return 'digital-technology'
   }
 
-  if (normalizedBusiness) {
-    return {
-      slug: slugify(normalizedBusiness) || 'others',
-      name: normalizedBusiness.replace(/^group\s+/i, ''),
-      icon: 'apps',
-      color: '#A60A3A',
-    }
+  if (normalized.includes('finance')) {
+    return 'finance-bars'
   }
+
+  if (normalized.includes('legal') || normalized.includes('compliance')) {
+    return 'legal-compliance'
+  }
+
+  if (normalized.includes('human resources') || normalized.includes('hr')) {
+    return 'personnel'
+  }
+
+  if (normalized.includes('china')) {
+    return 'building'
+  }
+
+  return 'apps'
+}
+
+const getBusinessAccentColor = (name?: string, color?: string) => {
+  if (color) {
+    return color
+  }
+
+  const normalized = normalizeString(name).toLowerCase()
+
+  if (normalized.includes('digital') || normalized.includes('technology') || normalized.includes('it')) {
+    return '#3c8aff'
+  }
+
+  if (normalized.includes('finance')) {
+    return '#009a88'
+  }
+
+  if (normalized.includes('legal') || normalized.includes('compliance')) {
+    return '#d7008f'
+  }
+
+  if (normalized.includes('human resources') || normalized.includes('hr')) {
+    return '#a60a3a'
+  }
+
+  return '#a60a3a'
+}
+
+const toDesktopCategory = (entry: ApplicationCatalogEntry): DesktopApplicationCategory => {
+  const mainTable = entry.mainTable
+  const name = getBusinessDisplayName(mainTable)
+  const businessName = normalizeString(mainTable?.business) || normalizeString(mainTable?.name_en) || name
+  const url = getEntryUrl(entry)
 
   return {
-    slug: 'others',
-    name: 'Others',
-    icon: 'apps',
-    color: '#A60A3A',
+    id: normalizeString(mainTable?.id) || businessName || name,
+    name,
+    business: businessName,
+    icon: getBusinessFallbackIcon(businessName),
+    color: getBusinessAccentColor(businessName, normalizeString(entry.color) || normalizeString(mainTable?.color)),
+    description: getBusinessDescription(mainTable),
+    intranetLabel: t('desktopApps.intranetLabel', { name }),
+    intranetUrl: url,
+    detailPath: getBusinessDetailPath(entry),
+    apps: [
+      {
+        id: normalizeString(mainTable?.id) || businessName || name,
+        name,
+        subtitle: normalizeString(mainTable?.type) || t('desktopApps.processName'),
+        url,
+        icon: getBusinessFallbackIcon(businessName),
+      },
+    ],
   }
 }
 
-const sortByOrderNumber = (left: ApplicationCatalogItem, right: ApplicationCatalogItem) => {
-  const leftRecord = getItemRecord(left)
-  const rightRecord = getItemRecord(right)
-  const leftMainTable = getItemMainTable(left)
-  const rightMainTable = getItemMainTable(right)
-  const leftOrder = Number(getFirstString(leftRecord.orderNumber, leftRecord.order_number, leftMainTable.orderNumber, leftMainTable.order_number))
-  const rightOrder = Number(getFirstString(rightRecord.orderNumber, rightRecord.order_number, rightMainTable.orderNumber, rightMainTable.order_number))
-  const safeLeft = Number.isFinite(leftOrder) ? leftOrder : Number.MAX_SAFE_INTEGER
-  const safeRight = Number.isFinite(rightOrder) ? rightOrder : Number.MAX_SAFE_INTEGER
-
-  if (safeLeft !== safeRight) {
-    return safeLeft - safeRight
-  }
-
-  return getItemName(left).localeCompare(getItemName(right))
-}
-
-const normalizeUrl = (app: ApplicationCatalogItem) => {
-  const record = getItemRecord(app)
-  const mainTable = getItemMainTable(app)
-
-  return getFirstString(
-    record.homepageUrl,
-    record.homepage_url,
-    record.mobileUrl,
-    record.mobileurl,
-    mainTable.homepageUrl,
-    mainTable.homepage_url,
-    mainTable.mobileUrl,
-    mainTable.mobileurl,
-  )
-}
-
-const getApplicationSubtitle = (app: ApplicationCatalogItem) => {
-  return getItemType(app) || t('desktopApps.processName')
-}
-
-const toDesktopApplication = (app: ApplicationCatalogItem): DesktopApplication => ({
-  id: getItemId(app),
-  name: getItemName(app),
-  subtitle: getApplicationSubtitle(app),
-  url: normalizeUrl(app),
-  icon: getBusinessMeta(getItemBusiness(app)).icon,
-})
-
-const toDesktopCategory = (
-  meta: ReturnType<typeof getBusinessMeta>,
-  items: ApplicationCatalogItem[],
-): DesktopApplicationCategory => {
-  const orderedItems = [...items].sort(sortByOrderNumber)
-  const businessItems = orderedItems.filter(isBusinessCategoryItem)
-  const applicationItems = orderedItems.filter(item => !isBusinessCategoryItem(item))
-  const intranetItem = businessItems.find(item => normalizeUrl(item)) || orderedItems.find(item => normalizeUrl(item))
-
-  return {
-    id: meta.slug,
-    name: meta.name,
-    icon: meta.icon,
-    color: meta.color,
-    description: getItemDescription(businessItems[0]) || getItemDescription(orderedItems[0]),
-    intranetLabel: `${meta.name} Intranet >`,
-    intranetUrl: intranetItem ? normalizeUrl(intranetItem) : '',
-    apps: applicationItems.slice(0, 4).map((item, index) => ({
-      ...toDesktopApplication(item),
-      id: getItemId(item, `${meta.slug}-${index}`),
-    })),
-  }
-}
-
-const isBusinessCategoryItem = (item: ApplicationCatalogItem) => {
-  const normalizedType = getItemType(item).toLowerCase()
-  const normalizedName = getItemName(item).toLowerCase()
-
-  return normalizedType === 'business' || businessCategoryNames.includes(normalizedName)
-}
-
-const visibleCategories = computed(() => {
-  const categoryMap = new Map<string, { meta: ReturnType<typeof getBusinessMeta>, items: ApplicationCatalogItem[] }>()
-
-  for (const item of desktopCatalog.value) {
-    const meta = getBusinessMeta(getItemBusiness(item))
-    const currentCategory = categoryMap.get(meta.slug)
-
-    if (currentCategory) {
-      currentCategory.items.push(item)
-    }
-    else {
-      categoryMap.set(meta.slug, {
-        meta,
-        items: [item],
-      })
-    }
-  }
-
-  const orderedCategories = Array.from(categoryMap.values()).sort((left, right) => {
-    const leftIndex = preferredBusinessOrder.indexOf(left.meta.slug)
-    const rightIndex = preferredBusinessOrder.indexOf(right.meta.slug)
-    const safeLeft = leftIndex === -1 ? preferredBusinessOrder.length : leftIndex
-    const safeRight = rightIndex === -1 ? preferredBusinessOrder.length : rightIndex
-
-    if (safeLeft !== safeRight) {
-      return safeLeft - safeRight
-    }
-
-    return left.meta.name.localeCompare(right.meta.name)
+const handleViewAll = (category: DesktopApplicationCategory) => {
+  applicationsStore.setSelectedBusiness({
+    id: category.id,
+    icon: category.icon,
+    name_en: category.name,
+    business: category.business || category.name,
+    description_en: category.description,
+    color: category.color,
+    intranetLabel: category.intranetLabel,
+    intranetUrl: category.intranetUrl,
   })
 
-  return orderedCategories
-    .map(category => toDesktopCategory(category.meta, category.items))
-    .filter(category => category.apps.length > 0)
-    .slice(0, 3)
-})
+  return navigateTo(category.detailPath || '/desktop/applications')
+}
 
 const handleClick = async (app: DesktopApplication) => {
   if (!app.url) {
@@ -460,23 +311,9 @@ const handleIntranetClick = async (category: DesktopApplicationCategory) => {
   await openGuardedUrl(category.intranetUrl, '_blank')
 }
 
-const fetchDesktopApplications = async () => {
-  loading.value = true
-
-  try {
-    desktopCatalog.value = await requestApplicationCatalogData()
-  }
-  catch (error) {
-    console.error('Fetch desktop applications failed:', error)
-    desktopCatalog.value = []
-  }
-  finally {
-    loading.value = false
-  }
-}
-
 onMounted(() => {
-  fetchDesktopApplications()
+  applicationsStore.activePrimaryTab = 'business'
+  void applicationsStore.fetchTabCatalog()
 })
 </script>
 
@@ -499,26 +336,26 @@ onMounted(() => {
 }
 
 .desktop-apps__title {
-  font-family: Source Sans Pro;
+  font-family: var(--font-source-sans-pro);
   font-weight: 600;
-  font-style: SemiBold;
+  font-style: normal;
   font-size: 24px;
   leading-trim: NONE;
   line-height: 100%;
-  letter-spacing: 0%;
+  letter-spacing: 0;
   vertical-align: middle;
 
 }
 
 .desktop-apps__link {
   color: #a60a3a;
-  font-family: Source Sans Pro;
+  font-family: var(--font-source-sans-pro);
   font-weight: 400;
-  font-style: Regular;
+  font-style: normal;
   font-size: 16px;
   leading-trim: NONE;
   line-height: 100%;
-  letter-spacing: 0%;
+  letter-spacing: 0;
   text-align: right;
   vertical-align: middle;
   text-decoration: underline;

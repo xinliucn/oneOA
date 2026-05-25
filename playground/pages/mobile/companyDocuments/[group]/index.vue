@@ -19,12 +19,13 @@
           :rotate="180"
           color="#B10F49"
         />
-        <span>Company Documents</span>
+        <span>{{ t('pages.companyDocuments.title') }}</span>
       </button>
 
       <button
         type="button"
         class="mobile-company-document-group__search"
+        :aria-label="t('pages.companyDocuments.searchPlaceholder')"
       >
         <IconCustom
           name="search"
@@ -53,7 +54,7 @@
             <span
               :class="['mobile-company-document-group__item-status', { 'is-pending': document.status === 'Not Acknowledged' }]"
             >
-              {{ document.status }}
+              {{ formatDocumentStatus(document.status) }}
             </span>
           </span>
         </span>
@@ -68,7 +69,7 @@
         v-if="!pending && !documents.length"
         class="mobile-company-document-group__empty"
       >
-        No documents found
+        {{ t('pages.companyDocuments.states.detailEmpty') }}
       </div>
     </main>
   </div>
@@ -83,6 +84,7 @@ definePageMeta({
 })
 
 const route = useRoute()
+const { t } = useAppI18n()
 const documentStore = useDocumentManagementStore()
 const groupSlug = computed(() => String(route.params.group || ''))
 const folderbaseid = computed(() => groupSlug.value)
@@ -99,6 +101,12 @@ const getStatus = (item: CompanyDocumentDetailResponseItem): CompanyDocumentStat
   }
 
   return 'Not Acknowledged'
+}
+
+const formatDocumentStatus = (status: CompanyDocumentStatus) => {
+  return status === 'Acknowledged'
+    ? t('pages.companyDocuments.filters.acknowledged')
+    : t('pages.companyDocuments.filters.notAcknowledged')
 }
 
 const getDocumentCodeAndVersion = (numberVersion?: string) => {
@@ -159,7 +167,7 @@ onMounted(() => {
 
   const acknowledgedTitle = String(route.query.acknowledgedTitle || '')
   if (acknowledgedTitle) {
-    acknowledgedToast.value = `${acknowledgedTitle} acknowledged!`
+    acknowledgedToast.value = `${acknowledgedTitle} ${t('pages.companyDocuments.messages.acknowledged')}`
     toastTimer = setTimeout(() => {
       acknowledgedToast.value = ''
       toastTimer = null
@@ -214,7 +222,7 @@ const handleDocumentClick = (document: CompanyDocumentItem) => {
   border-radius: 9px;
   background: #d8f3dc;
   color: #008000;
-  font-family: Source Sans Pro;
+  font-family: var(--font-source-sans-pro);
   font-size: 14px;
   line-height: 1.2;
   white-space: nowrap;
@@ -242,13 +250,13 @@ const handleDocumentClick = (document: CompanyDocumentItem) => {
   color: #b10f49;
 
   span {
-    font-family: Source Sans Pro;
+    font-family: var(--font-source-sans-pro);
     font-weight: 400;
-    font-style: Regular;
+    font-style: normal;
     font-size: 16px;
     leading-trim: NONE;
     line-height: 100%;
-    letter-spacing: 0%;
+    letter-spacing: 0;
     vertical-align: middle;
 
   }
@@ -302,49 +310,49 @@ const handleDocumentClick = (document: CompanyDocumentItem) => {
 
 .mobile-company-document-group__item-title {
   color: #171717;
-  font-family: Source Sans Pro;
+  font-family: var(--font-source-sans-pro);
   font-weight: 400;
-  font-style: Regular;
+  font-style: normal;
   font-size: 16px;
   leading-trim: NONE;
   line-height: 100%;
-  letter-spacing: 0%;
+  letter-spacing: 0;
 
 }
 
 .mobile-company-document-group__item-meta {
   color: #616161;
-  font-family: Source Sans Pro;
+  font-family: var(--font-source-sans-pro);
   font-weight: 400;
-  font-style: Regular;
+  font-style: normal;
   font-size: 12px;
   leading-trim: NONE;
   line-height: 100%;
-  letter-spacing: 0%;
+  letter-spacing: 0;
 
 }
 
 .mobile-company-document-group__item-status {
   color: #616161;
-  font-family: Source Sans Pro;
+  font-family: var(--font-source-sans-pro);
   font-weight: 400;
-  font-style: Regular;
+  font-style: normal;
   font-size: 12px;
   leading-trim: NONE;
   line-height: 100%;
-  letter-spacing: 0%;
+  letter-spacing: 0;
 
 }
 
 .mobile-company-document-group__item-status.is-pending {
   color: #FF0000;
-  font-family: Source Sans Pro;
+  font-family: var(--font-source-sans-pro);
   font-weight: 400;
-  font-style: Regular;
+  font-style: normal;
   font-size: 12px;
   leading-trim: NONE;
   line-height: 100%;
-  letter-spacing: 0%;
+  letter-spacing: 0;
 
 }
 

@@ -3,10 +3,10 @@
     <header class="desktop-coming-soon__header">
       <nav
         class="desktop-coming-soon__breadcrumb"
-        aria-label="Breadcrumb"
+        :aria-label="t('common.breadcrumb')"
       >
         <NuxtLink to="/desktop">
-          Home
+          {{ t('common.home') }}
         </NuxtLink>
         <span>&gt;</span>
         <span>{{ title }}</span>
@@ -51,12 +51,14 @@
     </main>
 
     <footer class="desktop-coming-soon__footer">
-      Copyright © 2026 Dah Chong Hong Holdings Limited. All rights reserved.
+      {{ t('common.copyright', { year: 2026 }) }}
     </footer>
   </div>
 </template>
 
 <script setup lang="ts">
+const { t } = useAppI18n()
+
 withDefaults(defineProps<{
   title: string
   description: string
@@ -88,7 +90,7 @@ withDefaults(defineProps<{
   align-items: center;
   gap: 5px;
   color: #a60a3a;
-  font-family: "Source Sans Pro", sans-serif;
+  font-family: var(--font-source-sans-pro);
   font-size: 12px;
   font-weight: 400;
   line-height: 100%;
@@ -96,7 +98,7 @@ withDefaults(defineProps<{
 
 .desktop-coming-soon__breadcrumb a {
   color: inherit;
-  font-family: "Source Sans Pro", sans-serif;
+  font-family: var(--font-source-sans-pro);
   font-size: 12px;
   font-weight: 400;
   line-height: 100%;
@@ -115,7 +117,7 @@ withDefaults(defineProps<{
 .desktop-coming-soon__header h1 {
   margin: 29px 0 0;
   color: #000000;
-  font-family: "Source Sans Pro", sans-serif;
+  font-family: var(--font-source-sans-pro);
   font-size: 26px;
   font-weight: 700;
   line-height: 100%;
@@ -158,7 +160,7 @@ withDefaults(defineProps<{
 .desktop-coming-soon__eyebrow {
   margin: 0 0 10px;
   color: #a60a3a;
-  font-family: "Source Sans Pro", sans-serif;
+  font-family: var(--font-source-sans-pro);
   font-size: 12px;
   font-weight: 700;
   line-height: 100%;
@@ -169,7 +171,7 @@ withDefaults(defineProps<{
 .desktop-coming-soon__panel h2 {
   margin: 0;
   color: #000000;
-  font-family: "Source Sans Pro", sans-serif;
+  font-family: var(--font-source-sans-pro);
   font-size: 24px;
   font-weight: 700;
   line-height: 120%;
@@ -179,7 +181,7 @@ withDefaults(defineProps<{
   max-width: 360px;
   margin: 14px 0 0;
   color: #666666;
-  font-family: "Source Sans Pro", sans-serif;
+  font-family: var(--font-source-sans-pro);
   font-size: 14px;
   font-weight: 400;
   line-height: 150%;
@@ -199,7 +201,7 @@ withDefaults(defineProps<{
   border-radius: 7px;
   background: #a60a3a;
   color: #ffffff;
-  font-family: "Source Sans Pro", sans-serif;
+  font-family: var(--font-source-sans-pro);
   font-size: 14px;
   font-weight: 600;
   line-height: 100%;
@@ -217,7 +219,7 @@ withDefaults(defineProps<{
   justify-content: center;
   background: #a60a3a;
   color: #ffffff;
-  font-family: "Source Sans Pro", sans-serif;
+  font-family: var(--font-source-sans-pro);
   font-size: 10px;
   line-height: 1.2;
 }

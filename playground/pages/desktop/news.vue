@@ -164,7 +164,7 @@ const newsItems = [
   padding-bottom: 19px;
   border-bottom: 1px solid #d9d9d9;
   color: #a60a3a;
-  font-family: "Source Sans Pro", sans-serif;
+  font-family: var(--font-source-sans-pro);
   font-size: 16px;
   font-weight: 400;
   line-height: 100%;
@@ -176,12 +176,12 @@ const newsItems = [
 
 .desktop-news__breadcrumb a {
   color: inherit;
-  font-family: "Source Sans Pro", sans-serif;
+  font-family: var(--font-source-sans-pro);
   font-weight: 400;
   font-style: normal;
   font-size: 16px;
   line-height: 100%;
-  letter-spacing: 0%;
+  letter-spacing: 0;
   vertical-align: middle;
   text-decoration: underline;
   text-decoration-style: solid;
@@ -191,7 +191,7 @@ const newsItems = [
 }
 
 .desktop-news__breadcrumb span {
-  font-family: "Source Sans Pro", sans-serif;
+  font-family: var(--font-source-sans-pro);
   font-size: 16px;
   font-weight: 400;
   line-height: 100%;
@@ -227,13 +227,13 @@ const newsItems = [
   color: #555555;
   line-height: 1;
   cursor: pointer;
-  font-family: Source Sans Pro;
+  font-family: var(--font-source-sans-pro);
   font-weight: 400;
-  font-style: Regular;
+  font-style: normal;
   font-size: 16px;
   leading-trim: NONE;
   line-height: 100%;
-  letter-spacing: 0%;
+  letter-spacing: 0;
   vertical-align: middle;
 
 }
@@ -253,13 +253,13 @@ const newsItems = [
   line-height: 1.2;
 
   span {
-    font-family: Source Sans Pro;
+    font-family: var(--font-source-sans-pro);
     font-weight: 600;
-    font-style: SemiBold;
+    font-style: normal;
     font-size: 12px;
     leading-trim: NONE;
     line-height: 100%;
-    letter-spacing: 0%;
+    letter-spacing: 0;
     vertical-align: middle;
     color: #616161;
 
@@ -278,13 +278,13 @@ const newsItems = [
     linear-gradient(135deg, #6f6f6f 50%, transparent 50%) calc(100% - 12px) 10px / 7px 7px no-repeat,
     #ffffff;
   color: #616161;
-  font-family: Source Sans Pro;
+  font-family: var(--font-source-sans-pro);
   font-weight: 400;
-  font-style: Regular;
+  font-style: normal;
   font-size: 16px;
   leading-trim: NONE;
   line-height: 100%;
-  letter-spacing: 0%;
+  letter-spacing: 0;
 
 }
 
@@ -329,13 +329,13 @@ const newsItems = [
   -webkit-box-orient: vertical;
   -webkit-line-clamp: 3;
   line-clamp: 3;
-  font-family: Source Sans Pro;
+  font-family: var(--font-source-sans-pro);
   font-weight: 600;
-  font-style: SemiBold;
+  font-style: normal;
   font-size: 16px;
   leading-trim: NONE;
   line-height: 100%;
-  letter-spacing: 0%;
+  letter-spacing: 0;
   vertical-align: middle;
 }
 
@@ -347,7 +347,7 @@ const newsItems = [
   padding: 0 18px;
   border-top: 1px solid #e0e0e0;
   color: #9aa1a8;
-  font-family: Source Sans Pro;
+  font-family: var(--font-source-sans-pro);
   font-size: 10px;
   line-height: 1;
 }
@@ -367,13 +367,13 @@ const newsItems = [
   background: #f8dbe6;
   color: #a60a3a;
   cursor: pointer;
-  font-family: Source Sans Pro;
+  font-family: var(--font-source-sans-pro);
   font-weight: 600;
-  font-style: SemiBold;
+  font-style: normal;
   font-size: 16px;
   leading-trim: NONE;
   line-height: 100%;
-  letter-spacing: 0%;
+  letter-spacing: 0;
   text-align: center;
   vertical-align: middle;
 }

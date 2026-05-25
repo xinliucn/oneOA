@@ -259,7 +259,7 @@ watch(
 }
 
 .tasks-list__title {
-  font-family: Source Sans Pro;
+  font-family: var(--font-source-sans-pro);
   font-weight: 600;
   font-size: 18px;
   line-height: 1.2;
@@ -284,7 +284,7 @@ watch(
   padding: 0 11px;
   background: #FFFFFF;
   color: #666666;
-  font-family: Source Sans Pro;
+  font-family: var(--font-source-sans-pro);
   font-weight: 400;
   cursor: pointer;
   white-space: nowrap;

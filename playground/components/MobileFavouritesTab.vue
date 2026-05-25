@@ -80,7 +80,7 @@
         v-if="favouriteLoading"
         class="mobile-favourites__empty"
       >
-        Loading...
+        {{ t('favourites.states.loading') }}
       </div>
       <div
         v-if="visibleFavourites.length"
@@ -178,7 +178,7 @@
         v-if="catalogLoading"
         class="mobile-favourites__empty mobile-favourites__empty--compact"
       >
-        Loading...
+        {{ t('favourites.states.loading') }}
       </div>
       <div
         v-else-if="!selectedEditableFavourites.length && !unselectedEditableFavourites.length"
@@ -207,7 +207,7 @@ type FavouriteItem = {
   path?: string
 }
 
-const { t, locale } = useAppI18n()
+const { t } = useAppI18n()
 const { requestApplicationCatalogData } = useApplicationCatalog()
 const {
   bootstrapFavourite,
@@ -217,39 +217,6 @@ const {
   loading: favouriteLoading,
   saving: favouriteSaving,
 } = useFavourite()
-
-const copyMap = {
-  'en': {
-    allItems: 'All Items',
-    cancel: 'Cancel',
-    done: 'Done',
-    saving: 'Saving...',
-    empty: 'No favourites selected yet.',
-    myFavourites: 'My Favourites',
-    searchEmpty: 'No favourites match your search.',
-    searchPlaceholder: 'Search All Items',
-  },
-  'zh-CN': {
-    allItems: '全部项目',
-    cancel: '取消',
-    done: '完成',
-    saving: '保存中...',
-    empty: '暂未选择收藏项目',
-    myFavourites: '我的收藏',
-    searchEmpty: '没有符合搜索条件的收藏项目',
-    searchPlaceholder: '搜索全部项目',
-  },
-  'zh-TW': {
-    allItems: '全部項目',
-    cancel: '取消',
-    done: '完成',
-    saving: '儲存中...',
-    empty: '暫未選擇收藏項目',
-    myFavourites: '我的收藏',
-    searchEmpty: '沒有符合搜尋條件的收藏項目',
-    searchPlaceholder: '搜尋全部項目',
-  },
-} as const
 
 type CatalogRecord = ApplicationCatalogItem & Record<string, any>
 
@@ -264,7 +231,16 @@ const catalogLoading = ref(false)
 const catalogLoaded = ref(false)
 
 const copy = computed(() => {
-  return copyMap[locale.value as keyof typeof copyMap] || copyMap.en
+  return {
+    allItems: t('favourites.editPanel.allItems'),
+    cancel: t('favourites.editPanel.cancel'),
+    done: t('favourites.editPanel.done'),
+    saving: t('favourites.editPanel.saving'),
+    empty: t('favourites.states.empty'),
+    myFavourites: t('favourites.editPanel.myFavourites'),
+    searchEmpty: t('favourites.states.searchEmpty'),
+    searchPlaceholder: t('favourites.editPanel.searchPlaceholder'),
+  }
 })
 
 const normalizeString = (value?: any) => {
@@ -310,14 +286,14 @@ const getCatalogItemName = (item?: ApplicationCatalogItem) => {
   const record = getCatalogRecord(item)
   const mainTable = getCatalogMainTable(item)
 
-  return getFirstString(record.name, record.name_en, mainTable.name_en, mainTable.name, mainTable.application) || 'Application'
+  return getFirstString(record.name, record.name_en, mainTable.name_en, mainTable.name, mainTable.application) || t('favourites.fallback.application')
 }
 
 const getCatalogItemType = (item?: ApplicationCatalogItem) => {
   const record = getCatalogRecord(item)
   const mainTable = getCatalogMainTable(item)
 
-  return getFirstString(record.type, mainTable.type, 'Application')
+  return getFirstString(record.type, mainTable.type, t('favourites.fallback.application'))
 }
 
 const getCatalogItemBusiness = (item?: ApplicationCatalogItem) => {
@@ -384,7 +360,7 @@ const apiFavouriteItems = computed<FavouriteItem[]>(() => {
     id: `api-${item.itemId}`,
     itemId: item.itemId,
     label: item.name,
-    subtitle: item.description || 'Application',
+    subtitle: item.description || t('favourites.fallback.application'),
     icon: 'apps',
     kind: 'application',
     url: item.mobileUrl || item.homepageUrl,

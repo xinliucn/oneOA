@@ -7,7 +7,7 @@
       <button
         type="button"
         class="desktop__logo"
-        aria-label="Back to desktop home"
+        :aria-label="t('common.home')"
         @click="handleLogoClick"
       >
         <img
@@ -89,7 +89,7 @@
         >
           <div class="desktop__loading-content">
             <div class="desktop__loading-title">
-              Loading...
+              {{ t('common.loading') }}
             </div>
             <div
               class="desktop__loading-track"
@@ -165,7 +165,7 @@ const handleLogoClick = () => navigateTo('/')
 
 const handleCommand = async (command: string) => {
   if (command === 'profile') {
-    console.log('打开个人信息页面')
+    console.log('Open profile page')
     // TODO: 导航到个人信息页面
   }
   else if (command === 'logout') {
@@ -175,7 +175,7 @@ const handleCommand = async (command: string) => {
       await navigateTo('/')
     }
     catch (error) {
-      console.error('退出登录失败:', error)
+      console.error('Logout failed:', error)
     }
   }
 }

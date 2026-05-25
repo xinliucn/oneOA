@@ -578,13 +578,13 @@ onMounted(async () => {
   background: transparent;
   color: #A60A3A;
   text-underline-offset: 2px;
-  font-family: Source Sans Pro;
+  font-family: var(--font-source-sans-pro);
   font-weight: 400;
-  font-style: Regular;
+  font-style: normal;
   font-size: 16px;
   leading-trim: NONE;
   line-height: 100%;
-  letter-spacing: 0%;
+  letter-spacing: 0;
   text-align: right;
   vertical-align: middle;
   text-decoration: underline;
@@ -611,7 +611,7 @@ onMounted(async () => {
   align-items: center;
   justify-content: center;
   color: #6f6f6f;
-  font-family: Source Sans Pro;
+  font-family: var(--font-source-sans-pro);
   font-size: 14px;
   font-weight: 400;
   line-height: 100%;
@@ -698,7 +698,7 @@ onMounted(async () => {
 .favourites-modal__title {
   margin: 0;
   color: #000000;
-  font-family: Source Sans Pro;
+  font-family: var(--font-source-sans-pro);
   font-size: 18px;
   font-weight: 700;
   line-height: 100%;
@@ -742,7 +742,7 @@ onMounted(async () => {
   outline: 0;
   background: transparent;
   color: #000000;
-  font-family: Source Sans Pro;
+  font-family: var(--font-source-sans-pro);
   font-size: 12px;
   font-weight: 400;
   line-height: 100%;
@@ -761,7 +761,7 @@ onMounted(async () => {
 
 .favourites-modal__sort span {
   color: #4d4d4d;
-  font-family: Source Sans Pro;
+  font-family: var(--font-source-sans-pro);
   font-size: 9px;
   font-weight: 400;
   line-height: 100%;
@@ -780,7 +780,7 @@ onMounted(async () => {
     linear-gradient(135deg, #6f6f6f 50%, transparent 50%) calc(100% - 13px) 13px / 8px 8px no-repeat,
     #ffffff;
   color: #6f6f6f;
-  font-family: Source Sans Pro;
+  font-family: var(--font-source-sans-pro);
   font-size: 12px;
   font-weight: 400;
   line-height: 100%;
@@ -807,7 +807,7 @@ onMounted(async () => {
   align-items: center;
   justify-content: center;
   color: #6f6f6f;
-  font-family: Source Sans Pro;
+  font-family: var(--font-source-sans-pro);
   font-size: 14px;
   line-height: 100%;
 }
@@ -852,7 +852,7 @@ onMounted(async () => {
 .favourites-modal__item-title {
   overflow: hidden;
   color: #000000;
-  font-family: Source Sans Pro;
+  font-family: var(--font-source-sans-pro);
   font-size: 12px;
   font-weight: 400;
   line-height: 100%;
@@ -864,7 +864,7 @@ onMounted(async () => {
 .favourites-modal__item-subtitle {
   overflow: hidden;
   color: #4d4d4d;
-  font-family: Source Sans Pro;
+  font-family: var(--font-source-sans-pro);
   font-size: 8px;
   font-weight: 400;
   line-height: 100%;
@@ -891,7 +891,7 @@ onMounted(async () => {
   border-radius: 6px;
   background: #f5f5f5;
   color: #4d4d4d;
-  font-family: Source Sans Pro;
+  font-family: var(--font-source-sans-pro);
   font-size: 12px;
   font-weight: 400;
   line-height: 100%;
@@ -907,7 +907,7 @@ onMounted(async () => {
   border-radius: 6px;
   background: #efd0db;
   color: #a60a3a;
-  font-family: Source Sans Pro;
+  font-family: var(--font-source-sans-pro);
   font-size: 12px;
   font-weight: 600;
   line-height: 100%;
