@@ -126,7 +126,7 @@
               <span>{{ task.creatorName }}</span>
               <span>{{ ' | ' }}</span>
               <span class="todo-item__portfolio">{{ task.workflowBaseInfo?.workflowName
-                }}</span>
+              }}</span>
             </div>
           </div>
           <IconCustom name="chevron-right" :size="20" color="#A60A3A" class="todo-item__arrow" />
@@ -283,7 +283,7 @@ const getTaskRawDisplayName = (task: TodoItem) => {
 }
 
 const getTaskListTitle = (task: TodoItem, view: TodoView) => {
-  if (view === 'approvals' || view === 'requests' || view === 'approved') {
+  if (view === 'approvals' || view === 'requests' || view === 'approved' || view === 'tasks') {
     return getTaskDisplayName(task) || getTaskRawDisplayName(task) || getTaskReference(task)
   }
 

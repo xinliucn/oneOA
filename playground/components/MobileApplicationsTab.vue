@@ -127,42 +127,108 @@
 
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
-import type { ApplicationCatalogEntry } from '~/types/applicationCatalog'
-
-type ServiceItem = {
-  id: string
-  name: string
-  badge: string
-  icon: string
-  type: string
-  url: string
-  raw: ApplicationCatalogEntry
-}
-
-type ServiceGroup = {
-  id: string
-  title: string
-  description: string
-  business: string
-  icon: string
-  color: string
-  items: ServiceItem[]
-}
+import type { ServiceGroup, ServiceItem, TioTopic, TioTopicItem } from '~/types/tiopsServices'
 
 const { t, locale } = useAppI18n()
 const { openGuardedUrl } = useNetworkGuard()
-const { addRecentItem } = useRecentItems()
-const applicationsStore = useApplicationsStore()
-const serviceCatalog = ref<ApplicationCatalogEntry[]>([])
-const serviceCatalogLoading = ref(false)
 const searchKeyword = ref('')
 const selectedTopicId = ref('all')
 const expandedGroupIds = ref<Set<string>>(new Set())
-const regionOrder = ['HK', 'CN', 'SEA']
-const detailRouteTypes = ['Group']
+const topicAccent = '#b0003a'
 
-const normalizeString = (value?: string | null) => {
-  return typeof value === 'string' ? value.trim() : ''
+const serviceTopics: TioTopic[] = [
+  {
+    category_en: 'IT and Systems Support',
+    category_sc: 'IT與系統支援',
+    category_tc: 'IT與系統支援',
+    icon_x86: 'server',
+    items: [
+      {
+        name_en: 'Open a Service Request',
+        name_sc: 'IT服务申请',
+        name_tc: 'IT服務申請',
+        icon_x86: 'service',
+        desktop_url: 'https://dch.service-now.com/sp?id=sc_cat_item&sys_id=ea6aef15db3d91908e9ddf0bd3961922&sysparm_category=22c62651db7991908e9ddf0bd39619d2',
+        mobile_url: 'https://dch.service-now.com/sp?id=sc_cat_item&sys_id=ea6aef15db3d91908e9ddf0bd3961922&sysparm_category=22c62651db7991908e9ddf0bd39619d2',
+      },
+      {
+        name_en: 'Report an Issue',
+        name_sc: '回报系统问题',
+        name_tc: '回報系統問題',
+        icon_x86: 'bug',
+        desktop_url: 'https://dch.service-now.com/sp?id=sc_cat_item&sys_id=3f1dd0320a0a0b99000a53f7604a2ef9&sysparm_category=af9c65c9db7951908e9ddf0bd3961975',
+        mobile_url: 'https://dch.service-now.com/sp?id=sc_cat_item&sys_id=3f1dd0320a0a0b99000a53f7604a2ef9&sysparm_category=af9c65c9db7951908e9ddf0bd3961975',
+      },
+    ],
+  },
+  {
+    category_en: 'Contracts and Compliance',
+    category_sc: '合同與合規',
+    category_tc: '合同與合規',
+    icon_x86: 'shield',
+    items: [
+      {
+        name_en: 'Group Contract Clearance Approval',
+        name_sc: '集团合同结清审批',
+        name_tc: '集團合約結清審批',
+        icon_x86: 'contract',
+        desktop_url: 'https://platform-uat.dchbi.app/spa/workflow/static4form/index.html#/main/workflow/req?iscreate=1&workflowid=213',
+        mobile_url: 'https://platform-uat.dchbi.app/spa/workflow/static4form/index.html#/main/workflow/req?iscreate=1&workflowid=213',
+      },
+      {
+        name_en: 'Contract List',
+        name_sc: '合同清单',
+        name_tc: '合約清單',
+        icon_x86: 'list',
+        desktop_url: 'https://platform-uat.dchbi.app/spa/cube/index.html#/main/cube/search?customid=542',
+        mobile_url: 'https://platform-uat.dchbi.app/wui/cas-entrance.jsp?path=https://platform-uat.dchbi.app/mobilemode/mobile/view.html?appHomepageId=1',
+      },
+    ],
+  },
+  {
+    category_en: 'Company and Administration',
+    category_sc: '公司與行政',
+    category_tc: '公司與行政',
+    icon_x86: 'building',
+    items: [
+      {
+        name_en: 'Policy Documents',
+        name_sc: '政策文件',
+        name_tc: '政策文件',
+        icon_x86: 'policy',
+        desktop_url: 'https://oa.dchbipoc.cc/mobilemode/admin/preview.jsp?appHomepageId=116&dataid=1233',
+        mobile_url: 'https://oa.dchbipoc.cc/mobilemode/admin/preview.jsp?appHomepageId=116&dataid=1233',
+      },
+      {
+        name_en: 'Intranet',
+        name_sc: '企业内网',
+        name_tc: '企業內聯網',
+        icon_x86: 'portal',
+        desktop_url: 'http://intranet.dch.com.hk/',
+        mobile_url: 'http://intranet.dch.com.hk/',
+      },
+    ],
+  },
+  {
+    category_en: 'Learning and Policy',
+    category_sc: '學習與政策',
+    category_tc: '學習與政策',
+    icon_x86: 'book',
+    items: [
+      {
+        name_en: 'Learning Management System',
+        name_sc: '学习管理系统',
+        name_tc: '學習管理系統',
+        icon_x86: 'learning',
+        desktop_url: 'https://lms.dchbi.com/',
+        mobile_url: 'https://lms.dchbi.com/',
+      },
+    ],
+  },
+]
+
+const normalizeString = (value: string) => {
+  return value.trim()
 }
 
 const slugify = (value: string) => {
@@ -173,286 +239,49 @@ const slugify = (value: string) => {
     .replace(/^-+|-+$/g, '')
 }
 
-const splitMultiValue = (value?: string | null) => {
-  return normalizeString(value)
-    .split(/[/,]/)
-    .map(item => item.trim())
-    .filter(Boolean)
-}
-
-const sortByKnownOrder = (items: string[], order: string[]) => {
-  return [...items].sort((left, right) => {
-    const leftIndex = order.indexOf(left)
-    const rightIndex = order.indexOf(right)
-    const safeLeft = leftIndex === -1 ? order.length : leftIndex
-    const safeRight = rightIndex === -1 ? order.length : rightIndex
-
-    if (safeLeft !== safeRight) {
-      return safeLeft - safeRight
-    }
-
-    return left.localeCompare(right)
-  })
-}
-
-const getEntryType = (entry: ApplicationCatalogEntry) => {
-  return normalizeString(entry.mainTable?.type || entry.type)
-}
-
-const getEntryOrder = (entry: ApplicationCatalogEntry) => {
-  const orderNumber = Number(normalizeString(String(entry.mainTable?.order_number || entry.order_number || entry.orderNumber || '')))
-  return Number.isFinite(orderNumber) ? orderNumber : Number.POSITIVE_INFINITY
-}
-
-const getApplicationDisplayName = (app: ApplicationCatalogEntry) => {
+const getTopicName = (topic: TioTopic) => {
   if (locale.value === 'zh-CN') {
-    return normalizeString(app.mainTable?.name_sc)
-      || normalizeString(app.mainTable?.name_en)
-      || normalizeString(app.mainTable?.name_tc)
-      || normalizeString(app.name)
-      || t('mobile.applications.navigator.fallbackService')
+    return topic.category_sc || topic.category_en || topic.category_tc
   }
 
   if (locale.value === 'zh-TW') {
-    return normalizeString(app.mainTable?.name_tc)
-      || normalizeString(app.mainTable?.name_en)
-      || normalizeString(app.mainTable?.name_sc)
-      || normalizeString(app.name)
-      || t('mobile.applications.navigator.fallbackService')
+    return topic.category_tc || topic.category_en || topic.category_sc
   }
 
-  return normalizeString(app.mainTable?.name_en)
-    || normalizeString(app.mainTable?.name_sc)
-    || normalizeString(app.mainTable?.name_tc)
-    || normalizeString(app.name)
-    || t('mobile.applications.navigator.fallbackService')
+  return topic.category_en || topic.category_sc || topic.category_tc
 }
 
-const getBusinessDisplayName = (business?: ApplicationCatalogEntry['mainTable']) => {
+const getItemName = (item: TioTopicItem) => {
   if (locale.value === 'zh-CN') {
-    return normalizeString(business?.name_sc)
-      || normalizeString(business?.name_en)
-      || normalizeString(business?.name_tc)
-      || t('mobile.applications.navigator.fallbackGroup')
+    return item.name_sc || item.name_en || item.name_tc
   }
 
   if (locale.value === 'zh-TW') {
-    return normalizeString(business?.name_tc)
-      || normalizeString(business?.name_en)
-      || normalizeString(business?.name_sc)
-      || t('mobile.applications.navigator.fallbackGroup')
+    return item.name_tc || item.name_en || item.name_sc
   }
 
-  return normalizeString(business?.name_en)
-    || normalizeString(business?.name_sc)
-    || normalizeString(business?.name_tc)
-    || t('mobile.applications.navigator.fallbackGroup')
+  return item.name_en || item.name_sc || item.name_tc
 }
-
-const getBusinessDescription = (entry: ApplicationCatalogEntry) => {
-  const business = entry.mainTable
-
-  if (locale.value === 'zh-CN') {
-    return normalizeString(business?.description_sc)
-      || normalizeString(business?.description_en)
-      || normalizeString(business?.description_tc)
-  }
-
-  if (locale.value === 'zh-TW') {
-    return normalizeString(business?.description_tc)
-      || normalizeString(business?.description_en)
-      || normalizeString(business?.description_sc)
-  }
-
-  return normalizeString(business?.description_en)
-    || normalizeString(business?.description_sc)
-    || normalizeString(business?.description_tc)
-}
-
-const getEntryBusiness = (entry: ApplicationCatalogEntry) => {
-  return normalizeString(entry.mainTable?.business || entry.business || entry.mainTable?.name_en)
-}
-
-const getApplicationUrl = (app: ApplicationCatalogEntry) => {
-  return app.mainTable?.mobileurl || app.mainTable?.homepage_url || app.mobileUrl || app.homepageUrl || ''
-}
-
-const getBusinessRouteParams = (biz: ApplicationCatalogEntry['mainTable']) => {
-  const businessName = normalizeString(biz?.business || biz?.name_en)
-  const tags = sortByKnownOrder(splitMultiValue(biz?.tag), regionOrder)
-
-  return {
-    business: businessName,
-    tag: (tags.length ? tags : regionOrder).join('/'),
-    type: detailRouteTypes.join('/'),
-  }
-}
-
-const getBusinessFallbackIcon = (name?: string) => {
-  const normalized = normalizeString(name).toLowerCase()
-
-  if (normalized.includes('digital') || normalized.includes('technology') || normalized.includes('it')) {
-    return 'digital-technology'
-  }
-
-  if (normalized.includes('finance')) {
-    return 'finance-bars'
-  }
-
-  if (normalized.includes('legal') || normalized.includes('compliance')) {
-    return 'legal-compliance'
-  }
-
-  if (normalized.includes('human resources') || normalized.includes('hr')) {
-    return 'personnel'
-  }
-
-  if (normalized.includes('china')) {
-    return 'building'
-  }
-
-  return 'apps'
-}
-
-const getBusinessAccentColor = (name?: string, color?: string) => {
-  if (color) {
-    return color
-  }
-
-  const normalized = normalizeString(name).toLowerCase()
-
-  if (normalized.includes('digital') || normalized.includes('technology') || normalized.includes('it')) {
-    return '#3c8aff'
-  }
-
-  if (normalized.includes('finance')) {
-    return '#009a88'
-  }
-
-  if (normalized.includes('legal') || normalized.includes('compliance')) {
-    return '#d7008f'
-  }
-
-  if (normalized.includes('human resources') || normalized.includes('hr')) {
-    return '#a60a3a'
-  }
-
-  if (normalized.includes('china')) {
-    return '#c77800'
-  }
-
-  return '#a60a3a'
-}
-
-const getServiceIcon = (entry: ApplicationCatalogEntry, business: string) => {
-  const source = `${getApplicationDisplayName(entry)} ${getEntryType(entry)} ${business}`.toLowerCase()
-
-  if (source.includes('finance') || source.includes('claim') || source.includes('pay') || source.includes('cost')) {
-    return 'finance-bars'
-  }
-
-  if (source.includes('data') || source.includes('list') || source.includes('report')) {
-    return 'analytics'
-  }
-
-  if (source.includes('hr') || source.includes('leave') || source.includes('employee') || source.includes('human resources')) {
-    return 'personnel'
-  }
-
-  if (source.includes('it') || source.includes('technology') || source.includes('system')) {
-    return 'digital-technology'
-  }
-
-  if (source.includes('legal') || source.includes('compliance') || source.includes('contract')) {
-    return 'legal-compliance'
-  }
-
-  return 'document'
-}
-
-const getServiceBadge = (entry: ApplicationCatalogEntry) => {
-  const type = getEntryType(entry).toLowerCase()
-
-  if (type === 'business') {
-    return t('mobile.applications.navigator.badges.portal')
-  }
-
-  if (type.includes('application')) {
-    return t('mobile.applications.navigator.badges.application')
-  }
-
-  if (type.includes('data')) {
-    return t('mobile.applications.navigator.badges.data')
-  }
-
-  return t('mobile.applications.navigator.badges.process')
-}
-
-const allCatalogEntries = computed(() => {
-  return [
-    ...serviceCatalog.value,
-    ...applicationsStore.catalogByTab.application,
-    ...applicationsStore.catalogByTab.business,
-  ]
-})
 
 const serviceGroups = computed<ServiceGroup[]>(() => {
-  const groups = new Map<string, ServiceGroup>()
-  const seenItems = new Set<string>()
-
-  for (const entry of allCatalogEntries.value) {
-    const business = getEntryBusiness(entry)
-    if (!business) {
-      continue
-    }
-
-    const groupId = slugify(business) || 'services'
-    const type = getEntryType(entry)
-    const isBusiness = type === 'Business'
-    const groupTitle = isBusiness ? getBusinessDisplayName(entry.mainTable) : business.replace(/^group\s+/i, '')
-    const color = getBusinessAccentColor(entry.mainTable?.name_en || business, entry.mainTable?.color || entry.color)
-    const group = groups.get(groupId) || {
-      id: groupId,
-      title: groupTitle || t('mobile.applications.navigator.fallbackGroup'),
-      description: '',
-      business,
-      icon: getBusinessFallbackIcon(entry.mainTable?.name_en || business),
-      color,
-      items: [],
-    }
-
-    const itemId = entry.mainTable?.id || entry.mobileUrl || entry.homepageUrl || `${business}:${getApplicationDisplayName(entry)}`
-    if (seenItems.has(itemId)) {
-      groups.set(groupId, group)
-      continue
-    }
-
-    const description = getBusinessDescription(entry)
-    if (!group.description && description) {
-      group.description = description
-    }
-
-    group.items.push({
-      id: itemId,
-      name: isBusiness ? group.title : getApplicationDisplayName(entry),
-      badge: getServiceBadge(entry),
-      icon: isBusiness ? group.icon : getServiceIcon(entry, business),
-      type,
-      url: getApplicationUrl(entry),
-      raw: entry,
-    })
-    seenItems.add(itemId)
-    groups.set(groupId, group)
-  }
-
-  return Array.from(groups.values())
-    .map(group => ({
-      ...group,
-      description: group.description || t('mobile.applications.navigator.defaultGroupDescription'),
-      items: [...group.items].sort((left, right) => getEntryOrder(left.raw) - getEntryOrder(right.raw)),
-    }))
-    .filter(group => group.items.length > 0)
-    .sort((left, right) => left.title.localeCompare(right.title))
+  return serviceTopics.map(topic => ({
+    id: slugify(topic.category_en),
+    title: getTopicName(topic),
+    description: topic.items.map(item => getItemName(item)).join(' · '),
+    business: topic.category_en,
+    icon: topic.icon_x86,
+    color: topicAccent,
+    items: topic.items.map<ServiceItem>(item => ({
+      id: `${slugify(topic.category_en)}:${slugify(item.name_en)}`,
+      name: getItemName(item),
+      badge: t('mobile.applications.navigator.badges.process'),
+      icon: item.icon_x86,
+      type: 'Workflow',
+      url: item.mobile_url,
+      mobileUrl: item.mobile_url,
+      desktopUrl: item.desktop_url,
+    })),
+  }))
 })
 
 const topics = computed(() => [
@@ -465,8 +294,10 @@ const topics = computed(() => [
     label: group.title,
   })),
 ])
+
 const topicCount = computed(() => serviceGroups.value.length)
 const serviceCount = computed(() => serviceGroups.value.reduce((total, group) => total + group.items.length, 0))
+const loading = computed(() => false)
 
 const visibleGroups = computed(() => {
   const keyword = searchKeyword.value.trim().toLowerCase()
@@ -495,12 +326,6 @@ const visibleGroups = computed(() => {
     .filter(group => group.items.length > 0)
 })
 
-const loading = computed(() => {
-  return serviceCatalogLoading.value
-    || applicationsStore.loadingByTab.application
-    || applicationsStore.loadingByTab.business
-})
-
 const isGroupExpanded = (groupId: string) => {
   return expandedGroupIds.value.has(groupId)
 }
@@ -518,71 +343,12 @@ const toggleGroup = (groupId: string) => {
   expandedGroupIds.value = nextGroups
 }
 
-const handleBusinessClick = (entry: ApplicationCatalogEntry) => {
-  const biz = entry.mainTable
-  const businessName = normalizeString(biz?.business || biz?.name_en)
-  const displayName = getBusinessDisplayName(biz)
-  const routeParams = getBusinessRouteParams(biz)
-  const targetPath = `/mobile/applications/business/${encodeURIComponent(routeParams.business)}/${encodeURIComponent(routeParams.tag)}/${encodeURIComponent(routeParams.type)}`
-
-  applicationsStore.setSelectedBusiness({
-    id: businessName,
-    icon: getBusinessFallbackIcon(biz?.name_en),
-    name_en: displayName,
-    business: businessName,
-    description_en: getBusinessDescription({ mainTable: biz } as ApplicationCatalogEntry),
-    color: getBusinessAccentColor(biz?.name_en, biz?.color),
-    intranetLabel: `${displayName} Intranet >`,
-    intranetUrl: biz?.homepage_url || biz?.mobileurl || 'https://intranet.dch.com.hk/',
-  })
-
-  addRecentItem({
-    id: `business:${businessName || biz?.id || displayName}`,
-    type: 'business',
-    label: displayName,
-    subtitle: getBusinessDescription({ mainTable: biz } as ApplicationCatalogEntry),
-    icon: getBusinessFallbackIcon(biz?.name_en),
-    path: targetPath,
-  })
-
-  return navigateTo(targetPath)
-}
-
-const handleServiceClick = async (item: ServiceItem) => {
-  if (item.type === 'Business') {
-    return handleBusinessClick(item.raw)
-  }
-
-  if (!item.url) {
+const handleServiceClick = (item: ServiceItem) => {
+  if (!item.mobileUrl) {
     return
   }
 
-  addRecentItem({
-    id: `application:${item.raw.mainTable?.id || item.url}`,
-    type: 'application',
-    label: item.name,
-    subtitle: item.badge,
-    icon: item.icon,
-    url: item.url,
-  })
-
-  await openGuardedUrl(item.url, '_blank')
-}
-
-const fetchServiceCatalog = async () => {
-  serviceCatalogLoading.value = true
-
-  try {
-    const nextCatalog = await applicationsStore.fetchCatalogByFilters({ type: detailRouteTypes })
-    serviceCatalog.value = nextCatalog
-  }
-  catch (error) {
-    console.error('Fetch service catalog failed:', error)
-    serviceCatalog.value = []
-  }
-  finally {
-    serviceCatalogLoading.value = false
-  }
+  void openGuardedUrl(item.mobileUrl, '_self')
 }
 
 watch(
@@ -599,10 +365,6 @@ watch(
   },
   { immediate: true },
 )
-
-void applicationsStore.fetchTabCatalog('application')
-void applicationsStore.fetchTabCatalog('business')
-void fetchServiceCatalog()
 </script>
 
 <style scoped>
@@ -624,7 +386,7 @@ void fetchServiceCatalog()
 
 .mobile-services__hero {
   flex: 0 0 auto;
-  padding: 10px 8px 12px;
+  padding: 24px 24px 12px;
   border: 1px solid #e5e9f0;
   border-radius: 16px;
   background:

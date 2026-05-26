@@ -1,6 +1,15 @@
 <template>
   <component
     :is="iconComponent"
+    v-if="iconComponent"
+    :size="size"
+    :color="color"
+    :class="className"
+    :style="style"
+  />
+  <CustomPathIcon
+    v-else-if="hasCustomIcon"
+    :name="name"
     :size="size"
     :color="color"
     :class="className"
@@ -44,6 +53,8 @@ import ClockIcon from './icons/svg/ColckIcon.vue'
 import DownArrowIcon from './icons/svg/DownArrowIcon.vue'
 import RightArrowIcon from './icons/svg/RightArrowIcon.vue'
 import CheckIcon from './icons/svg/CheckIcon.vue'
+import CustomPathIcon from './icons/svg/CustomPathIcon.vue'
+import { customIconPaths } from './icons/customIconPaths'
 
 const props = withDefaults(
   defineProps<{
@@ -105,6 +116,10 @@ const iconMap: Record<string, Component> = {
 // 动态获取图标组件
 const iconComponent = computed(() => {
   return iconMap[props.name] || null
+})
+
+const hasCustomIcon = computed(() => {
+  return props.name in customIconPaths
 })
 
 // 动态样式
