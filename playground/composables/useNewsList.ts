@@ -1,5 +1,7 @@
 import type { FetchNewsListOptions, NewsItem, NewsListResponse } from '~/types/news'
 
+const pendingNewsRequests = new Map<string, Promise<NewsItem[]>>()
+
 export const useNewsList = () => {
   const { locale } = useAppI18n()
   const newsList = useState<NewsItem[]>('news:list', () => [])
@@ -14,34 +16,45 @@ export const useNewsList = () => {
       return newsList.value
     }
 
-    try {
-      loading.value = true
-      error.value = null
+    const pendingRequest = pendingNewsRequests.get(requestLocale)
+    if (pendingRequest) {
+      return pendingRequest
+    }
 
-      const response = await $fetch<NewsListResponse>('/api/news/newslist', {
-        query: {
-          locale: requestLocale,
-        },
-      })
+    const request = (async () => {
+      try {
+        loading.value = true
+        error.value = null
 
-      if (response?.code === 1 && Array.isArray(response.data?.list)) {
-        newsList.value = response.data.list
+        const response = await $fetch<NewsListResponse>('/api/news/newslist', {
+          query: {
+            locale: requestLocale,
+          },
+        })
+
+        if (response?.code === 1 && Array.isArray(response.data?.list)) {
+          newsList.value = response.data.list
+          newsLocale.value = requestLocale
+          return newsList.value
+        }
+
+        newsList.value = []
         newsLocale.value = requestLocale
         return newsList.value
       }
+      catch (err: any) {
+        console.error('Failed to fetch news list:', err)
+        error.value = err
+        throw err
+      }
+      finally {
+        pendingNewsRequests.delete(requestLocale)
+        loading.value = false
+      }
+    })()
 
-      newsList.value = []
-      newsLocale.value = requestLocale
-      return newsList.value
-    }
-    catch (err: any) {
-      console.error('Failed to fetch news list:', err)
-      error.value = err
-      throw err
-    }
-    finally {
-      loading.value = false
-    }
+    pendingNewsRequests.set(requestLocale, request)
+    return request
   }
 
   const refreshNewsList = async () => {

@@ -47,8 +47,14 @@ export const appMessages = {
         home: '首页',
         todo: '待办',
         favourites: '收藏',
-        applications: '应用',
+        applications: '服务',
         search: '搜索',
+      },
+      profile: {
+        fields: {
+          username: '用户名',
+          email: '邮箱',
+        },
       },
       applications: {
         tabs: {
@@ -61,8 +67,8 @@ export const appMessages = {
           description: '按服务主题浏览入口，支持搜索、主题筛选、展开/收合，并保留跨主题标签（例如：探购、供应商、提醒）。',
           searchPlaceholder: '搜索服务，例如：报销、合同、IT、报表',
           allTopics: '全部主题',
-          topicCount: '主题数',
-          serviceCount: '服务数',
+          topicCount: '主题',
+          serviceCount: '服务',
           itemCount: '{count} 项',
           loading: '服务加载中...',
           empty: '未找到相关服务。',
@@ -98,6 +104,7 @@ export const appMessages = {
         },
       },
       approval: {
+        submitterLabel: '提交人',
         fields: {
           contractName: '合同名称',
           dchSigningEntity: 'DCH签署单位',
@@ -179,6 +186,13 @@ export const appMessages = {
         enabledMessage: '你将收到新的待办事项提醒。',
         disabledMessage: '你将不会收到待办事项提醒，可在个人信息中重新开启。',
         dismiss: '知道了',
+        testButton: '测试 iPhone 推送',
+        testNotIPhone: '请在 iPhone 上测试',
+        testAddToHomeScreen: '请先将网页添加到主屏幕，再测试推送',
+        testUnsupported: '当前环境不支持网页推送',
+        testPermissionDenied: '系统通知权限已关闭，请先在设置中开启',
+        testSuccess: '推送订阅测试成功',
+        testFailed: '推送测试未通过，请查看当前环境',
       },
     },
     tasks: {
@@ -360,8 +374,14 @@ export const appMessages = {
         home: '主頁',
         todo: '待辦',
         favourites: '收藏',
-        applications: '應用',
+        applications: '服務',
         search: '搜尋',
+      },
+      profile: {
+        fields: {
+          username: '用戶名',
+          email: '電郵',
+        },
       },
       applications: {
         tabs: {
@@ -374,8 +394,8 @@ export const appMessages = {
           description: '按服務主題瀏覽入口，支援搜尋、主題篩選、展開/收合，並保留跨主題標籤（例如：採購、供應商、提醒）。',
           searchPlaceholder: '搜尋服務，例如：報銷、合同、IT、報表',
           allTopics: '全部主題',
-          topicCount: '主題數',
-          serviceCount: '服務數',
+          topicCount: '主題',
+          serviceCount: '服務',
           itemCount: '{count} 項',
           loading: '服務載入中...',
           empty: '未找到相關服務。',
@@ -411,6 +431,7 @@ export const appMessages = {
         },
       },
       approval: {
+        submitterLabel: '提交人',
         fields: {
           contractName: '合同名稱',
           dchSigningEntity: 'DCH簽署單位',
@@ -492,6 +513,13 @@ export const appMessages = {
         enabledMessage: '你將收到新的待辦事項提醒。',
         disabledMessage: '你將不會收到待辦事項提醒，可在個人資訊中重新開啟。',
         dismiss: '知道了',
+        testButton: '測試 iPhone 推送',
+        testNotIPhone: '請在 iPhone 上測試',
+        testAddToHomeScreen: '請先將網頁加入主畫面，再測試推送',
+        testUnsupported: '目前環境不支援網頁推送',
+        testPermissionDenied: '系統通知權限已關閉，請先在設定中開啟',
+        testSuccess: '推送訂閱測試成功',
+        testFailed: '推送測試未通過，請檢查目前環境',
       },
     },
     tasks: {
@@ -673,8 +701,14 @@ export const appMessages = {
         home: 'Home',
         todo: 'To-Do',
         favourites: 'Favourites',
-        applications: 'Applications',
+        applications: 'Services',
         search: 'Search',
+      },
+      profile: {
+        fields: {
+          username: 'Username',
+          email: 'Email',
+        },
       },
       applications: {
         tabs: {
@@ -724,6 +758,7 @@ export const appMessages = {
         },
       },
       approval: {
+        submitterLabel: 'Submitted by',
         fields: {
           contractName: 'Contract Name',
           dchSigningEntity: 'DCH Signing Entity',
@@ -805,6 +840,13 @@ export const appMessages = {
         enabledMessage: 'You will receive alerts for new to-do list items.',
         disabledMessage: 'You will not receive to-do alerts. You can enable them again in Profile.',
         dismiss: 'Dismiss',
+        testButton: 'Test iPhone Push',
+        testNotIPhone: 'Please test this on an iPhone',
+        testAddToHomeScreen: 'Add this site to the Home Screen before testing push',
+        testUnsupported: 'Web push is not supported in the current environment',
+        testPermissionDenied: 'System notification permission is disabled. Enable it in Settings first',
+        testSuccess: 'Push subscription test succeeded',
+        testFailed: 'Push test did not pass. Check the current environment',
       },
     },
     tasks: {

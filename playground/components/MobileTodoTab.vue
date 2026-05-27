@@ -690,7 +690,7 @@ onBeforeUnmount(() => {
   padding: 0;
 
   h2 {
-    font-size: 20px;
+    font-size: 24px;
     font-weight: 600;
     margin: 0;
   }
@@ -937,14 +937,14 @@ onBeforeUnmount(() => {
 }
 
 .todo-item__code {
-  font-size: 15px;
+  font-size: 16px;
   font-weight: 600;
   line-height: 1.3;
   color: #1f1f1f;
 }
 
 .todo-item__status {
-  font-size: 15px;
+  font-size: 16px;
   font-weight: 600;
   line-height: 1.3;
 }
@@ -989,7 +989,7 @@ onBeforeUnmount(() => {
     font-family: var(--font-source-sans-pro);
     font-weight: 400;
     font-style: normal;
-    font-size: 11px;
+    font-size: 12px;
     leading-trim: NONE;
     line-height: 100%;
     letter-spacing: 0;

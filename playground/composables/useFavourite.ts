@@ -9,6 +9,9 @@ export interface FavouriteCatalogItem {
   id: string
   itemId: number
   name: string
+  nameEn?: string
+  nameSc?: string
+  nameTc?: string
   description: string
   icon: string
   homepageUrl: string
@@ -132,7 +135,10 @@ const normalizeFavouriteCatalogItem = (value: any): FavouriteCatalogItem | null 
   return {
     id: String(itemId),
     itemId,
-    name: getFirstString(mainTable.name_en, mainTable.name, mainTable.application, `Favourite ${itemId}`),
+    name: getFirstString(mainTable.name_en, mainTable.name_sc, mainTable.name_tc, mainTable.name, mainTable.application, `Favourite ${itemId}`),
+    nameEn: getFirstString(mainTable.name_en, mainTable.name, mainTable.application),
+    nameSc: getFirstString(mainTable.name_sc),
+    nameTc: getFirstString(mainTable.name_tc),
     description: getFirstString(mainTable.description_en, mainTable.description, mainTable.description_sc),
     icon: getFirstString(mainTable.iconx64, mainTable.icon),
     homepageUrl: getFirstString(mainTable.homepage_url, mainTable.homepageUrl),

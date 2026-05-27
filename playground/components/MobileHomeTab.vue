@@ -99,7 +99,7 @@
                 :size="39"
                 color="#A60A3A"
               />
-              <span>{{ item.label }}</span>
+              <span>{{ getItemLabel(item) }}</span>
             </button>
           </template>
           <div
@@ -248,7 +248,7 @@
               <span />
             </span>
             <span class="home-favourites-row__body">
-              <span class="home-favourites-row__title">{{ item.label }}</span>
+              <span class="home-favourites-row__title">{{ getItemLabel(item) }}</span>
               <span class="home-favourites-row__subtitle">{{ item.subtitle }}</span>
             </span>
           </button>
@@ -277,7 +277,7 @@
               aria-hidden="true"
             />
             <span class="home-favourites-row__body">
-              <span class="home-favourites-row__title">{{ item.label }}</span>
+              <span class="home-favourites-row__title">{{ getItemLabel(item) }}</span>
               <span class="home-favourites-row__subtitle">{{ item.subtitle }}</span>
             </span>
             <IconCustom
@@ -307,7 +307,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref, onMounted, onBeforeUnmount } from 'vue'
+import { computed, ref, onMounted, onBeforeUnmount, watch } from 'vue'
 import type { ApplicationCatalogItem } from '~/types/applicationCatalog'
 import type { NewsItem } from '~/types/news'
 import type { RecentItem } from '~/composables/useRecentItems'
@@ -321,6 +321,9 @@ type FavouriteItem = {
   id: string
   itemId: number
   label: string
+  labelEn?: string
+  labelSc?: string
+  labelTc?: string
   subtitle: string
   icon: string
   kind: FavouriteKind
@@ -473,6 +476,17 @@ const getCatalogItemName = (item?: ApplicationCatalogItem) => {
   return getFirstString(record.name, record.name_en, mainTable.name_en, mainTable.name, mainTable.application) || t('favourites.fallback.application')
 }
 
+const getCatalogItemNameFields = (item?: ApplicationCatalogItem) => {
+  const record = getCatalogRecord(item)
+  const mainTable = getCatalogMainTable(item)
+
+  return {
+    labelEn: getFirstString(record.name_en, mainTable.name_en, record.name, mainTable.name, mainTable.application),
+    labelSc: getFirstString(record.name_sc, mainTable.name_sc),
+    labelTc: getFirstString(record.name_tc, mainTable.name_tc),
+  }
+}
+
 const getCatalogItemType = (item?: ApplicationCatalogItem) => {
   const record = getCatalogRecord(item)
   const mainTable = getCatalogMainTable(item)
@@ -566,6 +580,9 @@ const apiFavouriteSource = computed<FavouriteItem[]>(() => {
     id: `api-${item.itemId}`,
     itemId: item.itemId,
     label: item.name,
+    labelEn: item.nameEn,
+    labelSc: item.nameSc,
+    labelTc: item.nameTc,
     subtitle: item.description || t('favourites.fallback.application'),
     icon: 'apps',
     kind: 'application',
@@ -583,11 +600,15 @@ const catalogFavouriteSource = computed<FavouriteItem[]>(() => {
     }
 
     const type = getCatalogItemType(item)
+    const localizedNameFields = getCatalogItemNameFields(item)
 
     items.push({
       id: `catalog-${itemId}`,
       itemId,
       label: getCatalogItemName(item),
+      labelEn: localizedNameFields.labelEn,
+      labelSc: localizedNameFields.labelSc,
+      labelTc: localizedNameFields.labelTc,
       subtitle: type,
       icon: getCatalogIcon(item),
       kind: type.toLowerCase() === 'business' ? 'intranet' : 'application',
@@ -649,8 +670,42 @@ const filteredEditableFavourites = computed(() => {
     return editableSource.value
   }
 
-  return editableSource.value.filter(item => [item.label, item.subtitle].some(value => value.toLowerCase().includes(keyword)))
+  return editableSource.value.filter((item) => {
+    return [
+      item.label,
+      item.labelEn,
+      item.labelSc,
+      item.labelTc,
+      item.subtitle,
+    ].some(value => normalizeString(value).toLowerCase().includes(keyword))
+  })
 })
+
+const getItemLabel = (item: {
+  label: string
+  labelEn?: string
+  labelSc?: string
+  labelTc?: string
+}) => {
+  if (locale.value === 'zh-CN') {
+    return normalizeString(item.labelSc)
+      || normalizeString(item.labelEn)
+      || normalizeString(item.labelTc)
+      || item.label
+  }
+
+  if (locale.value === 'zh-TW') {
+    return normalizeString(item.labelTc)
+      || normalizeString(item.labelEn)
+      || normalizeString(item.labelSc)
+      || item.label
+  }
+
+  return normalizeString(item.labelEn)
+    || normalizeString(item.labelSc)
+    || normalizeString(item.labelTc)
+    || item.label
+}
 
 const filteredEditableMap = computed(() => {
   return new Map(filteredEditableFavourites.value.map(item => [item.itemId, item]))
@@ -976,6 +1031,9 @@ const handleShortcutClick = async (item: ShortcutItem) => {
     id: item.id,
     type: 'application',
     label: item.label,
+    labelEn: item.labelEn,
+    labelSc: item.labelSc,
+    labelTc: item.labelTc,
     subtitle: item.subtitle,
     icon: item.icon,
     url: item.url,
@@ -1034,6 +1092,16 @@ onMounted(async () => {
   })
 
   fetchCatalogItems()
+})
+
+watch(locale, (nextLocale, previousLocale) => {
+  if (nextLocale === previousLocale) {
+    return
+  }
+
+  fetchNewsList({ locale: nextLocale }).catch((error) => {
+    console.error('Refresh mobile home news failed:', error)
+  })
 })
 
 onBeforeUnmount(() => {
@@ -1286,9 +1354,12 @@ onBeforeUnmount(() => {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  font-size: 11px;
+  font-size: 12px;
   line-height: 1.2;
   font-weight: 600;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  word-break: break-word;
 }
 
 .applications-grid {

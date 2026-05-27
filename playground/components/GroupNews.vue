@@ -62,7 +62,7 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted } from 'vue'
+import { onMounted, watch } from 'vue'
 import type { NewsItem } from '~/types/news'
 import { formatNewsDate } from '~/utils/date'
 
@@ -116,6 +116,16 @@ const handleClick = async (news: NewsItem) => {
 
 onMounted(() => {
   fetchNewsList()
+})
+
+watch(locale, (nextLocale, previousLocale) => {
+  if (nextLocale === previousLocale) {
+    return
+  }
+
+  fetchNewsList({ locale: nextLocale }).catch((error) => {
+    console.error('Refresh group news failed:', error)
+  })
 })
 </script>
 

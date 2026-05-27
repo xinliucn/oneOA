@@ -4,6 +4,9 @@ export interface RecentItem {
   id: string
   type: RecentItemType
   label: string
+  labelEn?: string
+  labelSc?: string
+  labelTc?: string
   subtitle?: string
   icon: string
   url?: string
@@ -47,6 +50,9 @@ const normalizeRecentItem = (value: any): RecentItem | null => {
     id,
     type: type || 'shortcut',
     label,
+    labelEn: normalizeString(value.labelEn),
+    labelSc: normalizeString(value.labelSc),
+    labelTc: normalizeString(value.labelTc),
     subtitle: normalizeString(value.subtitle),
     icon,
     url: normalizeString(value.url),

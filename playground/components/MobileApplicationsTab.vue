@@ -168,17 +168,17 @@ const serviceTopics: TioTopic[] = [
     icon_x86: 'shield',
     items: [
       {
-        name_en: 'Group Contract Clearance Approval',
-        name_sc: '集团合同结清审批',
-        name_tc: '集團合約結清審批',
+        name_en: 'Contracts Approval Sumission',
+        name_sc: '提交合同审批',
+        name_tc: '提交合同審批',
         icon_x86: 'contract',
         desktop_url: 'https://platform-uat.dchbi.app/spa/workflow/static4form/index.html#/main/workflow/req?iscreate=1&workflowid=213',
         mobile_url: 'https://platform-uat.dchbi.app/spa/workflow/static4form/index.html#/main/workflow/req?iscreate=1&workflowid=213',
       },
       {
-        name_en: 'Contract List',
-        name_sc: '合同清单',
-        name_tc: '合約清單',
+        name_en: 'View Contract List',
+        name_sc: '查看合同清单',
+        name_tc: '查看合同清單',
         icon_x86: 'list',
         desktop_url: 'https://platform-uat.dchbi.app/spa/cube/index.html#/main/cube/search?customid=542',
         mobile_url: 'https://platform-uat.dchbi.app/wui/cas-entrance.jsp?path=https://platform-uat.dchbi.app/mobilemode/mobile/view.html?appHomepageId=1',
@@ -562,13 +562,14 @@ watch(
   align-items: center;
   justify-content: center;
   border: 1px solid rgba(166, 10, 58, 0.16);
-  background: #fff4f7;
+  background: #ffffff;
 }
 
 .service-group__icon {
   width: 34px;
   height: 34px;
   border-radius: 12px;
+  background: #f8e8ef;
 }
 
 .service-group__copy {

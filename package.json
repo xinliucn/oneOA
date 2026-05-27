@@ -39,7 +39,8 @@
     "lint": "eslint .",
     "test": "vitest run",
     "test:watch": "vitest watch",
-    "test:types": "vue-tsc --noEmit && cd playground && vue-tsc --noEmit"
+    "test:types": "vue-tsc --noEmit && cd playground && vue-tsc --noEmit",
+    "start": "npm run dev:prepare && npx nuxt dev playground --dotenv .env.uat --host 0.0.0.0 --port 5173 --public"
   },
   "dependencies": {
     "@element-plus/nuxt": "^1.1.4",

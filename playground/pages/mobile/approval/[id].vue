@@ -1,6 +1,18 @@
 <template>
   <NuxtPage v-if="isAttachmentRoute" />
 
+  <div
+    v-else-if="isPageLoading"
+    class="mobile-approval mobile-approval--loading"
+  >
+    <main class="mobile-approval__loading">
+      <span class="mobile-approval__loading-spinner" />
+      <p class="mobile-approval__loading-text">
+        {{ t('common.loading') }}
+      </p>
+    </main>
+  </div>
+
   <div v-else class="mobile-approval">
     <MobileToast />
 
@@ -31,7 +43,7 @@
             <IconCustom name="personnel" :size="18" color="#ffffff" />
           </div>
           <div class="mobile-approval__submitter-info">
-            <span class="mobile-approval__submitter-label">Submitted by</span>
+            <span class="mobile-approval__submitter-label">{{ t('mobile.approval.submitterLabel') }}</span>
             <span class="mobile-approval__submitter-name">{{ approvalSummary.submittedBy }}</span>
           </div>
           <span class="mobile-approval__submitter-date">{{ approvalSummary.submittedDate }}</span>
@@ -139,8 +151,10 @@ const showAllApprovers = ref(false)
 const selectedAction = ref<ApprovalAction | ''>('')
 const actionComment = ref('')
 const submittingAction = ref(false)
+const isPageLoading = ref(true)
 const mobileActiveTab = useState('mobile:activeTab', () => 1)
 const timelinePreviewCount = 2
+let pageLoadVersion = 0
 
 type WorkflowField = {
   fieldId?: string
@@ -641,13 +655,22 @@ watch(
   [approvalId, requestId],
   async ([id, currentRequestId]) => {
     if (!id && !currentRequestId) {
+      isPageLoading.value = false
       return
     }
+
+    const currentLoadVersion = pageLoadVersion + 1
+    pageLoadVersion = currentLoadVersion
+    isPageLoading.value = true
 
     await Promise.all([
       getFormData(currentRequestId || id),
       getFormAttachments(currentRequestId || id),
     ])
+
+    if (currentLoadVersion === pageLoadVersion) {
+      isPageLoading.value = false
+    }
   },
   { immediate: true },
 )
@@ -659,6 +682,36 @@ watch(
   background: #ffffff;
   display: flex;
   flex-direction: column;
+}
+
+.mobile-approval--loading {
+  justify-content: center;
+}
+
+.mobile-approval__loading {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  padding: 24px;
+  color: #7a454f;
+}
+
+.mobile-approval__loading-spinner {
+  width: 28px;
+  height: 28px;
+  border: 3px solid rgba(166, 10, 58, 0.16);
+  border-top-color: #a60a3a;
+  border-radius: 999px;
+  animation: mobile-approval-spin 0.9s linear infinite;
+}
+
+.mobile-approval__loading-text {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 600;
 }
 
 .mobile-approval__header {
@@ -1098,5 +1151,11 @@ watch(
 .mobile-approval__progress-bar.is-rejected,
 .mobile-approval__timeline-avatar.is-rejected {
   background-color: #d04848;
+}
+
+@keyframes mobile-approval-spin {
+  to {
+    transform: rotate(360deg);
+  }
 }
 </style>

@@ -116,6 +116,16 @@ const handleNewsClick = async (item: NewsItem) => {
 onMounted(async () => {
   await fetchNewsList()
 })
+
+watch(locale, (nextLocale, previousLocale) => {
+  if (nextLocale === previousLocale) {
+    return
+  }
+
+  fetchNewsList({ locale: nextLocale }).catch((error) => {
+    console.error('Refresh mobile news failed:', error)
+  })
+})
 </script>
 
 <style scoped>

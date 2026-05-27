@@ -12,11 +12,11 @@
 
     <section class="mobile-profile__section">
       <div class="mobile-profile__row">
-        <span class="mobile-profile__label">Username</span>
+        <span class="mobile-profile__label">{{ t('mobile.profile.fields.username') }}</span>
         <span class="mobile-profile__value">{{ usernameText }}</span>
       </div>
       <div class="mobile-profile__row">
-        <span class="mobile-profile__label">Email</span>
+        <span class="mobile-profile__label">{{ t('mobile.profile.fields.email') }}</span>
         <span class="mobile-profile__value">{{ emailText }}</span>
       </div>
     </section>
@@ -24,10 +24,7 @@
     <section class="mobile-profile__section">
       <div class="mobile-profile__row mobile-profile__row--inline">
         <div>
-          <span class="mobile-profile__label">{{ t('notification.push.title') }}</span>
-          <!-- <span class="mobile-profile__value">
-            {{ pushToggleOn ? t('notification.push.on') : t('notification.push.off') }}
-          </span> -->
+          <span class="mobile-profile__label_nav">{{ t('notification.push.title') }}</span>
         </div>
         <button
           type="button"
@@ -40,6 +37,14 @@
           <span class="mobile-profile__toggle-knob" />
         </button>
       </div>
+      <button
+        type="button"
+        class="mobile-profile__secondary-action"
+        :disabled="isPushTestLoading"
+        @click="testIPhonePush"
+      >
+        {{ t('notification.push.testButton') }}
+      </button>
     </section>
 
     <section class="mobile-profile__section">
@@ -48,7 +53,7 @@
         class="mobile-profile__action"
         @click="handleLogout"
       >
-        Sign out
+        {{ t('user.logout') }}
       </button>
     </section>
 
@@ -90,8 +95,10 @@ const {
   init: initPushSubscription,
 } = usePushSubscription()
 const { t } = useAppI18n()
+const { showToast } = useMobileToast()
 
 const isPushToggleLoading = ref(false)
+const isPushTestLoading = ref(false)
 const subscriptionPrompt = reactive({
   visible: false,
   type: 'enabled' as 'enabled' | 'disabled',
@@ -99,7 +106,7 @@ const subscriptionPrompt = reactive({
 const pushToggleOn = computed(() => pushStatus.value === 'subscribed')
 
 const displayName = computed(() => {
-  return user.value?.name || user.value?.displayName || user.value?.username || 'Profile'
+  return user.value?.name || user.value?.displayName || user.value?.username || t('user.profile')
 })
 
 const emailText = computed(() => user.value?.email || '-')
@@ -143,6 +150,69 @@ const togglePushSubscription = async () => {
   }
   finally {
     isPushToggleLoading.value = false
+  }
+}
+
+const isIPhone = () => {
+  if (!import.meta.client) {
+    return false
+  }
+
+  return /iPhone|iPad|iPod/i.test(navigator.userAgent)
+}
+
+const isStandalone = () => {
+  if (!import.meta.client) {
+    return false
+  }
+
+  return Boolean((window.navigator as Navigator & { standalone?: boolean }).standalone)
+    || window.matchMedia('(display-mode: standalone)').matches
+}
+
+const testIPhonePush = async () => {
+  if (!import.meta.client || isPushTestLoading.value) {
+    return
+  }
+
+  isPushTestLoading.value = true
+
+  try {
+    if (!isIPhone()) {
+      showToast(t('notification.push.testNotIPhone'), 'error')
+      return
+    }
+
+    if (!isStandalone()) {
+      showToast(t('notification.push.testAddToHomeScreen'), 'error', 4500)
+      return
+    }
+
+    if (!('Notification' in window) || !('serviceWorker' in navigator) || !('PushManager' in window)) {
+      showToast(t('notification.push.testUnsupported'), 'error')
+      return
+    }
+
+    if (Notification.permission === 'denied') {
+      showToast(t('notification.push.testPermissionDenied'), 'error', 4500)
+      return
+    }
+
+    const nextSubscription = await subscribe()
+
+    if (nextSubscription) {
+      showToast(t('notification.push.testSuccess'))
+      return
+    }
+
+    showToast(t('notification.push.testFailed'), 'error')
+  }
+  catch (error) {
+    console.error('Test iPhone push failed:', error)
+    showToast(t('notification.push.testFailed'), 'error')
+  }
+  finally {
+    isPushTestLoading.value = false
   }
 }
 
@@ -201,14 +271,14 @@ onMounted(async () => {
 
 .mobile-profile__identity h1 {
   margin: 0;
-  font-size: 22px;
+  font-size: 24px;
   line-height: 1.2;
   color: #2f1a22;
 }
 
 .mobile-profile__identity p {
   margin: 6px 0 0;
-  font-size: 13px;
+  font-size: 14px;
   line-height: 1.4;
   color: #7c6570;
   word-break: break-all;
@@ -233,18 +303,24 @@ onMounted(async () => {
   gap: 16px;
 }
 
-.mobile-profile__row + .mobile-profile__row {
+.mobile-profile__row+.mobile-profile__row {
   border-top: 1px solid #f1e8eb;
 }
 
 .mobile-profile__label {
-  font-size: 11px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #8e7781;
+}
+
+.mobile-profile__label_nav {
+  font-size: 16px;
   font-weight: 600;
   color: #8e7781;
 }
 
 .mobile-profile__value {
-  font-size: 15px;
+  font-size: 16px;
   color: #24151b;
   word-break: break-all;
 }
@@ -297,6 +373,23 @@ onMounted(async () => {
   padding: 14px 16px;
   font-size: 15px;
   font-weight: 700;
+}
+
+.mobile-profile__secondary-action {
+  width: 100%;
+  margin-top: 8px;
+  border: 1px solid #e8d5dc;
+  border-radius: 14px;
+  background: #fff6f8;
+  color: #a60a3a;
+  padding: 12px 16px;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.mobile-profile__secondary-action:disabled {
+  cursor: default;
+  opacity: 0.65;
 }
 
 .mobile-profile__ios-overlay {
