@@ -348,7 +348,7 @@ const handleServiceClick = (item: ServiceItem) => {
     return
   }
 
-  void openGuardedUrl(item.mobileUrl, '_self')
+  void openGuardedUrl(item.mobileUrl, '_blank')
 }
 
 watch(
@@ -356,10 +356,6 @@ watch(
   (groups) => {
     const availableGroupIds = new Set(groups.map(group => group.id))
     const nextExpanded = new Set([...expandedGroupIds.value].filter(groupId => availableGroupIds.has(groupId)))
-
-    for (const group of groups.slice(0, 2)) {
-      nextExpanded.add(group.id)
-    }
 
     expandedGroupIds.value = nextExpanded
   },
