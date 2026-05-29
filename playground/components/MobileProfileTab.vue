@@ -37,14 +37,6 @@
           <span class="mobile-profile__toggle-knob" />
         </button>
       </div>
-      <button
-        type="button"
-        class="mobile-profile__secondary-action"
-        :disabled="isPushTestLoading"
-        @click="testIPhonePush"
-      >
-        {{ t('notification.push.testButton') }}
-      </button>
     </section>
 
     <section class="mobile-profile__section">
@@ -90,6 +82,7 @@
 const { user, logout } = useAuth()
 const {
   status: pushStatus,
+  errorMessage: pushErrorMessage,
   subscribe,
   unsubscribe,
   init: initPushSubscription,
@@ -98,7 +91,6 @@ const { t } = useAppI18n()
 const { showToast } = useMobileToast()
 
 const isPushToggleLoading = ref(false)
-const isPushTestLoading = ref(false)
 const subscriptionPrompt = reactive({
   visible: false,
   type: 'enabled' as 'enabled' | 'disabled',
@@ -140,79 +132,28 @@ const togglePushSubscription = async () => {
 
   try {
     if (pushToggleOn.value) {
-      await unsubscribe()
-      showSubscriptionResultPrompt(false)
-      return
-    }
+      const success = await unsubscribe()
 
-    const nextSubscription = await subscribe()
-    showSubscriptionResultPrompt(Boolean(nextSubscription))
-  }
-  finally {
-    isPushToggleLoading.value = false
-  }
-}
+      if (success) {
+        showSubscriptionResultPrompt(false)
+        return
+      }
 
-const isIPhone = () => {
-  if (!import.meta.client) {
-    return false
-  }
-
-  return /iPhone|iPad|iPod/i.test(navigator.userAgent)
-}
-
-const isStandalone = () => {
-  if (!import.meta.client) {
-    return false
-  }
-
-  return Boolean((window.navigator as Navigator & { standalone?: boolean }).standalone)
-    || window.matchMedia('(display-mode: standalone)').matches
-}
-
-const testIPhonePush = async () => {
-  if (!import.meta.client || isPushTestLoading.value) {
-    return
-  }
-
-  isPushTestLoading.value = true
-
-  try {
-    if (!isIPhone()) {
-      showToast(t('notification.push.testNotIPhone'), 'error')
-      return
-    }
-
-    if (!isStandalone()) {
-      showToast(t('notification.push.testAddToHomeScreen'), 'error', 4500)
-      return
-    }
-
-    if (!('Notification' in window) || !('serviceWorker' in navigator) || !('PushManager' in window)) {
-      showToast(t('notification.push.testUnsupported'), 'error')
-      return
-    }
-
-    if (Notification.permission === 'denied') {
-      showToast(t('notification.push.testPermissionDenied'), 'error', 4500)
+      showToast(pushErrorMessage.value || t('notification.push.subscribeFailed'), 'error', 4500)
       return
     }
 
     const nextSubscription = await subscribe()
 
     if (nextSubscription) {
-      showToast(t('notification.push.testSuccess'))
+      showSubscriptionResultPrompt(true)
       return
     }
 
-    showToast(t('notification.push.testFailed'), 'error')
-  }
-  catch (error) {
-    console.error('Test iPhone push failed:', error)
-    showToast(t('notification.push.testFailed'), 'error')
+    showToast(pushErrorMessage.value || t('notification.push.subscribeFailed'), 'error', 4500)
   }
   finally {
-    isPushTestLoading.value = false
+    isPushToggleLoading.value = false
   }
 }
 

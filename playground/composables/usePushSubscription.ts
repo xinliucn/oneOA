@@ -76,6 +76,7 @@ export const usePushSubscription = () => {
 
   const runtimeConfig = useRuntimeConfig()
   const { getCurrentUserId } = useCurrentUserId()
+  const { t } = useAppI18n()
 
   const isIOS = () => {
     if (!import.meta.client) {
@@ -158,6 +159,20 @@ export const usePushSubscription = () => {
 
     return shouldUseFCM() || 'PushManager' in window
   })
+
+  const ensureIOSStandaloneSupport = () => {
+    if (!import.meta.client || !isIOS()) {
+      return true
+    }
+
+    if (isStandalone()) {
+      return true
+    }
+
+    status.value = 'unsupported'
+    errorMessage.value = t('notification.push.iosHomeScreenRequired')
+    return false
+  }
 
   const getSubscriptionIdentity = (value: LocalSubscriptionState): string | null => {
     if (!value) {
@@ -460,6 +475,11 @@ export const usePushSubscription = () => {
     }
 
     logSubscribeDebug('start')
+
+    if (!ensureIOSStandaloneSupport()) {
+      logSubscribeDebug('ios-standalone-required')
+      return null
+    }
 
     if (import.meta.client && isIOS() && 'Notification' in window && Notification.permission === 'default') {
       const allowed = await requestIOSPermissionPrompt()

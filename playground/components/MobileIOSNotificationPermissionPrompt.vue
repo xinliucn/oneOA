@@ -7,10 +7,10 @@
       >
         <section class="mobile-ios-notification-prompt__dialog">
           <h2 class="mobile-ios-notification-prompt__title">
-            “DCH Intranet” Would Like to Send You Notifications
+            {{ t('notification.push.iosPermissionPromptTitle', { appName: t('common.appName') }) }}
           </h2>
           <p class="mobile-ios-notification-prompt__message">
-            Notifications may include alerts and important updates. These can be configured in Settings &gt; Notifications.
+            {{ t('notification.push.iosPermissionPromptMessage') }}
           </p>
           <div class="mobile-ios-notification-prompt__actions">
             <button
@@ -18,14 +18,14 @@
               class="mobile-ios-notification-prompt__action"
               @click="denyIOSPermissionPrompt"
             >
-              Don’t Allow
+              {{ t('notification.push.iosPermissionPromptDeny') }}
             </button>
             <button
               type="button"
               class="mobile-ios-notification-prompt__action"
               @click="allowIOSPermissionPrompt"
             >
-              Allow
+              {{ t('notification.push.iosPermissionPromptAllow') }}
             </button>
           </div>
         </section>
@@ -40,6 +40,7 @@ const {
   allowIOSPermissionPrompt,
   denyIOSPermissionPrompt,
 } = usePushSubscription()
+const { t } = useAppI18n()
 </script>
 
 <style scoped>

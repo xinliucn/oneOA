@@ -37,6 +37,12 @@ export default defineNuxtConfig({
     css: {
       devSourcemap: true,
     },
+    server: {
+      allowedHosts: ['.trycloudflare.com'],
+    },
+    preview: {
+      allowedHosts: ['.trycloudflare.com'],
+    },
   },
   myModule: {
     defaultLocale: 'zh-CN',
