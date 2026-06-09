@@ -115,8 +115,9 @@ const profileInitials = computed(() => {
 const tabs = computed(() => [
   { index: 1, icon: 'home', label: t('mobile.tabs.home') },
   { index: 2, icon: 'todo', label: t('mobile.tabs.todo') },
-  { index: 3, icon: 'apps', label: t('mobile.tabs.applications') },
-  { index: 4, icon: 'search', label: t('user.profile'), type: 'profile' },
+  { index: 3, icon: 'service-dots', label: t('mobile.tabs.applications') },
+  { index: 4, icon: 'service-briefcase', label: t('mobile.services.titlePlural') },
+  { index: 5, icon: 'search', label: t('user.profile'), type: 'profile' },
 ])
 
 const displayActiveTab = computed<number | null>(() => {
@@ -404,15 +405,15 @@ onBeforeUnmount(() => {
 .mobile__footer {
     background-color: #ffffff;
     border-top: 0;
-    padding: 8px 0 calc(6px + env(safe-area-inset-bottom, 0px));
-    box-shadow: 0 -6px 18px rgba(0, 0, 0, 0.04);
+    padding: 7px 0 calc(9px + env(safe-area-inset-bottom, 0px));
+    box-shadow: 0 -4px 16px rgba(0, 0, 0, 0.05);
     flex-shrink: 0;
 }
 
 .tab-bar {
     display: flex;
-    justify-content: space-around;
     align-items: center;
+    height: 50px;
 }
 
 .tab-item {
@@ -421,19 +422,25 @@ onBeforeUnmount(() => {
     align-items: center;
     justify-content: center;
     flex: 1;
-    padding: 4px 0;
+    min-width: 0;
+    height: 50px;
+    padding: 3px 0 2px;
     cursor: pointer;
     position: relative;
-    color: #999999;
-    transition: color 0.3s;
+    color: #7a7a7a;
+    transition: color 0.2s ease;
 
     svg {
-        margin-bottom: 4px;
+        width: 24px;
+        height: 24px;
+        margin-bottom: 2px;
     }
 
     .tab-label {
         font-size: 10px;
-        line-height: 1.2;
+        font-weight: 600;
+        line-height: 12px;
+        white-space: nowrap;
     }
 
     &.active {
@@ -442,19 +449,19 @@ onBeforeUnmount(() => {
 }
 
 .tab-item__profile-avatar {
-    width: 30px;
-    height: 30px;
+    width: 27px;
+    height: 27px;
     border-radius: 999px;
     background: linear-gradient(135deg, #cb7291 0%, #8b0f3b 100%);
     color: #ffffff;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 12px;
+    font-size: 11px;
     font-weight: 700;
-    letter-spacing: 0.03em;
-    margin-bottom: 4px;
-    box-shadow: 0 6px 12px rgba(166, 10, 58, 0.16);
+    letter-spacing: 0;
+    margin-bottom: 2px;
+    box-shadow: 0 4px 10px rgba(166, 10, 58, 0.14);
 }
 
 .tab-item.active .tab-item__profile-avatar {

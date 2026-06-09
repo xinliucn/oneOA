@@ -115,6 +115,8 @@ import { computed, ref, watch } from 'vue'
 import type {
   ApplicationCatalogEntry,
   ApplicationCatalogFilters,
+  ApplicationCatalogIconFile,
+  ApplicationCatalogMainTable,
   SelectedBusinessSummary,
 } from '~/types/applicationCatalog'
 
@@ -141,6 +143,27 @@ const detailCatalog = ref<ApplicationCatalogEntry[]>([])
 
 const normalizeString = (value?: string | null) => {
   return typeof value === 'string' ? value.trim() : ''
+}
+
+const isApplicationCatalogIconFile = (value: unknown): value is ApplicationCatalogIconFile => {
+  return Boolean(value)
+    && typeof value === 'object'
+    && !Array.isArray(value)
+    && typeof (value as ApplicationCatalogIconFile).name === 'string'
+    && typeof (value as ApplicationCatalogIconFile).showid === 'string'
+    && typeof (value as ApplicationCatalogIconFile).content === 'string'
+}
+
+const resolveIconName = (iconx64: ApplicationCatalogMainTable['iconx64']) => {
+  if (typeof iconx64 === 'string') {
+    return normalizeString(iconx64)
+  }
+
+  if (Array.isArray(iconx64)) {
+    return normalizeString(iconx64.find(isApplicationCatalogIconFile)?.name)
+  }
+
+  return ''
 }
 
 const decodeRouteParam = (value: any) => {
@@ -362,7 +385,7 @@ const getItemName = (item: ApplicationCatalogEntry) => {
 }
 
 const getItemIcon = (item: ApplicationCatalogEntry) => {
-  return normalizeString(item.mainTable?.iconx64)
+  return resolveIconName(item.mainTable?.iconx64)
 }
 
 const syncSelectedBusiness = () => {

@@ -12,6 +12,7 @@
 import type { Component, Ref } from 'vue'
 import { computed, inject } from 'vue'
 import MobileApplicationsTab from '~/components/MobileApplicationsTab.vue'
+import MobileFavouritesTab from '~/components/MobileFavouritesTab.vue'
 import MobileHomeTab from '~/components/MobileHomeTab.vue'
 import MobileProfileTab from '~/components/MobileProfileTab.vue'
 import MobileTodoTab from '~/components/MobileTodoTab.vue'
@@ -24,8 +25,9 @@ definePageMeta({
 const tabComponents: Record<number, Component> = {
   1: MobileHomeTab,
   2: MobileTodoTab,
-  3: MobileApplicationsTab,
-  4: MobileProfileTab,
+  3: MobileFavouritesTab,
+  4: MobileApplicationsTab,
+  5: MobileProfileTab,
 }
 
 const activeTab = inject<Ref<number>>('activeTab')

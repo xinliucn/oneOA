@@ -111,7 +111,7 @@
         </div>
       </section>
 
-      <section class="home-section">
+      <!-- <section class="home-section">
         <div class="home-section__header">
           <h2>{{ t('desktopApps.title') }}</h2>
           <button
@@ -139,7 +139,7 @@
             <span v-if="item.description">{{ item.description }}</span>
           </button>
         </div>
-      </section>
+      </section> -->
 
       <section class="home-section home-section--news">
         <div class="home-section__header">

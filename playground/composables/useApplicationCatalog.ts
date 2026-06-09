@@ -1,6 +1,8 @@
 import type {
+  ApplicationCatalogApiEntry,
   ApplicationBusiness,
   ApplicationCatalogFilters,
+  ApplicationCatalogIconFile,
   ApplicationCatalogItem,
 } from '~/types/applicationCatalog'
 
@@ -20,6 +22,13 @@ const normalizeString = (value?: string | null) => {
 
 const isRecord = (value: any): value is Record<string, any> => {
   return !!value && typeof value === 'object' && !Array.isArray(value)
+}
+
+const isApplicationCatalogIconFile = (value: unknown): value is ApplicationCatalogIconFile => {
+  return isRecord(value)
+    && typeof value.name === 'string'
+    && typeof value.showid === 'string'
+    && typeof value.content === 'string'
 }
 
 const uniq = <T>(items: T[]) => {
@@ -49,6 +58,18 @@ const normalizeApplicationIconPath = (iconx64?: string | null) => {
   }
 
   return applicationIconMap[iconName] || iconName
+}
+
+const resolveApplicationIconName = (iconx64: unknown) => {
+  if (typeof iconx64 === 'string') {
+    return iconx64
+  }
+
+  if (Array.isArray(iconx64)) {
+    return iconx64.find(isApplicationCatalogIconFile)?.name || ''
+  }
+
+  return ''
 }
 
 const slugify = (value: string) => {
@@ -173,7 +194,7 @@ export const useApplicationCatalog = () => {
   const businesses = computed(() => groupCatalogByBusiness(catalog.value))
 
   const requestApplicationCatalogData = async (filters: ApplicationCatalogFilters = {}) => {
-    const response = await $fetch<any[] | { data?: any[] }>('/api/applications/catlog', {
+    const response = await $fetch<ApplicationCatalogApiEntry[] | { data?: ApplicationCatalogApiEntry[] }>('/api/applications/catlog', {
       method: 'POST',
       body: buildApplicationCatalogPayload(filters),
     })
@@ -183,7 +204,7 @@ export const useApplicationCatalog = () => {
       ...item,
       mainTable: {
         ...(isRecord(item.mainTable) ? item.mainTable : {}),
-        iconx64: normalizeApplicationIconPath(isRecord(item.mainTable) ? normalizeString(item.mainTable.iconx64 as string | null) : ''),
+        iconx64: normalizeApplicationIconPath(isRecord(item.mainTable) ? resolveApplicationIconName(item.mainTable.iconx64) : ''),
       },
     })) as any as ApplicationCatalogItem[]
   }

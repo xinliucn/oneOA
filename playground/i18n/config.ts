@@ -47,7 +47,8 @@ export const appMessages = {
         home: '首页',
         todo: '待办',
         favourites: '收藏',
-        applications: '服务',
+        applications: '应用',
+        service: '服务',
         search: '搜索',
       },
       profile: {
@@ -57,6 +58,7 @@ export const appMessages = {
         },
       },
       applications: {
+        searchAriaLabel: '搜索应用',
         tabs: {
           byApplication: '按应用',
           byBusiness: '按业务',
@@ -83,6 +85,39 @@ export const appMessages = {
           },
         },
       },
+      services: {
+        title: '服务',
+        titlePlural: '服务',
+        filterAriaLabel: '筛选服务',
+        modes: {
+          topic: '主题',
+          process: '流程',
+        },
+        filters: {
+          region: '地区',
+          serviceType: '服务类型',
+          topic: '主题',
+          all: '全部',
+        },
+        serviceTypes: {
+          workflow: '流程',
+          portal: '入口',
+          knowledge: '知识',
+          application: '应用',
+          record: '记录',
+        },
+        processes: {
+          all: '全部流程',
+          staffOnboarding: '员工入职',
+          staffOffBoarding: '员工离职',
+          contractClearance: '合约结清',
+          businessTripReimbursement: '差旅费报销',
+        },
+        actions: {
+          expand: '展开服务分组',
+          collapse: '收起服务分组',
+        },
+      },
       todo: {
         via: '通过',
         filters: {
@@ -104,6 +139,9 @@ export const appMessages = {
         },
       },
       approval: {
+        workflowDetailLabel: '查看 {workflowName} 详情',
+        notificationTitle: '通知',
+        notificationTitleWithReference: '{reference} - 通知',
         submitterLabel: '提交人',
         fields: {
           contractName: '合同名称',
@@ -117,9 +155,12 @@ export const appMessages = {
           approve: '批准',
           reject: '拒绝',
           return: '退回',
+          confirm: '确认',
           submit: '提交',
           submitting: '提交中...',
           submitted: '已提交',
+          showMore: '查看更多',
+          showLess: '收起',
           commentPlaceholder: '添加备注...',
         },
       },
@@ -373,7 +414,8 @@ export const appMessages = {
         home: '主頁',
         todo: '待辦',
         favourites: '收藏',
-        applications: '服務',
+        applications: '應用',
+        service: '服務',
         search: '搜尋',
       },
       profile: {
@@ -383,6 +425,7 @@ export const appMessages = {
         },
       },
       applications: {
+        searchAriaLabel: '搜尋應用',
         tabs: {
           byApplication: '按應用',
           byBusiness: '按業務',
@@ -409,6 +452,39 @@ export const appMessages = {
           },
         },
       },
+      services: {
+        title: '服務',
+        titlePlural: '服務',
+        filterAriaLabel: '篩選服務',
+        modes: {
+          topic: '主題',
+          process: '流程',
+        },
+        filters: {
+          region: '地區',
+          serviceType: '服務類型',
+          topic: '主題',
+          all: '全部',
+        },
+        serviceTypes: {
+          workflow: '流程',
+          portal: '入口',
+          knowledge: '知識',
+          application: '應用',
+          record: '記錄',
+        },
+        processes: {
+          all: '全部流程',
+          staffOnboarding: '員工入職',
+          staffOffBoarding: '員工離職',
+          contractClearance: '合約結清',
+          businessTripReimbursement: '差旅費報銷',
+        },
+        actions: {
+          expand: '展開服務分組',
+          collapse: '收起服務分組',
+        },
+      },
       todo: {
         via: '透過',
         filters: {
@@ -430,6 +506,9 @@ export const appMessages = {
         },
       },
       approval: {
+        workflowDetailLabel: '查看 {workflowName} 詳情',
+        notificationTitle: '通知',
+        notificationTitleWithReference: '{reference} - 通知',
         submitterLabel: '提交人',
         fields: {
           contractName: '合同名稱',
@@ -443,9 +522,12 @@ export const appMessages = {
           approve: '批准',
           reject: '拒絕',
           return: '退回',
+          confirm: '確認',
           submit: '提交',
           submitting: '提交中...',
           submitted: '已提交',
+          showMore: '查看更多',
+          showLess: '收起',
           commentPlaceholder: '新增備註...',
         },
       },
@@ -699,7 +781,8 @@ export const appMessages = {
         home: 'Home',
         todo: 'To-Do',
         favourites: 'Favourites',
-        applications: 'Services',
+        applications: 'Applications',
+        service: 'Service',
         search: 'Search',
       },
       profile: {
@@ -709,6 +792,7 @@ export const appMessages = {
         },
       },
       applications: {
+        searchAriaLabel: 'Search applications',
         tabs: {
           byApplication: 'By Application',
           byBusiness: 'By Business',
@@ -735,6 +819,39 @@ export const appMessages = {
           },
         },
       },
+      services: {
+        title: 'Service',
+        titlePlural: 'Services',
+        filterAriaLabel: 'Filter services',
+        modes: {
+          topic: 'Topic',
+          process: 'Process',
+        },
+        filters: {
+          region: 'Region',
+          serviceType: 'Service Type',
+          topic: 'Topic',
+          all: 'All',
+        },
+        serviceTypes: {
+          workflow: 'Workflow',
+          portal: 'Portal',
+          knowledge: 'Knowledge',
+          application: 'Application',
+          record: 'Record',
+        },
+        processes: {
+          all: 'All Process',
+          staffOnboarding: 'Staff Onboarding',
+          staffOffBoarding: 'Staff Offboarding',
+          contractClearance: 'Contract Clearance',
+          businessTripReimbursement: 'Business Trip Reimbursement',
+        },
+        actions: {
+          expand: 'Expand service group',
+          collapse: 'Collapse service group',
+        },
+      },
       todo: {
         via: 'via',
         filters: {
@@ -756,6 +873,9 @@ export const appMessages = {
         },
       },
       approval: {
+        workflowDetailLabel: 'View details in {workflowName}',
+        notificationTitle: 'Notification',
+        notificationTitleWithReference: '{reference} - Notification',
         submitterLabel: 'Submitted by',
         fields: {
           contractName: 'Contract Name',
@@ -769,9 +889,12 @@ export const appMessages = {
           approve: 'Approve',
           reject: 'Reject',
           return: 'Return',
+          confirm: 'Confirm',
           submit: 'Submit',
           submitting: 'Submitting...',
           submitted: 'Submitted',
+          showMore: 'Show more',
+          showLess: 'Show less',
           commentPlaceholder: 'Add a comment...',
         },
       },

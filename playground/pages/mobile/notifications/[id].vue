@@ -21,7 +21,8 @@
         v-if="loading"
         class="mobile-notification-detail__state"
       >
-        {{ loadingText }}
+        <span class="mobile-notification-detail__loading-spinner" />
+        <span>{{ loadingText }}</span>
       </div>
       <div
         v-else-if="!notification"
@@ -302,6 +303,7 @@ definePageMeta({
 
 const route = useRoute()
 const { locale, t } = useAppI18n()
+const { getFormData } = useApplicationCatalog()
 const notificationId = computed(() => String(route.params.id || ''))
 const returnPath = useState<string>('mobile:notification:return-path', () => '/mobile')
 const { notifications } = useNotification()
@@ -428,6 +430,49 @@ const articleParagraphs = computed(() => {
     .filter(Boolean)
 })
 
+const getPayloadString = (payload: Record<string, any> | null | undefined, keys: string[]) => {
+  if (!payload) {
+    return ''
+  }
+
+  for (const key of keys) {
+    const value = payload[key]
+    if (typeof value === 'string' && value.trim()) {
+      return value.trim()
+    }
+
+    if (typeof value === 'number' && Number.isFinite(value)) {
+      return String(value)
+    }
+  }
+
+  return ''
+}
+
+const getRequestIdFromLink = (link?: string) => {
+  if (!link) {
+    return ''
+  }
+
+  try {
+    const parsed = new URL(link, 'https://superapp.local')
+    return parsed.searchParams.get('requestId')
+      || parsed.searchParams.get('requestid')
+      || parsed.searchParams.get('request_id')
+      || ''
+  }
+  catch {
+    return ''
+  }
+}
+
+const getNotificationRequestId = (item: NotificationItem) => {
+  return item.requestId?.trim()
+    || getPayloadString(item.payload, ['requestId', 'requestid', 'request_id'])
+    || getRequestIdFromLink(item.link)
+    || ''
+}
+
 const loadNotification = async () => {
   loading.value = true
 
@@ -440,6 +485,13 @@ const loadNotification = async () => {
     const detail = await $fetch<{ item: NotificationItem | null }>(`/api/notifications/${encodeURIComponent(notificationId.value)}`)
     if (detail?.item) {
       notification.value = detail.item
+    }
+
+    if (notification.value) {
+      const requestId = getNotificationRequestId(notification.value)
+      if (requestId) {
+        await getFormData(requestId)
+      }
     }
   }
   catch (error) {
@@ -539,10 +591,32 @@ watch(notificationId, async (id) => {
 }
 
 .mobile-notification-detail__state {
+  flex: 1;
+  min-height: 240px;
   padding: 48px 16px;
-  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
   font-size: 14px;
+  font-weight: 600;
   color: #8b8b8b;
+}
+
+.mobile-notification-detail__loading-spinner {
+  width: 28px;
+  height: 28px;
+  border: 3px solid rgba(166, 10, 58, 0.16);
+  border-top-color: #a60a3a;
+  border-radius: 999px;
+  animation: mobile-notification-detail-spin 0.9s linear infinite;
+}
+
+@keyframes mobile-notification-detail-spin {
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 .mobile-notification-detail__approval {

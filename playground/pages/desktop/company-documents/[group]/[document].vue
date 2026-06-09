@@ -77,6 +77,7 @@
               <strong>{{ documentDetail.createdBy }}</strong>
             </div>
             <time>
+              <span>{{ t('pages.companyDocuments.fields.createdDate') }}:</span>
               <span>{{ documentDetail.createdDate }}</span>
               <span>{{ documentDetail.createdTime }}</span>
             </time>
@@ -109,14 +110,12 @@
       </section>
 
       <section class="company-document-view__policy">
-        <!-- Sanitized controlled OA/CMS HTML before rendering. -->
         <!-- eslint-disable-next-line vue/no-v-html -->
         <div
           class="company-document-view__paragraphs"
           v-html="documentDetail.contentHtml"
         />
 
-        <!-- Sanitized controlled OA/CMS HTML before rendering. -->
         <!-- eslint-disable-next-line vue/no-v-html -->
         <div class="company-document-view__acknowledgement">
           <label>
@@ -159,7 +158,6 @@
 </template>
 
 <script setup lang="ts">
-import { sanitizeControlledHtml } from '~/utils/sanitizeHtml'
 import type {
   CompanyDocumentDetail,
   CompanyDocumentDetailResponseItem,
@@ -251,7 +249,20 @@ const documentDetail = computed<CompanyDocumentDetail | null>(() => {
   const { code, version } = getDocumentCodeAndVersion(groupDetail.value.Number_Version)
   const title = groupDetail.value.RequestName || documentTitle.value || code
   const createdDateTime = splitDateTime(groupDetail.value.createddate || groupDetail.value.RequestPublishDate)
-
+  console.log('Document Detail Computed:', {
+    title,
+    code,
+    version,
+    fileName: previewFileList.value[0]?.filename || title,
+    serverRelativeUrl: '',
+    createdBy: groupDetail.value.createdby || '-',
+    createdDate: createdDateTime.date || '-',
+    createdTime: createdDateTime.time || '',
+    publishedDateTime: groupDetail.value.RequestPublishDate || groupDetail.value.createddate || '-',
+    contentHtml: groupDetail.value.content_display || '',
+    footerHtml: groupDetail.value.footer_display || '',
+    status: getStatus(currentDocument.value),
+  })
   return {
     title,
     code,
@@ -262,8 +273,8 @@ const documentDetail = computed<CompanyDocumentDetail | null>(() => {
     createdDate: createdDateTime.date || '-',
     createdTime: createdDateTime.time || '',
     publishedDateTime: groupDetail.value.RequestPublishDate || groupDetail.value.createddate || '-',
-    contentHtml: sanitizeControlledHtml(groupDetail.value.content_display || ''),
-    footerHtml: sanitizeControlledHtml(groupDetail.value.footer_display || ''),
+    contentHtml: groupDetail.value.content_display || '',
+    footerHtml: groupDetail.value.footer_display || '',
     status: getStatus(currentDocument.value),
   }
 })
@@ -411,7 +422,7 @@ onMounted(() => {
 
 .company-document-view__summary {
   display: grid;
-  grid-template-columns: 2fr 1fr 1fr;
+  grid-template-columns: 5fr 3fr;
   gap: 22px;
   align-items: start;
 }
@@ -491,9 +502,10 @@ onMounted(() => {
 
 .company-document-view__creator {
   display: grid;
-  grid-template-columns: 32px 1fr 82px;
-  gap: 7px;
-  align-items: start;
+  grid-template-columns: 28px minmax(0, 1fr);
+  column-gap: 10px;
+  row-gap: 6px;
+  align-items: center;
 }
 
 .company-document-view__avatar {
@@ -504,29 +516,14 @@ onMounted(() => {
 
 .company-document-view__creator-copy {
   min-width: 0;
-
-  time {
-    display: block;
-    color: #a3aab2;
-    font-family: var(--font-source-sans-pro);
-    font-family: var(--font-source-sans-pro);
-    font-weight: 400;
-    font-style: normal;
-    font-size: 16px;
-    leading-trim: NONE;
-    line-height: 100%;
-    letter-spacing: 0;
-    vertical-align: middle;
-
-  }
+  display: flex;
+  align-items: baseline;
+  gap: 4px;
 }
 
 .company-document-view__creator-copy span,
-.company-document-view__published span,
-/* .company-document-view__creator time {
-  display: block;
+.company-document-view__published span {
   color: #a3aab2;
-  font-family: var(--font-source-sans-pro);
   font-family: var(--font-source-sans-pro);
   font-weight: 400;
   font-style: normal;
@@ -540,7 +537,6 @@ onMounted(() => {
 
 .company-document-view__creator-copy strong,
 .company-document-view__published strong {
-  display: block;
   color: #000000;
   font-family: var(--font-source-sans-pro);
   font-weight: 400;
@@ -551,10 +547,32 @@ onMounted(() => {
   letter-spacing: 0;
   vertical-align: middle;
 
-} */
+}
 
 .company-document-view__creator time {
-  text-align: right;
+  grid-column: 2;
+  display: flex;
+  gap: 6px;
+  color: #000000;
+  font-family: var(--font-source-sans-pro);
+  font-weight: 400;
+  font-style: normal;
+  font-size: 16px;
+  leading-trim: NONE;
+  line-height: 100%;
+  letter-spacing: 0;
+  vertical-align: middle;
+}
+
+.company-document-view__creator time span:first-child {
+  color: #a3aab2;
+}
+
+.company-document-view__published {
+  display: flex;
+  align-items: baseline;
+  gap: 4px;
+  margin-left: 38px;
 }
 
 .company-document-view__file {
@@ -620,6 +638,8 @@ onMounted(() => {
 
 .company-document-view__paragraphs {
   margin: 0 0 14px;
+  font-size: 16px;
+  line-height: 1.5;
 }
 
 .company-document-view__paragraphs :deep(p) {

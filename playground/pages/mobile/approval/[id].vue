@@ -69,7 +69,7 @@
             </div>
             <button v-if="timelineItems.length > timelinePreviewCount" type="button" class="mobile-approval__show-more"
               @click="showAllApprovers = !showAllApprovers">
-              {{ showAllApprovers ? 'Show less' : 'Show more' }}
+              {{ showAllApprovers ? t('mobile.approval.actions.showLess') : t('mobile.approval.actions.showMore') }}
             </button>
           </div>
         </div>
@@ -198,7 +198,9 @@ const workflowDetailLabel = computed(() => {
     || 'Workflow',
   )
 
-  return `View details in ${workflowName || 'Workflow'}`
+  return t('mobile.approval.workflowDetailLabel', {
+    workflowName: workflowName || 'Workflow',
+  })
 })
 const workflowFields = computed<WorkflowField[]>(() => {
   return processInfo.value?.workflowMainTableInfo?.requestRecords?.[0]?.workflowRequestTableFields ?? []
@@ -509,6 +511,10 @@ const actionMode = computed<'approveReject' | 'submit' | 'viewOnly'>(() => {
 })
 
 const confirmButtonLabel = computed(() => {
+  if (actionMode.value === 'approveReject') {
+    return t('mobile.approval.actions.confirm')
+  }
+
   return submitButtonName.value || t('mobile.approval.actions.submit')
 })
 
@@ -516,12 +522,14 @@ const isConfirmDisabled = computed(() => {
   return submittingAction.value || (actionMode.value === 'approveReject' && !selectedAction.value)
 })
 
-const backLabel = computed(() => isNotificationSource.value ? 'Notifications' : '')
+const backLabel = computed(() => isNotificationSource.value ? t('notification.title') : '')
 
 const headerTitle = computed(() => {
   if (isNotificationSource.value) {
     const reference = approvalSummary.value.referenceNumber || approvalId.value
-    return reference ? `${reference} - Notification` : 'Notification'
+    return reference
+      ? t('mobile.approval.notificationTitleWithReference', { reference })
+      : t('mobile.approval.notificationTitle')
   }
 
   if (todoView.value === 'requests') {

@@ -12,6 +12,37 @@ export interface ApplicationCatalogRequestBody {
   tag?: unknown
 }
 
+export interface ApplicationCatalogIconFile {
+  name: string
+  showid: string
+  content: string
+}
+
+export interface ApplicationCatalogApiMainTable extends Record<string, unknown> {
+  id: string
+  tag: string
+  type: string
+  iconx64: string | ApplicationCatalogIconFile[]
+  name_en: string
+  name_sc: string
+  name_tc: string
+  business: string
+  category: string
+  isactive: string
+  mobileurl: string
+  allowroles: string
+  application: string
+  homepage_url: string
+  order_number: string
+  description_en: string
+  description_sc: string
+  description_tc: string
+}
+
+export interface ApplicationCatalogApiEntry {
+  mainTable: ApplicationCatalogApiMainTable
+}
+
 export interface ApplicationCatalogMainTable extends Record<string, unknown> {
   id?: string
   name_en?: string
@@ -20,7 +51,7 @@ export interface ApplicationCatalogMainTable extends Record<string, unknown> {
   description_en?: string
   description_sc?: string
   description_tc?: string
-  iconx64?: string
+  iconx64?: string | ApplicationCatalogIconFile[]
   color?: string
   isactive?: string
   allowroles?: string
@@ -48,7 +79,7 @@ export interface ApplicationCatalogItem {
   mainTable: ApplicationCatalogMainTable
 }
 
-export type ApplicationCatalogEntry = Partial<Omit<ApplicationCatalogItem, 'mainTable'>> & {
+export interface ApplicationCatalogEntry extends Partial<Omit<ApplicationCatalogItem, 'mainTable'>> {
   color?: string
   business?: string
   tag?: string

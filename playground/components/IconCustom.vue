@@ -49,6 +49,8 @@ import PersonnelIcon from './icons/svg/PersonnelIcon.vue'
 import HomeIcon from './icons/svg/HomeIcon.vue'
 import FilterIcon from './icons/svg/FilterIcon.vue'
 import StarIcon from './icons/svg/StarIcon.vue'
+import ServiceBriefcaseIcon from './icons/svg/ServiceBriefcaseIcon.vue'
+import ServiceDotsIcon from './icons/svg/ServiceDotsIcon.vue'
 import ClockIcon from './icons/svg/ColckIcon.vue'
 import DownArrowIcon from './icons/svg/DownArrowIcon.vue'
 import RightArrowIcon from './icons/svg/RightArrowIcon.vue'
@@ -103,6 +105,8 @@ const iconMap: Record<string, Component> = {
   'todo': TodoIcon,
   'personnel': PersonnelIcon,
   'home': HomeIcon,
+  'service-briefcase': ServiceBriefcaseIcon,
+  'service-dots': ServiceDotsIcon,
   'filterIcon': FilterIcon,
   'starIcon': StarIcon,
   'clockIcon': ClockIcon,

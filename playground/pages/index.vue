@@ -107,11 +107,11 @@ onMounted(async () => {
 
 .login-container {
   background: white;
-  border-radius: 0.8rem;
-  -webkit-box-shadow: 0 4rem 20rem rgba(0, 0, 0, 0.15);
-  box-shadow: 0 4rem 20rem rgba(0, 0, 0, 0.15);
-  width: 44rem;
-  padding: 5rem 4rem;
+  border-radius: 8px;
+  -webkit-box-shadow: 0 40px 200px rgba(0, 0, 0, 0.15);
+  box-shadow: 0 40px 200px rgba(0, 0, 0, 0.15);
+  width: 440px;
+  padding: 50px 40px;
 }
 
 .login-header {
@@ -121,7 +121,7 @@ onMounted(async () => {
   margin-bottom: 30px;
 
   .login-logo {
-    width: 30rem;
+    width: 300px;
     margin: 0 auto 20px;
 
     img {
@@ -135,15 +135,15 @@ onMounted(async () => {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 2.4rem;
-  margin-top: 4rem;
-  padding: 6rem 2rem;
+  gap: 24px;
+  margin-top: 40px;
+  padding: 60px 20px;
 }
 
 .loading-spinner {
-  width: 5rem;
-  height: 5rem;
-  border: 0.3rem solid #f0f0f0;
+  width: 50px;
+  height: 50px;
+  border: 3px solid #f0f0f0;
   border-top-color: #a52a2a;
   border-radius: 50%;
   animation: spin 0.8s linear infinite;
@@ -156,7 +156,7 @@ onMounted(async () => {
 }
 
 .loading-text {
-  font-size: 1.4rem;
+  font-size: 14px;
   color: #555;
   text-align: center;
   font-weight: 400;

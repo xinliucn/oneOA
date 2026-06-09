@@ -4,6 +4,8 @@ export type ServiceItem = {
   badge: string
   icon: string
   type: string
+  regions: string[]
+  processGroups: string[]
   url?: string
   mobileUrl?: string
   desktopUrl?: string
@@ -26,6 +28,9 @@ export type TioTopicItem = {
   icon_x86: string
   desktop_url: string
   mobile_url: string
+  region: string[]
+  service_type: string
+  process_group: string[]
 }
 
 export type TioTopic = {
