@@ -201,6 +201,8 @@ import type {
   TioTopicItem,
 } from '~/types/tiopsServices'
 
+definePageMeta({ layout: 'mobile', middleware: 'auth' })
+
 type ServiceMode = 'topic' | 'process'
 
 type ChipOption = {
@@ -271,8 +273,8 @@ const serviceTopics: TioTopic[] = [
         name_sc: '政策文件',
         name_tc: '政策文件',
         icon_x86: 'policy',
-        desktop_url: 'https://oa.dchbipoc.cc/mobilemode/admin/preview.jsp?appHomepageId=116&dataid=1233',
-        mobile_url: 'https://oa.dchbipoc.cc/mobilemode/admin/preview.jsp?appHomepageId=116&dataid=1233',
+        desktop_url: 'https://oa-uat.dchbi.app/desktop/company-documents',
+        mobile_url: 'https://oa-uat.dchbi.app/desktop/company-documents',
         region: ['hk', 'cn', 'sea'],
         service_type: 'knowledge',
         process_group: ['Staff Onboarding'],

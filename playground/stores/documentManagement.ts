@@ -35,6 +35,33 @@ const createPagination = (): DocumentCategoryPagination => ({
   totalPages: 1,
 })
 
+const normalizeNumber = (value: unknown, fallback: number) => {
+  const numberValue = Number(value)
+  return Number.isFinite(numberValue) ? numberValue : fallback
+}
+
+const normalizeCategoryResponse = (
+  response: Partial<CompanyDocumentCategoriesResponse>,
+  fallbackPage: number,
+  fallbackPageSize: number,
+): CompanyDocumentCategoriesResponse => {
+  const data = Array.isArray(response.data) ? response.data : []
+  const page = normalizeNumber(response.page, fallbackPage)
+  const pageSize = normalizeNumber(response.pageSize, fallbackPageSize)
+  const total = normalizeNumber(response.total, data.length)
+  const totalPages = normalizeNumber(response.totalPages, Math.max(1, Math.ceil(total / pageSize)))
+
+  return {
+    data,
+    page,
+    pageSize,
+    total,
+    totalPages,
+    errMsg: response.errMsg,
+    status: response.status,
+  }
+}
+
 export const useDocumentManagementStore = defineStore('documentManagement', () => {
   const documentsList = ref<CompanyDocumentDetailResponseItem[]>([])
   const acknowledgedDocumentIds = ref<string[]>([])
@@ -94,15 +121,17 @@ export const useDocumentManagementStore = defineStore('documentManagement', () =
   const fetchCategories = async (options: FetchDocumentCategoriesOptions = {}) => {
     const status = options.status ?? ''
     const tabKey = getCategoryTabKey(status)
-    const response = await $fetch<CompanyDocumentCategoriesResponse>('/api/documentManagement/categories', {
+    const fallbackPage = options.page ?? 1
+    const fallbackPageSize = options.pageSize ?? 20
+    const response = normalizeCategoryResponse(await $fetch<Partial<CompanyDocumentCategoriesResponse>>('/api/documentManagement/categories', {
       method: 'POST',
       body: {
-        page: options.page ?? 1,
-        pageSize: options.pageSize ?? 20,
+        page: fallbackPage,
+        pageSize: fallbackPageSize,
         matchingKeyword: options.matchingKeyword ?? '',
         status,
       },
-    })
+    }), fallbackPage, fallbackPageSize)
 
     categoriesByTab[tabKey] = options.append
       ? [...categoriesByTab[tabKey], ...response.data]

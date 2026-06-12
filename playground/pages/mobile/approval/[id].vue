@@ -128,7 +128,6 @@
 <script setup lang="ts">
 import type { ApprovalAction } from '~/types/approval'
 import { formatRequestName } from '~/utils/todo'
-import MobileToast from '~/components/MobileToast.vue'
 
 const { form, getFormData } = useApplicationCatalog()
 const { formAttachments, getFormAttachments } = useToDoData()

@@ -244,6 +244,8 @@ import type { TodoItem, TodoView } from '~/composables/useToDoData'
 import type { LocaleMessages } from '~/types/i18n'
 import { formatRequestName } from '~/utils/todo'
 
+definePageMeta({ layout: 'mobile', middleware: 'auth' })
+
 const toDoFrom = useState<TodoItem | null>('mobile:todo-form', () => null)
 
 type TodoOption = {

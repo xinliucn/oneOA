@@ -80,6 +80,8 @@
 
 <script setup lang="ts">
 const { user, logout } = useAuth()
+
+definePageMeta({ layout: 'mobile', middleware: 'auth' })
 const {
   status: pushStatus,
   errorMessage: pushErrorMessage,

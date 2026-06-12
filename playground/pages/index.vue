@@ -29,8 +29,6 @@
 </template>
 
 <script setup lang="ts">
-import MobileFirstLaunchGuide from '~/components/MobileFirstLaunchGuide.vue'
-
 definePageMeta({
   layout: false,
 })

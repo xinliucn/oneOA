@@ -44,6 +44,8 @@ import powerBiLogo from '~/assets/images/applications/Test PowerBI Report.png'
 import serviceDeskLogo from '~/assets/images/applications/ITServiceDesk.png'
 import officeAutomateLogo from '~/assets/images/applications/Group 285.png'
 
+definePageMeta({ layout: 'mobile', middleware: 'auth' })
+
 type MobileApplication = {
   id: string
   name: string
