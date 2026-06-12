@@ -104,7 +104,7 @@ const displayName = computed(() => {
 })
 
 const emailText = computed(() => user.value?.email || '-')
-const usernameText = computed(() => user.value?.username || '-')
+const usernameText = computed(() => user.value?.name || '-')
 
 const profileInitials = computed(() => {
   const source = displayName.value.trim()
