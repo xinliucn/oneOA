@@ -1,3 +1,5 @@
+import { proxyRequest } from '~/server/utils/requestProxy'
+
 const getErrorRecord = (error: any) => {
   return error && typeof error === 'object'
     ? error as Record<string, any>
@@ -67,20 +69,17 @@ export default defineEventHandler(async (event) => {
   }
 
   try {
-    const notificationApiPrefix = '/api/r/internal'
-    const response = await $fetch.raw<Record<string, any>>(`${config.public.apiBase}${notificationApiPrefix}/ecology_oa/workflow_form_attachments`, {
+    const response = await proxyRequest<Record<string, any>>(event, '/api/r/internal/ecology_oa/workflow_form_attachments', {
       method: 'POST',
-      headers: getForwardHeaders(event),
       body: {
         requestid: body.requestid ?? body.requestId,
       },
+      errorMessage: 'Workflow form attachments API failed',
     })
-
-    forwardSetCookieHeaders(event, response)
 
     return {
       success: true,
-      data: response._data,
+      data: response,
     }
   }
   catch (error: any) {

@@ -43,48 +43,69 @@
     </section>
 
     <section
-      v-if="activeMode === 'topic' && showTopicFilters"
+      v-if="showTopicFilters"
       class="mobile-services__filters"
     >
-      <div class="filter-row">
+      <template v-if="activeMode === 'topic'">
+        <div class="filter-row">
+          <div class="filter-row__label">
+            {{ t('mobile.services.filters.region') }}
+          </div>
+          <div class="filter-row__chips">
+            <button
+              v-for="region in regions"
+              :key="region.value"
+              type="button"
+              :class="['filter-chip', { 'is-active': selectedRegion === region.value }]"
+              @click="selectedRegion = region.value"
+            >
+              {{ region.label }}
+            </button>
+          </div>
+        </div>
+        <div class="filter-row">
+          <div class="filter-row__label">
+            {{ t('mobile.services.filters.serviceType') }}
+          </div>
+          <div class="filter-row__chips">
+            <button
+              v-for="type in serviceTypes"
+              :key="type.value"
+              type="button"
+              :class="['filter-chip', { 'is-active': selectedServiceType === type.value }]"
+              @click="selectedServiceType = type.value"
+            >
+              {{ type.label }}
+            </button>
+          </div>
+        </div>
+        <div class="filter-row">
+          <div class="filter-row__label">
+            {{ t('mobile.services.filters.topic') }}
+          </div>
+          <div class="filter-row__chips">
+            <button
+              v-for="option in topicChips"
+              :key="option.id"
+              type="button"
+              :class="['filter-chip', { 'is-active': activeChipId === option.id }]"
+              @click="activeChipId = option.id"
+            >
+              {{ option.label }}
+            </button>
+          </div>
+        </div>
+      </template>
+      <div
+        v-else
+        class="filter-row"
+      >
         <div class="filter-row__label">
-          {{ t('mobile.services.filters.region') }}
+          {{ t('mobile.services.modes.process') }}
         </div>
         <div class="filter-row__chips">
           <button
-            v-for="region in regions"
-            :key="region.value"
-            type="button"
-            :class="['filter-chip', { 'is-active': selectedRegion === region.value }]"
-            @click="selectedRegion = region.value"
-          >
-            {{ region.label }}
-          </button>
-        </div>
-      </div>
-      <div class="filter-row">
-        <div class="filter-row__label">
-          {{ t('mobile.services.filters.serviceType') }}
-        </div>
-        <div class="filter-row__chips">
-          <button
-            v-for="type in serviceTypes"
-            :key="type.value"
-            type="button"
-            :class="['filter-chip', { 'is-active': selectedServiceType === type.value }]"
-            @click="selectedServiceType = type.value"
-          >
-            {{ type.label }}
-          </button>
-        </div>
-      </div>
-      <div class="filter-row">
-        <div class="filter-row__label">
-          {{ t('mobile.services.filters.topic') }}
-        </div>
-        <div class="filter-row__chips">
-          <button
-            v-for="option in topicChips"
+            v-for="option in activeChips"
             :key="option.id"
             type="button"
             :class="['filter-chip', { 'is-active': activeChipId === option.id }]"
@@ -96,98 +117,96 @@
       </div>
     </section>
 
-    <section
-      v-if="activeMode !== 'topic'"
-      class="mobile-services__chips"
-    >
-      <button
-        v-for="option in activeChips"
-        :key="option.id"
-        type="button"
-        :class="['filter-chip', { 'is-active': activeChipId === option.id }]"
-        @click="activeChipId = option.id"
-      >
-        {{ option.label }}
-      </button>
-    </section>
-
     <section class="mobile-services__content">
       <div
-        v-if="visibleGroups.length === 0"
+        v-if="servicesLoading"
         class="mobile-services__state"
       >
-        {{ t('mobile.applications.navigator.empty') }}
+        {{ t('mobile.services.states.loading') }}
+      </div>
+      <div
+        v-else-if="servicesError"
+        class="mobile-services__state mobile-services__state--error"
+      >
+        {{ t('mobile.services.states.error') }}
+      </div>
+      <div
+        v-else-if="visibleGroups.length === 0"
+        class="mobile-services__state"
+      >
+        {{ t('mobile.services.states.empty') }}
       </div>
 
-      <article
-        v-for="group in visibleGroups"
-        v-else
-        :key="group.id"
-        class="service-group"
-      >
-        <button
-          type="button"
-          class="service-group__header"
-          :aria-label="isGroupExpanded(group.id) ? t('mobile.services.actions.collapse') : t('mobile.services.actions.expand')"
-          :aria-expanded="isGroupExpanded(group.id)"
-          @click="toggleGroup(group.id)"
-        >
-          <span class="service-group__icon">
-            <IconCustom
-              :name="group.icon"
-              :size="20"
-            />
-          </span>
-          <span class="service-group__copy">
-            <strong>{{ group.title }}</strong>
-            <span>{{ group.description }}</span>
-          </span>
-          <span class="service-group__count">
-            {{ group.items.length }}
-          </span>
-          <IconCustom
-            name="chevron-right"
-            :size="16"
-            color="#b7bec8"
-            :rotate="isGroupExpanded(group.id) ? -90 : 90"
-          />
-        </button>
-
-        <div
-          v-if="isGroupExpanded(group.id)"
-          class="service-group__items"
+      <template v-else>
+        <article
+          v-for="group in visibleGroups"
+          :key="group.id"
+          class="service-group"
         >
           <button
-            v-for="item in group.items"
-            :key="item.id"
             type="button"
-            class="service-item"
-            @click="handleServiceClick(item)"
+            class="service-group__header"
+            :aria-label="isGroupExpanded(group.id) ? t('mobile.services.actions.collapse') : t('mobile.services.actions.expand')"
+            :aria-expanded="isGroupExpanded(group.id)"
+            @click="toggleGroup(group.id)"
           >
-            <span class="service-item__icon">
+            <span class="service-group__icon">
               <IconCustom
-                :name="item.icon"
-                :size="17"
+                :name="group.icon"
+                :size="20"
               />
             </span>
-            <span class="service-item__copy">
-              <strong>{{ item.name }}</strong>
-              <span class="service-item__badges">
-                <span>{{ item.badge }}</span>
-                <span>{{ formatRegions(item.regions) }}</span>
-                <span v-if="item.processGroups.length > 0">
-                  {{ formatProcessGroups(item.processGroups) }}
-                </span>
-              </span>
+            <span class="service-group__copy">
+              <strong>{{ group.title }}</strong>
+              <span>{{ group.description }}</span>
+            </span>
+            <span class="service-group__count">
+              {{ group.items.length }}
             </span>
             <IconCustom
               name="chevron-right"
-              :size="15"
-              color="#c4cbd5"
+              :size="16"
+              color="#b7bec8"
+              :rotate="isGroupExpanded(group.id) ? -90 : 90"
             />
           </button>
-        </div>
-      </article>
+
+          <div
+            v-if="isGroupExpanded(group.id)"
+            class="service-group__items"
+          >
+            <button
+              v-for="item in group.items"
+              :key="item.id"
+              type="button"
+              class="service-item"
+              @click="handleServiceClick(item)"
+            >
+              <span class="service-item__icon">
+                <IconCustom
+                  :name="item.icon"
+                  :size="17"
+                />
+              </span>
+              <span class="service-item__copy">
+                <strong>{{ item.name }}</strong>
+                <span class="service-item__badges">
+                  <span>{{ item.badge }}</span>
+                  <span>{{ formatRegions(item.regions) }}</span>
+                  <span v-if="item.processGroups.length > 0">
+                    {{ formatProcessGroups(item.processGroups) }}
+                  </span>
+                </span>
+              </span>
+              <IconCustom
+                name="chevron-right"
+                :size="15"
+                color="#c4cbd5"
+              />
+            </button>
+          </div>
+        </article>
+      </template>
     </section>
   </div>
 </template>
@@ -220,235 +239,13 @@ const selectedServiceType = ref('all')
 const showTopicFilters = ref(false)
 const expandedGroupIds = ref<Set<string>>(new Set())
 
-const serviceTopics: TioTopic[] = [
-  {
-    category_en: 'IT and System Support',
-    category_sc: 'IT与系统支持',
-    category_tc: 'IT與系統支持',
-    icon_x86: 'server',
-    items: [
-      {
-        name_en: 'Report an Issue',
-        name_sc: '报告问题',
-        name_tc: '報告問題',
-        icon_x86: 'bug',
-        desktop_url: 'https://dch.service-now.com/sp?id=sc_cat_item&sys_id=3f1dd0320a0a0b99000a53f7604a2ef9&sysparm_category=af9c65c9db7951908e9ddf0bd3961975',
-        mobile_url: 'https://dch.service-now.com/sp?id=sc_cat_item&sys_id=3f1dd0320a0a0b99000a53f7604a2ef9&sysparm_category=af9c65c9db7951908e9ddf0bd3961975',
-        region: ['hk'],
-        service_type: 'workflow',
-        process_group: ['Staff Onboarding', 'Staff Offboarding'],
-      },
-      {
-        name_en: 'Open a Service Request',
-        name_sc: '一般 IT 服务和应用程式请求',
-        name_tc: '一般 IT 服務和應用程式請求',
-        icon_x86: 'service',
-        desktop_url: 'https://dch.service-now.com/sp?id=sc_cat_item&sys_id=ea6aef15db3d91908e9ddf0bd3961922&sysparm_category=22c62651db7991908e9ddf0bd39619d2',
-        mobile_url: 'https://dch.service-now.com/sp?id=sc_cat_item&sys_id=ea6aef15db3d91908e9ddf0bd3961922&sysparm_category=22c62651db7991908e9ddf0bd39619d2',
-        region: ['hk'],
-        service_type: 'workflow',
-        process_group: ['Staff Onboarding', 'Staff Offboarding'],
-      },
-    ],
-  },
-  {
-    category_en: 'Company and Administration',
-    category_sc: '公司与行政',
-    category_tc: '公司與行政',
-    icon_x86: 'building',
-    items: [
-      {
-        name_en: 'Intranet',
-        name_sc: '企业内网',
-        name_tc: '企業內聯網',
-        icon_x86: 'portal',
-        desktop_url: 'http://intranet.dch.com.hk/',
-        mobile_url: 'http://intranet.dch.com.hk/',
-        region: ['hk'],
-        service_type: 'portal',
-        process_group: ['Staff Onboarding'],
-      },
-      {
-        name_en: 'Policy Documents',
-        name_sc: '政策文件',
-        name_tc: '政策文件',
-        icon_x86: 'policy',
-        desktop_url: 'https://oa-uat.dchbi.app/desktop/company-documents',
-        mobile_url: 'https://oa-uat.dchbi.app/desktop/company-documents',
-        region: ['hk', 'cn', 'sea'],
-        service_type: 'knowledge',
-        process_group: ['Staff Onboarding'],
-      },
-    ],
-  },
-  {
-    category_en: 'Learning and Policy',
-    category_sc: '学习与政策',
-    category_tc: '學習與政策',
-    icon_x86: 'book',
-    items: [
-      {
-        name_en: 'Learning Management System',
-        name_sc: '学习管理系统',
-        name_tc: '學習管理系統',
-        icon_x86: 'learning',
-        desktop_url: '',
-        mobile_url: '',
-        region: ['hk'],
-        service_type: 'application',
-        process_group: ['Staff Onboarding'],
-      },
-    ],
-  },
-  {
-    category_en: 'Contracts and Compliance',
-    category_sc: '合同与合规',
-    category_tc: '合同與合規',
-    icon_x86: 'shield',
-    items: [
-      {
-        name_en: 'Contracts Approval Submission',
-        name_sc: '合约审批提交',
-        name_tc: '合約審批提交',
-        icon_x86: 'contract',
-        desktop_url: 'https://platform-uat.dchbi.app/spa/workflow/static4form/index.html#/main/workflow/req?iscreate=1&workflowid=213',
-        mobile_url: 'https://platform-uat.dchbi.app/spa/workflow/static4form/index.html#/main/workflow/req?iscreate=1&workflowid=213',
-        region: ['hk'],
-        service_type: 'workflow',
-        process_group: ['Contract Clearance'],
-      },
-      {
-        name_en: 'Contract List',
-        name_sc: '合同清单',
-        name_tc: '合約清單',
-        icon_x86: 'list',
-        desktop_url: 'https://platform-uat.dchbi.app/spa/cube/index.html#/main/cube/search?customid=542',
-        mobile_url: 'https://platform-uat.dchbi.app/wui/cas-entrance.jsp?path=https://platform-uat.dchbi.app/mobilemode/mobile/view.html?appHomepageId=1',
-        region: ['hk'],
-        service_type: 'record',
-        process_group: ['Contract Clearance'],
-      },
-      {
-        name_en: 'Policies and Guidelines',
-        name_sc: '政策及指引',
-        name_tc: '政策及指引',
-        icon_x86: 'guideline',
-        desktop_url: '',
-        mobile_url: '',
-        region: ['hk'],
-        service_type: 'knowledge',
-        process_group: ['Contract Clearance'],
-      },
-      {
-        name_en: 'Contract Templates &Playbooks',
-        name_sc: '合约范本及指引',
-        name_tc: '合約範本及指引',
-        icon_x86: 'reference',
-        desktop_url: '',
-        mobile_url: '',
-        region: ['hk'],
-        service_type: 'knowledge',
-        process_group: ['Contract Clearance'],
-      },
-    ],
-  },
-  {
-    category_en: 'Employee and HR',
-    category_sc: '员工与人事',
-    category_tc: '員工與人事',
-    icon_x86: 'people',
-    items: [
-      {
-        name_en: 'Leave Management',
-        name_sc: '请假管理',
-        name_tc: '請假管理',
-        icon_x86: 'calendar',
-        desktop_url: '',
-        mobile_url: '',
-        region: ['hk', 'sea'],
-        service_type: 'workflow',
-        process_group: [],
-      },
-      {
-        name_en: 'Payroll Management',
-        name_sc: '薪酬管理',
-        name_tc: '薪酬管理',
-        icon_x86: 'money',
-        desktop_url: '',
-        mobile_url: '',
-        region: ['hk', 'sea'],
-        service_type: 'workflow',
-        process_group: [],
-      },
-      {
-        name_en: 'Appraisal Management',
-        name_sc: '绩效考核管理',
-        name_tc: '績效評核管理',
-        icon_x86: 'chart',
-        desktop_url: '',
-        mobile_url: '',
-        region: ['hk', 'sea'],
-        service_type: 'workflow',
-        process_group: ['Staff Offboarding'],
-      },
-    ],
-  },
-  {
-    category_en: 'Finance and Reimbursement',
-    category_sc: '财务与报销',
-    category_tc: '財務與報銷',
-    icon_x86: 'wallet',
-    items: [
-      {
-        name_en: 'Travel Request',
-        name_sc: '差旅申请',
-        name_tc: '差旅申請',
-        icon_x86: 'travel',
-        desktop_url: '',
-        mobile_url: '',
-        region: ['hk', 'sea'],
-        service_type: 'workflow',
-        process_group: ['Business Trip Reimbursement'],
-      },
-      {
-        name_en: 'Claim Request',
-        name_sc: '报销申请',
-        name_tc: '報銷申請',
-        icon_x86: 'receipt',
-        desktop_url: '',
-        mobile_url: '',
-        region: ['hk', 'sea'],
-        service_type: 'workflow',
-        process_group: ['Business Trip Reimbursement'],
-      },
-      {
-        name_en: 'Entertainment Request',
-        name_sc: '客户招待申请',
-        name_tc: '客戶招待申請',
-        icon_x86: 'coffee',
-        desktop_url: '',
-        mobile_url: '',
-        region: ['hk', 'sea'],
-        service_type: 'workflow',
-        process_group: ['Business Trip Reimbursement'],
-      },
-    ],
-  },
-  {
-    category_en: 'Projects and Assets',
-    category_sc: '项目与资产',
-    category_tc: '項目與資產',
-    icon_x86: 'rocket',
-    items: [],
-  },
-  {
-    category_en: 'Reports and Data',
-    category_sc: '报表与数据',
-    category_tc: '報表與數據',
-    icon_x86: 'report',
-    items: [],
-  },
-]
+const {
+  data: serviceTopicsResponse,
+  pending: servicesLoading,
+  error: servicesError,
+} = await useFetch<unknown>('/api/services/list', {
+  default: () => [],
+})
 
 const modeOptions = computed(() => [
   { value: 'topic' as const, label: t('mobile.services.modes.topic') },
@@ -493,6 +290,82 @@ const processGroupConfig: Record<string, { id: string, labelKey: string, icon: s
     icon: 'legal-compliance',
   },
 }
+
+const isRecord = (value: unknown): value is Record<string, unknown> => {
+  return Boolean(value) && typeof value === 'object' && !Array.isArray(value)
+}
+
+const getString = (value: unknown) => typeof value === 'string' ? value : ''
+
+const getStringArray = (value: unknown) => {
+  if (!Array.isArray(value)) {
+    return []
+  }
+
+  return value
+    .map(item => getString(item).trim())
+    .filter(Boolean)
+}
+
+const normalizeTopicItem = (value: unknown): TioTopicItem | null => {
+  if (!isRecord(value)) {
+    return null
+  }
+
+  const nameEn = getString(value.name_en)
+  const nameSc = getString(value.name_sc)
+  const nameTc = getString(value.name_tc)
+
+  if (!nameEn && !nameSc && !nameTc) {
+    return null
+  }
+
+  return {
+    name_en: nameEn,
+    name_sc: nameSc,
+    name_tc: nameTc,
+    icon_x86: getString(value.icon_x86) || 'service-briefcase',
+    desktop_url: getString(value.desktop_url),
+    mobile_url: getString(value.mobile_url),
+    region: getStringArray(value.region),
+    service_type: getString(value.service_type) || 'application',
+    process_group: getStringArray(value.process_group),
+  }
+}
+
+const normalizeTopic = (value: unknown): TioTopic | null => {
+  if (!isRecord(value)) {
+    return null
+  }
+
+  const categoryEn = getString(value.category_en)
+  const categorySc = getString(value.category_sc)
+  const categoryTc = getString(value.category_tc)
+
+  if (!categoryEn && !categorySc && !categoryTc) {
+    return null
+  }
+
+  return {
+    category_en: categoryEn,
+    category_sc: categorySc,
+    category_tc: categoryTc,
+    icon_x86: getString(value.icon_x86) || 'service-briefcase',
+    items: Array.isArray(value.items)
+      ? value.items.map(item => normalizeTopicItem(item)).filter((item): item is TioTopicItem => Boolean(item))
+      : [],
+  }
+}
+
+const serviceTopics = computed<TioTopic[]>(() => {
+  if (!Array.isArray(serviceTopicsResponse.value)) {
+    return []
+  }
+
+  return serviceTopicsResponse.value
+    .map(topic => normalizeTopic(topic))
+    .filter((topic): topic is TioTopic => Boolean(topic))
+})
 
 const normalizeString = (value: string) => value.trim()
 
@@ -577,12 +450,12 @@ const createTopicGroup = (topic: TioTopic): ServiceGroup => ({
   items: topic.items.map(item => createServiceItem(item, topic.category_en)),
 })
 
-const topicGroups = computed(() => serviceTopics.map(topic => createTopicGroup(topic)))
+const topicGroups = computed(() => serviceTopics.value.map(topic => createTopicGroup(topic)))
 
 const processGroups = computed<ServiceGroup[]>(() => {
   const groups = new Map<string, TioTopicItem[]>()
 
-  serviceTopics.forEach((topic) => {
+  serviceTopics.value.forEach((topic) => {
     topic.items.forEach((item) => {
       if (item.process_group.length === 0) {
         return
@@ -845,8 +718,7 @@ watch(
   line-height: 1;
 }
 
-.filter-row__chips,
-.mobile-services__chips {
+.filter-row__chips {
   display: flex;
   gap: 7px;
   overflow-x: auto;
@@ -854,16 +726,8 @@ watch(
   scrollbar-width: none;
 }
 
-.filter-row__chips::-webkit-scrollbar,
-.mobile-services__chips::-webkit-scrollbar {
+.filter-row__chips::-webkit-scrollbar {
   display: none;
-}
-
-.mobile-services__chips {
-  flex: 0 0 auto;
-  padding: 8px 16px 9px;
-  background: #ffffff;
-  border-bottom: 1px solid #eceff3;
 }
 
 .filter-chip {

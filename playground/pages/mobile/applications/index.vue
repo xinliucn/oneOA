@@ -37,61 +37,45 @@
 </template>
 
 <script setup lang="ts">
-import bipoLogo from '~/assets/images/applications/eLeave.png'
-import yonyouLogo from '~/assets/images/applications/yonyou.png'
-import italantLogo from '~/assets/images/applications/italcant.png'
-import powerBiLogo from '~/assets/images/applications/Test PowerBI Report.png'
-import serviceDeskLogo from '~/assets/images/applications/ITServiceDesk.png'
-import officeAutomateLogo from '~/assets/images/applications/Group 285.png'
+import type { MobileApplication } from '~/types/applicationCatalog'
 
 definePageMeta({ layout: 'mobile', middleware: 'auth' })
-
-type MobileApplication = {
-  id: string
-  name: string
-  logo: string
-  url?: string
-}
 
 const { t } = useAppI18n()
 const { openGuardedUrl } = useNetworkGuard()
 
-const apps: MobileApplication[] = [
-  {
-    id: 'eleave',
-    name: 'eLeave',
-    logo: bipoLogo,
-    url: 'https://hrms.dch.com.hk/hrms/Login/LoginWithSAML?redirect_uri=https://hrms.dch.com.hk/hrms/',
-  },
-  {
-    id: 'yonyou',
-    name: 'YonYou',
-    logo: yonyouLogo,
-  },
-  {
-    id: 'elearning',
-    name: 'eLearning',
-    logo: italantLogo,
-  },
-  {
-    id: 'powerbi-report',
-    name: 'PowerBI Report',
-    logo: powerBiLogo,
-    url: 'https://aka.ms/AA10pdw6',
-  },
-  {
-    id: 'it-service-desk',
-    name: 'IT Service Desk',
-    logo: serviceDeskLogo,
-    url: 'https://dch.service-now.com/sp',
-  },
-  {
-    id: 'office-automate',
-    name: 'Office Automate',
-    logo: officeAutomateLogo,
-    url: 'https://oa.dchbipoc.cc/spa/coms/static4mobile/index.html#/menu-preview?id=appDefaultPage&checkAccess=1',
-  },
-]
+const {
+  data: appsResponse,
+} = await useFetch<MobileApplication[]>('/api/applications/list', {
+  default: () => [],
+})
+
+const applicationLogoModules = import.meta.glob('~/assets/images/applications/*', {
+  eager: true,
+  import: 'default',
+}) as Record<string, string>
+
+const applicationLogoMap = Object.fromEntries(
+  Object.entries(applicationLogoModules).map(([path, resolvedUrl]) => [
+    path.split('/').pop() || '',
+    resolvedUrl,
+  ]),
+)
+
+const resolveApplicationLogo = (logo: string) => {
+  if (/^(?:https?:)?\/\//.test(logo) || logo.startsWith('/')) {
+    return logo
+  }
+
+  return applicationLogoMap[logo] || logo
+}
+
+const apps = computed<MobileApplication[]>(() => {
+  return appsResponse.value.map(app => ({
+    ...app,
+    logo: resolveApplicationLogo(app.logo),
+  }))
+})
 
 const openSearch = () => {
   return navigateTo('/mobile/search')

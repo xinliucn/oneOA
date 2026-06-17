@@ -187,6 +187,7 @@ type ShortcutItem = Pick<RecentItem, 'id' | 'label' | 'subtitle' | 'icon' | 'url
 const { t } = useAppI18n()
 const { requestApplicationCatalogData } = useApplicationCatalog()
 const { items: recentItems, hydrate: hydrateRecentItems, addRecentItem } = useRecentItems('desktop')
+const { openGuardedUrl } = useNetworkGuard()
 const {
   bootstrapFavourite,
   saveFavourite,
@@ -470,7 +471,7 @@ const saveFavourites = async () => {
   }
 }
 
-const handleClick = (app: ShortcutItem) => {
+const handleClick = async (app: ShortcutItem) => {
   addRecentItem({
     id: app.id,
     type: 'application',
@@ -486,7 +487,7 @@ const handleClick = (app: ShortcutItem) => {
   }
 
   if (app.url) {
-    window.open(app.url, '_blank')
+    await openGuardedUrl(app.url, '_blank')
   }
 
   return undefined

@@ -134,6 +134,8 @@ const { formAttachments, getFormAttachments } = useToDoData()
 const toDoFrom: any = useState('mobile:todo-form', () => null)
 const { showToast } = useMobileToast()
 const { t } = useAppI18n()
+const runtimeConfig = useRuntimeConfig()
+const { openGuardedUrl } = useNetworkGuard()
 
 definePageMeta({
   layout: false,
@@ -571,7 +573,10 @@ const getWorkflowDetailUrl = () => {
     return ''
   }
 
-  return `https://platform-uat.dchbi.app/spa/workflow/static4mobileform/index.html#/req?requestid=${encodeURIComponent(currentRequestId)}`
+  const apiBase = String(runtimeConfig.public.apiBase || '').replace(/\/+$/, '')
+  const workflowBaseUrl = apiBase || 'https://platform-uat.dchbi.app'
+
+  return `${workflowBaseUrl}/spa/workflow/static4mobileform/index.html#/req?requestid=${encodeURIComponent(currentRequestId)}`
 }
 
 const openWorkflowDetail = async () => {
@@ -581,9 +586,7 @@ const openWorkflowDetail = async () => {
     return
   }
 
-  await navigateTo(detailUrl, {
-    external: true,
-  })
+  await openGuardedUrl(detailUrl, '_self')
 }
 
 const selectAction = (action: ApprovalAction) => {

@@ -1,3 +1,5 @@
+import { proxyRequest } from '~/server/utils/requestProxy'
+
 export default defineEventHandler(async (event) => {
   const config = useRuntimeConfig(event)
   const body: Record<string, any> = await readBody<Record<string, any>>(event).catch(() => ({}))
@@ -15,18 +17,13 @@ export default defineEventHandler(async (event) => {
   }
 
   try {
-    const notificationApiPrefix = '/api/r/internal'
-    const response = await $fetch.raw<Record<string, any>>(`${config.public.apiBase}${notificationApiPrefix}/ecology_oa/workflow_action/rejectRequest`, {
+    return await proxyRequest<Record<string, any>>(event, '/api/r/internal/ecology_oa/workflow_action/rejectRequest', {
       method: 'POST',
-      headers: getForwardHeaders(event),
       body: {
         requestId,
       },
+      errorMessage: 'Reject request API failed',
     })
-
-    forwardSetCookieHeaders(event, response)
-
-    return response._data
   }
   catch (error: any) {
     const errorRecord = error && typeof error === 'object' ? error as Record<string, any> : {}

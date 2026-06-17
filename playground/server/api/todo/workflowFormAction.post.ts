@@ -1,3 +1,5 @@
+import { proxyRequest } from '~/server/utils/requestProxy'
+
 export default defineEventHandler(async (event) => {
   const config = useRuntimeConfig(event)
   const body: Record<string, any> = await readBody<Record<string, any>>(event).catch(() => ({}))
@@ -28,22 +30,28 @@ export default defineEventHandler(async (event) => {
       ...(body.type ? { type: body.type } : {}),
       ...(body.tag ? { tag: body.tag } : {}),
     }
-    const notificationApiPrefix = '/api/r/internal'
-    const response = await $fetch.raw<Record<string, any>>(`${config.public.apiBase}${notificationApiPrefix}/ecology_oa/workflow_form_action`, {
+    const response = await proxyRequest<Record<string, any>>(event, '/api/r/internal/ecology_oa/workflow_form_action', {
       method: 'POST',
-      headers: getForwardHeaders(event),
       body: requestBody,
+      errorMessage: 'Workflow form action API failed',
     })
-
-    forwardSetCookieHeaders(event, response)
 
     return {
       success: true,
-      data: response._data,
+      data: response,
     }
   }
-  catch (error) {
-    console.log(error)
-    return []
+  catch (error: any) {
+    console.error('Workflow form action API error:', {
+      statusCode: error?.statusCode || error?.status,
+      statusMessage: error?.statusMessage || error?.message,
+      data: error?.data,
+    })
+
+    throw createError({
+      statusCode: error?.statusCode || error?.status || 500,
+      statusMessage: error?.statusMessage || error?.message || 'Workflow form action API failed',
+      data: error?.data,
+    })
   }
 })

@@ -110,6 +110,13 @@ export interface ApplicationBusiness {
   items: ApplicationCatalogItem[]
 }
 
+export interface MobileApplication {
+  id: string
+  name: string
+  logo: string
+  url?: string
+}
+
 export interface DesktopApplication {
   id: string
   name: string

@@ -1,3 +1,5 @@
+import { proxyRequest } from '~/server/utils/requestProxy'
+
 export default defineEventHandler(async (event) => {
   const config = useRuntimeConfig()
   if (config.mockEnabled) {
@@ -147,25 +149,32 @@ export default defineEventHandler(async (event) => {
   }
   try {
     const body: Record<string, any> = await readBody<Record<string, any>>(event).catch(() => ({}))
-    const notificationApiPrefix = '/api/r/internal'
-    const response = await $fetch.raw<Record<string, any>>(`${config.public.apiBase}${notificationApiPrefix}/ecology_oa/workflow_my_request`, {
+    const response = await proxyRequest<Record<string, any>>(event, '/api/r/internal/ecology_oa/workflow_my_request', {
       method: 'POST',
-      headers: getForwardHeaders(event),
       body: {
         pageNo: body.pageNo ?? body.pageNum ?? 1,
         pageSize: 10,
         otherParams: { countOnly: false },
       },
+      errorMessage: 'Workflow request API failed',
     })
-
-    forwardSetCookieHeaders(event, response)
 
     return {
       success: true,
-      data: response._data,
+      data: response,
     }
   }
   catch (error: any) {
-    console.error('Mark notification as read API error:', error)
+    console.error('Workflow request API error:', {
+      statusCode: error?.statusCode || error?.status,
+      statusMessage: error?.statusMessage || error?.message,
+      data: error?.data,
+    })
+
+    throw createError({
+      statusCode: error?.statusCode || error?.status || 500,
+      statusMessage: error?.statusMessage || error?.message || 'Workflow request API failed',
+      data: error?.data,
+    })
   }
 })

@@ -99,6 +99,11 @@ export const appMessages = {
           topic: '主题',
           all: '全部',
         },
+        states: {
+          loading: '服务加载中...',
+          error: '服务加载失败，请稍后重试。',
+          empty: '未找到相关服务。',
+        },
         serviceTypes: {
           workflow: '流程',
           portal: '入口',
@@ -466,6 +471,11 @@ export const appMessages = {
           topic: '主題',
           all: '全部',
         },
+        states: {
+          loading: '服務載入中...',
+          error: '服務載入失敗，請稍後再試。',
+          empty: '未找到相關服務。',
+        },
         serviceTypes: {
           workflow: '流程',
           portal: '入口',
@@ -832,6 +842,11 @@ export const appMessages = {
           serviceType: 'Service Type',
           topic: 'Topic',
           all: 'All',
+        },
+        states: {
+          loading: 'Loading services...',
+          error: 'Failed to load services. Please try again later.',
+          empty: 'No services found.',
         },
         serviceTypes: {
           workflow: 'Workflow',

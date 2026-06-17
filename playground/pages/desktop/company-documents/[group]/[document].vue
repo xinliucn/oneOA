@@ -249,20 +249,7 @@ const documentDetail = computed<CompanyDocumentDetail | null>(() => {
   const { code, version } = getDocumentCodeAndVersion(groupDetail.value.Number_Version)
   const title = groupDetail.value.RequestName || documentTitle.value || code
   const createdDateTime = splitDateTime(groupDetail.value.createddate || groupDetail.value.RequestPublishDate)
-  console.log('Document Detail Computed:', {
-    title,
-    code,
-    version,
-    fileName: previewFileList.value[0]?.filename || title,
-    serverRelativeUrl: '',
-    createdBy: groupDetail.value.createdby || '-',
-    createdDate: createdDateTime.date || '-',
-    createdTime: createdDateTime.time || '',
-    publishedDateTime: groupDetail.value.RequestPublishDate || groupDetail.value.createddate || '-',
-    contentHtml: groupDetail.value.content_display || '',
-    footerHtml: groupDetail.value.footer_display || '',
-    status: getStatus(currentDocument.value),
-  })
+
   return {
     title,
     code,
