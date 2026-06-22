@@ -1,6 +1,6 @@
 // server/api/auth/callback.ts
 import type { H3Event } from 'h3'
-import { forwardSetCookieHeaders, getForwardHeaders, getWindmillApiBase } from '../../utils/windmillProxy'
+import { forwardSetCookieHeaders, getForwardHeaders, getWindmillApiBase } from '../../utils/requestProxy'
 
 const safeRedirectFallback = '/'
 

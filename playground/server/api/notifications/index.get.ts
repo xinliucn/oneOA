@@ -1,6 +1,14 @@
 import type { H3Event } from 'h3'
 import { normalizeNotificationCheck, normalizeNotificationList } from '../../utils/notification'
 
+type RuntimeConfigWithNotifications = {
+  fixedProxyCookie?: string
+  mockEnabled?: boolean
+  public: {
+    apiBase?: string
+  }
+}
+
 const getErrorStatusCode = (error: any) => {
   if (error && typeof error === 'object' && 'statusCode' in error && typeof error.statusCode === 'number') {
     return error.statusCode
@@ -31,8 +39,9 @@ const forwardSetCookieHeaders = (event: H3Event, response: { headers: Headers })
 }
 
 export default defineEventHandler(async (event) => {
-  const config = useRuntimeConfig()
-  const raw = config.mockEnabled
+  const config = useRuntimeConfig() as unknown as RuntimeConfigWithNotifications
+  const fixedProxyCookie = String(config.fixedProxyCookie || '').trim()
+  const raw = config.mockEnabled && !fixedProxyCookie
   const query = getQuery(event)
   const mode = typeof query.mode === 'string' ? query.mode : ''
   const page = 1
@@ -310,7 +319,7 @@ export default defineEventHandler(async (event) => {
   }
 
   try {
-    const cookieHeader = getRequestHeader(event, 'cookie')
+    const cookieHeader = fixedProxyCookie || getRequestHeader(event, 'cookie')
     const userAgent = getRequestHeader(event, 'user-agent')
     const referer = getRequestHeader(event, 'referer')
     const forwardedIp = getHeader(event, 'x-forwarded-for') || getHeader(event, 'x-real-ip') || ''
@@ -331,7 +340,6 @@ export default defineEventHandler(async (event) => {
         'X-Forwarded-For': forwardedIp,
       },
     })
-
     forwardSetCookieHeaders(event, response)
 
     if (mode === 'check') {

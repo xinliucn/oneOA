@@ -280,7 +280,7 @@ export const useApplicationCatalog = () => {
     }
 
     try {
-      const response = await $fetch<any>('/api/todo/form', {
+      const response = await $fetch<any>('/api/todo/workflowForm', {
         method: 'POST',
         body: {
           requestid,

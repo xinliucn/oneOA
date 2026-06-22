@@ -1,4 +1,5 @@
-import { getNotificationApiPrefix, proxyWindmill } from '../../utils/windmillProxy'
+import { getNotificationApiPrefix } from '../../utils/requestProxy'
+import { proxyWindmill } from '../../utils/windmillProxy'
 
 export default defineEventHandler(async (event) => {
   const config = useRuntimeConfig()

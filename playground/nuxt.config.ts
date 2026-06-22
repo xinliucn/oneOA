@@ -7,6 +7,7 @@ export default defineNuxtConfig({
   css: ['~/assets/css/desktop-critical.css'],
   runtimeConfig: {
     mockEnabled: process.env.NUXT_MOCK_ENABLED === 'true',
+    fixedProxyCookie: process.env.NUXT_FIXED_PROXY_COOKIE || '',
     trustedProxyIps: process.env.NUXT_TRUSTED_PROXY_IPS || '',
     vapidPrivateKey: process.env.NUXT_VAPID_PRIVATE_KEY || '',
     vapidSubject: process.env.NUXT_VAPID_SUBJECT || '',

@@ -1,4 +1,5 @@
-import { getNotificationApiPrefix, proxyWindmill } from '../../utils/windmillProxy'
+import { getNotificationApiPrefix } from '../../utils/requestProxy'
+import { proxyWindmill } from '../../utils/windmillProxy'
 import { normalizeNotification } from '../../utils/notification'
 
 export default defineEventHandler(async (event) => {

@@ -14,7 +14,7 @@
         />
       </button>
       <h1 class="mobile-attachment-preview__title">
-        {{ attachment?.name || 'Attachment' }}
+        {{ attachmentName }}
       </h1>
       <div class="mobile-attachment-preview__spacer" />
     </header>
@@ -24,14 +24,14 @@
         v-if="loading || previewLoading"
         class="mobile-attachment-preview__state"
       >
-        Loading...
+        {{ t('common.loading') }}
       </div>
 
       <div
         v-else-if="!attachment"
         class="mobile-attachment-preview__state"
       >
-        Attachment not found
+        {{ t('mobile.todo.detail.attachmentNotFound') }}
       </div>
 
       <div
@@ -41,7 +41,7 @@
         <img
           v-if="blobUrl && isImagePreview && !previewFailed"
           :src="blobUrl"
-          :alt="attachment.name"
+          :alt="attachmentName"
           class="mobile-attachment-preview__page mobile-attachment-preview__image"
           @error="previewFailed = true"
         >
@@ -50,7 +50,7 @@
           v-else-if="blobUrl && isPdfPreview"
           :src="blobUrl"
           class="mobile-attachment-preview__page mobile-attachment-preview__frame"
-          title="Attachment preview"
+          :title="t('mobile.todo.detail.attachmentPreview')"
         />
 
         <article
@@ -76,19 +76,18 @@
               color="#3b82f6"
             />
           </span>
-          <span class="mobile-attachment-preview__fallback-name">{{ attachment.name }}</span>
+          <span class="mobile-attachment-preview__fallback-name">{{ attachmentName }}</span>
           <span class="mobile-attachment-preview__fallback-text">
-            {{ previewError || 'Preview is not available for this file type' }}
+            {{ previewError || t('mobile.todo.detail.previewUnavailable') }}
           </span>
-          <a
+          <button
             v-if="previewUrl"
+            type="button"
             class="mobile-attachment-preview__fallback-link"
-            :href="previewUrl"
-            target="_blank"
-            rel="noopener noreferrer"
+            @click="openAttachmentUrl"
           >
-            Open / Download
-          </a>
+            {{ t('mobile.todo.detail.openAttachment') }}
+          </button>
         </div>
       </div>
     </main>
@@ -103,12 +102,15 @@ definePageMeta({
 
 const route = useRoute()
 const config = useRuntimeConfig()
-const { formAttachments, getFormAttachments } = useToDoData()
+const todosStore = useTodosStore()
+const { t } = useAppI18n()
+const { openGuardedUrl } = useNetworkGuard()
 
-const approvalId = computed(() => String(route.params.id || ''))
-const attachmentId = computed(() => String(route.params.attachmentId || ''))
-const requestId = computed(() => String(route.query.requestId || approvalId.value))
-const loading = ref(false)
+const requestId = computed(() => String(route.params.id || '').trim())
+const attachmentId = computed(() => String(route.params.attachmentId || '').trim())
+const loading = computed(() => {
+  return requestId.value ? todosStore.workflowFormAttachmentsLoadingById[requestId.value] : false
+})
 const previewLoading = ref(false)
 const previewFailed = ref(false)
 const previewError = ref('')
@@ -118,12 +120,18 @@ const docxParagraphs = ref<string[]>([])
 const docxPreviewToken = ref(0)
 const oaFileBase = 'https://platform-uat.dchbi.app'
 
+const attachments = computed(() => {
+  return requestId.value ? todosStore.workflowFormAttachments[requestId.value] : undefined
+})
 const attachment = computed(() => {
-  return formAttachments.value.find(item => String(item.id) === attachmentId.value) || null
+  return attachments.value?.find(item => String(item.id) === attachmentId.value) || null
+})
+const attachmentName = computed(() => {
+  return attachment.value?.name || attachment.value?.filename || attachment.value?.fileName || t('mobile.todo.detail.attachment')
 })
 
 const previewUrl = computed(() => {
-  const url = attachment.value?.url?.replace(/&amp;/g, '&')
+  const url = String(attachment.value?.url || attachment.value?.downloadUrl || attachment.value?.fileUrl || '').replace(/&amp;/g, '&')
 
   if (!url) {
     return ''
@@ -141,24 +149,22 @@ const previewUrl = computed(() => {
 })
 
 const isImagePreview = computed(() => {
-  const name = attachment.value?.name || ''
-
   return previewContentType.value.startsWith('image/')
-    || /\.(?:png|jpe?g|gif|webp|bmp|svg)$/i.test(name)
+    || /\.(?:png|jpe?g|gif|webp|bmp|svg)$/i.test(attachmentName.value)
 })
 
 const isPdfPreview = computed(() => {
   return previewContentType.value.includes('application/pdf')
-    || /\.pdf$/i.test(attachment.value?.name || '')
+    || /\.pdf$/i.test(attachmentName.value)
 })
 
 const isDocxPreview = computed(() => {
   return previewContentType.value.includes('wordprocessingml.document')
-    || /\.docx$/i.test(attachment.value?.name || '')
+    || /\.docx$/i.test(attachmentName.value)
 })
 
 const canLoadPreview = computed(() => {
-  return !!previewUrl.value && (isImagePreview.value || isPdfPreview.value || isDocxPreview.value)
+  return Boolean(previewUrl.value && (isImagePreview.value || isPdfPreview.value || isDocxPreview.value))
 })
 
 const base64ToBytes = (base64: string) => {
@@ -301,12 +307,12 @@ const loadAttachmentPreview = async () => {
       method: 'POST',
       body: {
         url: previewUrl.value,
-        fileName: attachment.value.name,
+        fileName: attachmentName.value,
       },
     })
 
     if (!response.data) {
-      previewError.value = 'Preview is not available for this file type'
+      previewError.value = t('mobile.todo.detail.previewUnavailable')
       return
     }
 
@@ -319,13 +325,13 @@ const loadAttachmentPreview = async () => {
 
       if (token === docxPreviewToken.value) {
         docxParagraphs.value = paragraphs
-        previewError.value = paragraphs.length ? '' : 'Preview content is empty'
+        previewError.value = paragraphs.length ? '' : t('mobile.todo.detail.emptyPreview')
       }
     }
   }
   catch (error) {
-    console.error('Attachment preview load failed:', error)
-    previewError.value = 'Preview is not available for this file type'
+    console.error('Todo attachment preview load failed:', error)
+    previewError.value = t('mobile.todo.detail.previewUnavailable')
   }
   finally {
     if (token === docxPreviewToken.value) {
@@ -335,28 +341,21 @@ const loadAttachmentPreview = async () => {
 }
 
 const handleBack = () => {
-  return navigateTo({
-    path: `/mobile/approval/${approvalId.value}/attachments`,
-    query: {
-      requestId: requestId.value,
-    },
-  })
+  return navigateTo(`/mobile/todo/${requestId.value}/attachments`)
+}
+
+const openAttachmentUrl = async () => {
+  await openGuardedUrl(previewUrl.value, '_blank')
 }
 
 watch(
   requestId,
-  async (id) => {
-    if (!id || formAttachments.value.some(item => String(item.id) === attachmentId.value)) {
+  (id) => {
+    if (!id || attachments.value?.some(item => String(item.id) === attachmentId.value)) {
       return
     }
 
-    loading.value = true
-    try {
-      await getFormAttachments(id)
-    }
-    finally {
-      loading.value = false
-    }
+    void todosStore.fetchWorkflowFormAttachments(id)
   },
   { immediate: true },
 )
@@ -517,12 +516,12 @@ onBeforeUnmount(revokeBlobUrl)
   min-height: 34px;
   margin-top: 8px;
   padding: 9px 16px;
+  border: 0;
   border-radius: 999px;
   background: #b10f49;
   color: #ffffff;
   font-size: 12px;
   font-weight: 700;
   line-height: 1.2;
-  text-decoration: none;
 }
 </style>
