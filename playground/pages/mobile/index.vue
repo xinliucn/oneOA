@@ -891,57 +891,9 @@ const newsItems = computed(() => {
   return [...selectedItems, ...fallbackItems].slice(0, 2)
 })
 
-const openApplicationsPage = async () => {
-  await navigateTo('/mobile/applications')
-}
 
 const recordRecentItem = (item: Omit<RecentItem, 'visitedAt'>) => {
   addRecentItem(item)
-}
-
-const openBusinessDetail = async (item: {
-  mainTable?: {
-    id?: string
-    name_en?: string
-    name_sc?: string
-    name_tc?: string
-    description_en?: string
-    description_sc?: string
-    description_tc?: string
-    business?: string
-    tag?: string
-    color?: string
-    homepage_url?: string
-    mobileurl?: string
-  }
-}) => {
-  const businessName = normalizeString(item.mainTable?.business || item.mainTable?.name_en)
-  const businessTags = sortByKnownOrder(splitMultiValue(item.mainTable?.tag), regionOrder)
-  const displayName = getBusinessDisplayName(item.mainTable)
-  const targetPath = `/mobile/applications/business/${encodeURIComponent(businessName)}/${encodeURIComponent((businessTags.length ? businessTags : regionOrder).join('/'))}/${encodeURIComponent(detailRouteTypes.join('/'))}`
-
-  applicationsStore.setSelectedBusiness({
-    id: businessName,
-    icon: getBusinessFallbackIcon(item.mainTable?.name_en || businessName),
-    name_en: displayName,
-    business: businessName,
-    description_en: getBusinessDescription(item.mainTable),
-    color: getBusinessAccentColor(item.mainTable?.name_en || businessName, item.mainTable?.color),
-    intranetLabel: `${displayName} Intranet >`,
-    intranetUrl: item.mainTable?.homepage_url || item.mainTable?.mobileurl || 'https://intranet.dch.com.hk/',
-  })
-
-  recordRecentItem({
-    id: `business:${businessName || item.mainTable?.id || displayName}`,
-    type: 'business',
-    label: displayName,
-    subtitle: getBusinessDescription(item.mainTable),
-    icon: getBusinessFallbackIcon(item.mainTable?.name_en || businessName),
-    path: targetPath,
-  })
-
-  applicationsStore.activePrimaryTab = 'business'
-  await navigateTo(targetPath)
 }
 
 const openSearch = async () => {

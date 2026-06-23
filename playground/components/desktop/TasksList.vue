@@ -13,61 +13,61 @@
       <button
         v-for="tab in tabs"
         :key="tab.value"
-        :class="['tab-btn', { active: activeTab === tab.value }]"
-        @click="activeTab = tab.value"
+        :class="['tab-btn', { active: todosStore.activeListKey === tab.value }]"
+        @click="selectTab(tab.value)"
       >
         {{ tab.label }}
       </button>
     </div>
     <div class="tasks-list__items">
       <div
-        v-if="loading && visibleTasks.length === 0"
+        v-if="loading && todosStore.activeTodoList.length === 0"
         class="tasks-list__state"
       >
         {{ t('mobile.todo.states.loadingScreen', { view: activeTabLabel }) }}
       </div>
       <div
-        v-else-if="!loading && visibleTasks.length === 0"
+        v-else-if="!loading && todosStore.activeTodoList.length === 0"
         class="tasks-list__state"
       >
         {{ t('mobile.todo.states.empty') }}
       </div>
       <template v-else>
         <div
-          v-for="task in visibleTasks"
-          :key="task.id"
+          v-for="task in todosStore.activeTodoList"
+          :key="task.cid || task.requestId"
           class="task-item"
           @click="handleClick(task)"
         >
           <div class="task-item__content">
             <div class="task-item__meta">
-              <span class="task-item__code">{{ task.reference }}</span>
+              <span class="task-item__code">{{ getTaskReference(task) }}</span>
               <span
                 class="task-item__status"
-                :class="task.statusClass"
+                :class="getTaskStatusClass(getTaskStatus(task))"
               >
-                {{ task.statusLabel }}
+                {{ getTaskStatus(task) }}
               </span>
             </div>
             <div class="task-item__title">
-              {{ task.title }}
+              {{ formatRequestName(task.requestName) || '-' }}
             </div>
             <div class="task-item__subtitle">
-              <span>{{ task.submitter }}</span>
-              <span v-if="task.workflowName">
+              <span>{{ task.creatorName }}</span>
+              <span v-if="task.workflowBaseInfo?.workflowName">
                 via
               </span>
               <span
-                v-if="task.workflowName"
+                v-if="task.workflowBaseInfo?.workflowName"
                 class="task-item__workflow"
               >
-                {{ task.workflowName }}
+                {{ task.workflowBaseInfo.workflowName }}
               </span>
             </div>
           </div>
           <div class="task-item__right">
             <div class="task-item__date">
-              {{ task.date }}
+              {{ formatTaskDate(task.createTime) }}
             </div>
             <IconCustom
               name="chevron-right"
@@ -82,76 +82,36 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref, watch } from 'vue'
-import type { TodoView } from '~/composables/useToDoData'
+import { computed, onMounted } from 'vue'
+import type { TodoListKey, WorkflowTodoItem } from '~/types/todo'
+import { formatRequestName } from '~/utils/todo'
 
-const { list, loading, fetchByView } = useToDoData()
-const toDoFrom = useState<any>('mobile:todo-form', () => null)
 const { t } = useAppI18n()
+const todosStore = useTodosStore()
+const activeTodo = useState<WorkflowTodoItem | null>('desktop:todo:active', () => null)
+const legacyTodoForm = useState<WorkflowTodoItem | null>('mobile:todo-form', () => null)
 const { addRecentItem } = useRecentItems('desktop')
 
-type TodoRecord = Record<string, any>
-
-type DisplayTask = {
-  id: string
-  reference: string
-  statusLabel: string
-  statusClass: string
-  title: string
-  submitter: string
-  workflowName: string
-  date: string
-  raw: any
-}
-
-type DesktopTodoView = TodoView | 'watchlist'
-
-const activeTab = ref<DesktopTodoView>('approvals')
-
 const tabs = computed(() => [
-  { label: t('tasks.tabs.approval'), value: 'approvals' as const },
-  { label: t('tasks.tabs.requests'), value: 'requests' as const },
-  { label: t('tasks.tabs.tasks'), value: 'tasks' as const },
-  { label: t('tasks.tabs.watchlist'), value: 'watchlist' as const },
+  { label: t('tasks.tabs.approval'), value: 'myApproval' as const },
+  { label: t('tasks.tabs.requests'), value: 'myRequests' as const },
+  { label: t('tasks.tabs.tasks'), value: 'myTasks' as const },
+  { label: t('tasks.tabs.approved'), value: 'approved' as const },
 ])
 
 const activeTabLabel = computed(() => {
-  return tabs.value.find(tab => tab.value === activeTab.value)?.label || ''
+  return tabs.value.find(tab => tab.value === todosStore.activeListKey)?.label || ''
 })
 
-const isRecord = (value: any): value is TodoRecord => {
-  return !!value && typeof value === 'object' && !Array.isArray(value)
+const loading = computed(() => todosStore.activeLoading)
+
+const getTaskReference = (task: WorkflowTodoItem) => {
+  return task.requestmark || task.requestId || task.cid
 }
 
-const getStringValue = (record: TodoRecord, key: string) => {
-  const value = record[key]
-  if (typeof value === 'string' || typeof value === 'number') {
-    return String(value).trim()
-  }
-
-  return ''
-}
-
-const getNestedStringValue = (record: TodoRecord, parentKey: string, key: string) => {
-  const parent = record[parentKey]
-  if (!isRecord(parent)) {
-    return ''
-  }
-
-  return getStringValue(parent, key)
-}
-
-const getTaskReference = (task: TodoRecord) => {
-  return getStringValue(task, 'requestmark')
-    || getStringValue(task, 'requestId')
-    || getStringValue(task, 'referenceNo')
-    || getStringValue(task, 'code')
-    || getStringValue(task, 'id')
-}
-
-const getTaskStatus = (task: TodoRecord) => {
-  return getStringValue(task, 'status')
-    || getStringValue(task, 'currentNodeName')
+const getTaskStatus = (task: WorkflowTodoItem) => {
+  return task.status
+    || task.currentNodeName
     || t('tasks.status.pending')
 }
 
@@ -169,73 +129,42 @@ const getTaskStatusClass = (status: string) => {
   return 'status-pending'
 }
 
-const visibleTasks = computed<DisplayTask[]>(() => {
-  if (activeTab.value === 'watchlist') {
-    return []
-  }
-
-  return list.value.slice(0, 5).map((item, index) => {
-    const task = isRecord(item) ? item : {}
-    const statusLabel = getTaskStatus(task)
-    const workflowName = getNestedStringValue(task, 'workflowBaseInfo', 'workflowName')
-
-    return {
-      id: getStringValue(task, 'id') || getStringValue(task, 'requestId') || String(index),
-      reference: getTaskReference(task),
-      statusLabel,
-      statusClass: getTaskStatusClass(statusLabel),
-      title: getStringValue(task, 'requestName') || getStringValue(task, 'title') || '-',
-      submitter: getStringValue(task, 'creatorName') || getStringValue(task, 'submittedBy'),
-      workflowName,
-      date: formatTaskDate(getStringValue(task, 'createTime') || getStringValue(task, 'date')),
-      raw: item,
-    }
-  })
-})
-
 const formatTaskDate = (date: string) => {
   return date.length > 10 ? date.slice(0, 10) : date
 }
 
-const handleClick = (task: DisplayTask) => {
-  toDoFrom.value = task.raw
+const handleClick = (task: WorkflowTodoItem) => {
+  activeTodo.value = task
+  legacyTodoForm.value = task
 
-  const rawTask = isRecord(task.raw) ? task.raw : {}
-  const requestId = getStringValue(rawTask, 'requestId') || getStringValue(rawTask, 'id') || task.reference
-  const targetId = task.reference || requestId
-
-  if (!targetId) {
+  if (!task.requestId) {
     return
   }
 
   addRecentItem({
-    id: `todo:${targetId}`,
+    id: `todo:${task.requestId}`,
     type: 'todo',
-    label: task.title,
+    label: formatRequestName(task.requestName) || '-',
     subtitle: activeTabLabel.value,
     icon: 'todo',
-    path: `/desktop/todo/${encodeURIComponent(targetId)}`,
+    path: `/desktop/todo/${encodeURIComponent(task.requestId)}`,
   })
 
   return navigateTo({
-    path: `/desktop/todo/${encodeURIComponent(targetId)}`,
+    path: `/desktop/todo/${encodeURIComponent(task.requestId)}`,
     query: {
-      requestId: requestId || targetId,
+      requestId: task.requestId,
     },
   })
 }
 
-watch(
-  activeTab,
-  async (view) => {
-    if (view === 'watchlist') {
-      return
-    }
+const selectTab = (listKey: TodoListKey) => {
+  void todosStore.selectTodoList(listKey, { query: { pageSize: 100 } })
+}
 
-    await fetchByView(view)
-  },
-  { immediate: true },
-)
+onMounted(() => {
+  void todosStore.selectTodoList('myApproval', { query: { pageSize: 100 } })
+})
 </script>
 
 <style scoped>

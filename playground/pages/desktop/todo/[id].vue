@@ -1,391 +1,3 @@
-<script setup lang="ts">
-import type { ApprovalAction } from '~/types/approval'
-import { formatRequestName } from '~/utils/todo'
-
-definePageMeta({
-  layout: 'desktop',
-  middleware: 'auth',
-})
-
-type WorkflowField = {
-  fieldId?: string
-  fieldName?: string
-  fieldShowName?: string
-  fieldValue?: string
-  fieldShowValue?: string
-  filedHtmlShow?: string
-}
-
-type MainFieldInfo = {
-  fieldid?: string | number
-  fieldname?: string
-  selectattr?: {
-    selectitemlist?: Array<{
-      selectname?: string
-      selectvalue?: string | number
-    }>
-  }
-}
-
-type TimelineItem = {
-  id: string
-  nodeName: string
-  action: string
-  date: string
-}
-
-const route = useRoute()
-const approvalId = computed(() => String(route.params.id || ''))
-const toDoFrom: any = useState('mobile:todo-form', () => null)
-const { form, getFormData } = useApplicationCatalog()
-const { formAttachments, getFormAttachments } = useToDoData()
-const { showTodoToast } = useDesktopTodoToast()
-const { t } = useAppI18n()
-
-const showAllApprovers = ref(false)
-const actionComment = ref('')
-const selectedAction = ref<ApprovalAction | ''>('')
-const submittingAction = ref(false)
-const actionOptions: ApprovalAction[] = ['Approve', 'Reject', 'Return']
-
-const requestId = computed(() => String(route.query.requestId || toDoFrom.value?.requestId || ''))
-const processInfo = computed(() => form.value?.processInfo ?? {})
-const workflowBaseInfo = computed(() => processInfo.value?.workflowBaseInfo ?? toDoFrom.value?.workflowBaseInfo ?? {})
-const workflowFields = computed<WorkflowField[]>(() => {
-  return processInfo.value?.workflowMainTableInfo?.requestRecords?.[0]?.workflowRequestTableFields ?? []
-})
-
-const isRecord = (value: unknown): value is Record<string, unknown> => {
-  return !!value && typeof value === 'object' && !Array.isArray(value)
-}
-
-const stripHtml = (value?: string | number | null) => {
-  if (value === null || value === undefined) {
-    return ''
-  }
-
-  return String(value)
-    .replace(/<br\s*\/?>/gi, ' ')
-    .replace(/<[^>]*>/g, '')
-    .replace(/&nbsp;/g, ' ')
-    .replace(/&gt;/g, '>')
-    .replace(/&lt;/g, '<')
-    .replace(/&amp;/g, '&')
-    .replace(/\s+/g, ' ')
-    .trim()
-}
-
-const formatDate = (value?: string | null) => {
-  const normalized = stripHtml(value)
-  return normalized.split(' ')[0] || ''
-}
-
-const formatDateTime = (date?: string | null, time?: string | null) => {
-  return [formatDate(date), stripHtml(time)].filter(Boolean).join(' at ')
-}
-
-const getFieldByName = (name: string) => {
-  const normalizedName = name.toLowerCase()
-  return workflowFields.value.find(field => field.fieldName === name || field.fieldName?.toLowerCase() === normalizedName)
-}
-
-const getFieldById = (id: string) => {
-  return workflowFields.value.find(field => String(field.fieldId) === id)
-}
-
-const getFieldDisplayValue = (field?: WorkflowField) => {
-  if (!field) {
-    return ''
-  }
-
-  return stripHtml(field.fieldShowValue || field.filedHtmlShow || field.fieldValue)
-}
-
-const getMainFieldInfoByName = (name: string): MainFieldInfo | undefined => {
-  const fieldInfoMap = form.value?.formInfo?.tableInfo?.main?.fieldinfomap
-  if (!isRecord(fieldInfoMap)) {
-    return undefined
-  }
-
-  const normalizedName = name.toLowerCase()
-  return Object.values(fieldInfoMap).find((fieldInfo): fieldInfo is MainFieldInfo => {
-    return isRecord(fieldInfo)
-      && (fieldInfo.fieldname === name || String(fieldInfo.fieldname || '').toLowerCase() === normalizedName)
-  })
-}
-
-const getSpecialObjectDisplayValue = (value: unknown) => {
-  if (Array.isArray(value)) {
-    return value.map((item) => {
-      if (isRecord(item)) {
-        return stripHtml(String(item.name || item.showname || item.value || item.id || ''))
-      }
-
-      return stripHtml(String(item || ''))
-    }).filter(Boolean).join(', ')
-  }
-
-  if (isRecord(value)) {
-    return stripHtml(String(value.name || value.showname || value.value || value.id || ''))
-  }
-
-  return ''
-}
-
-const getMainFieldSelectValue = (fieldInfo: MainFieldInfo | undefined, value: unknown) => {
-  const normalizedValue = String(value ?? '')
-  const selectItem = fieldInfo?.selectattr?.selectitemlist?.find(item => String(item.selectvalue) === normalizedValue)
-  return stripHtml(selectItem?.selectname || '')
-}
-
-const getMainFieldValue = (name: string) => {
-  const fieldInfo = getMainFieldInfoByName(name)
-  const fieldId = fieldInfo?.fieldid
-  if (fieldId === undefined || fieldId === null) {
-    return ''
-  }
-
-  const mainData = form.value?.formInfo?.maindata
-  const fieldData = isRecord(mainData) ? mainData[`field${fieldId}`] : undefined
-  if (!isRecord(fieldData)) {
-    return ''
-  }
-
-  return getSpecialObjectDisplayValue(fieldData.specialobj)
-    || getMainFieldSelectValue(fieldInfo, fieldData.value)
-    || stripHtml(String(fieldData.value ?? ''))
-}
-
-const getFieldValue = (name: string, fallbackFieldId?: string) => {
-  return getFieldDisplayValue(getFieldByName(name) || (fallbackFieldId ? getFieldById(fallbackFieldId) : undefined))
-    || getMainFieldValue(name)
-}
-
-const getContractFieldValue = (name: string) => {
-  return getFieldValue(name) || '-'
-}
-
-const approvalSummary = computed(() => {
-  const referenceNumber = toDoFrom.value?.requestmark || getFieldValue('casenumber', '14904') || approvalId.value
-  const status = processInfo.value?.status || toDoFrom.value?.status || 'Pending'
-  const currentNodeName = processInfo.value?.currentNodeName || toDoFrom.value?.currentNodeName || ''
-
-  return {
-    referenceNumber,
-    status,
-    processStatus: currentNodeName ? `${status} (${currentNodeName})` : status,
-    title: formatRequestName(processInfo.value?.requestName || toDoFrom.value?.requestName) || referenceNumber,
-    submittedBy: processInfo.value?.creatorName || toDoFrom.value?.creatorName || '-',
-    submittedDate: formatDate(processInfo.value?.createTime || toDoFrom.value?.createTime || toDoFrom.value?.receiveTime),
-    requestDate: formatDate(processInfo.value?.createTime || toDoFrom.value?.createTime),
-    portfolio: workflowBaseInfo.value?.workflowTypeName || workflowBaseInfo.value?.workflowName || '-',
-    businessUnit: getFieldValue('bu', '14576') || toDoFrom.value?.userSubcompanyName || '-',
-    workflowName: workflowBaseInfo.value?.workflowName || '-',
-  }
-})
-
-const statusClass = computed(() => {
-  const status = approvalSummary.value.status.toLowerCase()
-
-  if (status.includes('reject')) {
-    return 'is-rejected'
-  }
-
-  if (status.includes('approv') || status.includes('complete')) {
-    return 'is-approved'
-  }
-
-  return 'is-pending'
-})
-
-const statusBarLabel = computed(() => approvalSummary.value.status || 'Pending')
-
-const statusBarColor = computed(() => {
-  if (statusClass.value === 'is-rejected') {
-    return '#d53535'
-  }
-
-  if (statusClass.value === 'is-approved') {
-    return '#139222'
-  }
-
-  return '#d8a300'
-})
-
-const formFields = computed(() => [
-  {
-    label: t('mobile.approval.fields.contractName'),
-    value: getContractFieldValue('TitleReferenceNoOfContract'),
-  },
-  {
-    label: t('mobile.approval.fields.dchSigningEntity'),
-    value: getContractFieldValue('dchsigningentity1'),
-  },
-  {
-    label: t('mobile.approval.fields.counterpartyName'),
-    value: getContractFieldValue('CounterpartyName_MultiLine'),
-  },
-  {
-    label: t('mobile.approval.fields.contractAmountHkd'),
-    value: getContractFieldValue('ContractAmountHKD'),
-  },
-  {
-    label: t('mobile.approval.fields.contractStartDate'),
-    value: getContractFieldValue('contractstartdate'),
-  },
-  {
-    label: t('mobile.approval.fields.contractEndDate'),
-    value: getContractFieldValue('WithEndDate'),
-  },
-])
-
-const attachments = computed(() => {
-  if (formAttachments.value.length > 0) {
-    return formAttachments.value
-  }
-
-  const fileDatas = form.value?.formInfo?.maindata?.field14582?.specialobj?.filedatas
-
-  if (!Array.isArray(fileDatas)) {
-    return []
-  }
-
-  return fileDatas.map((file: Record<string, any>, index: number) => ({
-    id: String(file.fileid || file.id || index),
-    name: stripHtml(file.filename || file.name || file.fileName || `File ${index + 1}`),
-    url: file.downloadUrl || file.url || file.fileUrl,
-  }))
-})
-
-const getApproverStatusClass = (action: string) => {
-  const normalizedAction = action.toLowerCase()
-
-  if (normalizedAction.includes('reject')) {
-    return 'is-rejected'
-  }
-
-  if (normalizedAction.includes('pending')) {
-    return 'is-pending'
-  }
-
-  return 'is-approved'
-}
-
-const timelineItems = computed<TimelineItem[]>(() => {
-  const logs = processInfo.value?.workflowRequestLogs
-  const items: TimelineItem[] = Array.isArray(logs)
-    ? logs.map((log: Record<string, any>, index: number) => ({
-        id: String(log.id || `${log.nodeId || 'log'}-${index}`),
-        nodeName: stripHtml(log.nodeName || log.operatorName || `Step ${index + 1}`),
-        action: stripHtml(log.operateType || 'Processed'),
-        date: formatDateTime(log.operateDate, log.operateTime),
-      }))
-    : []
-
-  const currentNodeName = stripHtml(processInfo.value?.currentNodeName || toDoFrom.value?.currentNodeName)
-  if (currentNodeName && !items.some(item => item.nodeName === currentNodeName)) {
-    items.push({
-      id: `current-${processInfo.value?.currentNodeId || toDoFrom.value?.currentNodeId || 'node'}`,
-      nodeName: currentNodeName,
-      action: approvalSummary.value.status,
-      date: '',
-    })
-  }
-
-  if (items.length > 0) {
-    return items
-  }
-
-  return [
-    {
-      id: 'current',
-      nodeName: currentNodeName || 'Current Step',
-      action: approvalSummary.value.status,
-      date: '',
-    },
-  ]
-})
-
-const visibleTimelineItems = computed(() => {
-  return showAllApprovers.value ? timelineItems.value : timelineItems.value.slice(0, 2)
-})
-
-const currentRequestId = computed(() => requestId.value || approvalId.value)
-const workflowFormActionEndpoint = '/api/todo/workflowFormAction' as string
-const rejectRequestEndpoint = '/api/todo/rejectRequest' as string
-
-const handleConfirm = async () => {
-  if (!selectedAction.value || submittingAction.value) {
-    return
-  }
-
-  const action = selectedAction.value
-  const comment = actionComment.value
-  const submitParams = form.value?.submitParams ?? {}
-  const targetRequestId = String(submitParams.requestid ?? currentRequestId.value)
-  const referenceNumber = approvalSummary.value.referenceNumber || currentRequestId.value
-
-  if (!targetRequestId) {
-    console.error('Missing request id')
-    return
-  }
-
-  submittingAction.value = true
-
-  try {
-    if (action === 'Reject') {
-      await $fetch(rejectRequestEndpoint, {
-        method: 'POST',
-        body: {
-          requestId: targetRequestId,
-        },
-      })
-    }
-    else {
-      await $fetch(workflowFormActionEndpoint, {
-        method: 'POST',
-        body: {
-          ...submitParams,
-          action,
-          remark: comment,
-          requestid: targetRequestId,
-          requestId: targetRequestId,
-        },
-      })
-    }
-
-    showTodoToast(referenceNumber, action === 'Reject' ? 'rejected' : 'approved')
-    selectedAction.value = ''
-    actionComment.value = ''
-    await navigateTo('/desktop/todo')
-  }
-  catch (error) {
-    const message = error instanceof Error ? error.message : 'Submit failed'
-    console.error(message)
-    console.error('Failed to submit approval action:', error)
-  }
-  finally {
-    submittingAction.value = false
-  }
-}
-
-watch(
-  [approvalId, requestId],
-  async ([id, reqId]) => {
-    const targetId = reqId || id
-    if (!targetId) {
-      return
-    }
-
-    await Promise.all([
-      getFormData(targetId),
-      getFormAttachments(targetId),
-    ])
-  },
-  { immediate: true },
-)
-</script>
-
 <template>
   <div class="todo-detail">
     <header class="todo-detail__header">
@@ -481,11 +93,11 @@ watch(
                   :size="13"
                   color="#3b82f6"
                 />
-                {{ attachment.name }}
+                {{ getAttachmentName(attachment) }}
               </span>
               <a
-                v-if="attachment.url"
-                :href="attachment.url"
+                v-if="getAttachmentUrl(attachment)"
+                :href="getAttachmentUrl(attachment)"
                 target="_blank"
                 rel="noreferrer"
               >Download</a>
@@ -506,13 +118,20 @@ watch(
         </div>
       </section>
 
-      <section class="todo-detail__action-panel">
+      <section
+        v-if="actionMode !== 'viewOnly'"
+        class="todo-detail__action-panel"
+      >
         <textarea
           v-model="actionComment"
           placeholder="Add Comments"
         />
         <div class="todo-detail__action-row">
-          <select v-model="selectedAction">
+          <select
+            v-if="actionMode === 'approveReject'"
+            v-model="selectedAction"
+            @change="handleActionChange"
+          >
             <option
               value=""
               disabled
@@ -529,10 +148,10 @@ watch(
           </select>
           <button
             type="button"
-            :disabled="!selectedAction || submittingAction"
+            :disabled="isConfirmDisabled"
             @click="handleConfirm"
           >
-            {{ submittingAction ? 'Submitting...' : 'Submit' }}
+            {{ submittingAction ? t('mobile.approval.actions.submitting') : confirmButtonLabel }}
           </button>
         </div>
       </section>
@@ -543,6 +162,279 @@ watch(
     </footer>
   </div>
 </template>
+
+<script setup lang="ts">
+import type { ApprovalAction } from '~/types/approval'
+import type { WorkflowBaseInfo, WorkflowFormAttachment } from '~/types/todo'
+import { formatRequestName, getWorkflowFieldText, stripHtml } from '~/utils/todo'
+
+definePageMeta({
+  layout: 'desktop',
+  middleware: 'auth',
+})
+
+type TimelineItem = {
+  id: string
+  nodeName: string
+  action: string
+  date: string
+}
+
+const route = useRoute()
+const approvalId = computed(() => String(route.params.id || ''))
+const todosStore = useTodosStore()
+const { showTodoToast } = useDesktopTodoToast()
+const { t } = useAppI18n()
+
+const showAllApprovers = ref(false)
+const actionComment = ref('')
+const selectedAction = ref<ApprovalAction | ''>('')
+const submittingAction = ref(false)
+const actionOptions: ApprovalAction[] = ['Approve', 'Reject', 'Return']
+
+const requestId = computed(() => String(route.query.requestId || route.params.id || '').trim())
+const workflowDetail = computed(() => requestId.value ? todosStore.workflowForms[requestId.value] : undefined)
+const processInfo = computed(() => workflowDetail.value?.processInfo ?? {})
+const workflowBaseInfo = computed<Partial<WorkflowBaseInfo>>(() => processInfo.value.workflowBaseInfo ?? {})
+
+const formatDate = (value?: string | null) => {
+  const normalized = stripHtml(value)
+  return normalized.split(' ')[0] || ''
+}
+
+const formatDateTime = (date?: string | null, time?: string | null) => {
+  return [formatDate(date), stripHtml(time)].filter(Boolean).join(' at ')
+}
+
+const getWorkflowText = (name: string) => {
+  if (!workflowDetail.value) {
+    return ''
+  }
+
+  return getWorkflowFieldText(workflowDetail.value, name)
+}
+
+const approvalSummary = computed(() => {
+  const referenceNumber = processInfo.value.requestId || requestId.value || approvalId.value
+  const status = processInfo.value.status || 'Pending'
+  const currentNodeName = processInfo.value.currentNodeName || ''
+
+  return {
+    referenceNumber,
+    status,
+    processStatus: currentNodeName ? `${status} (${currentNodeName})` : status,
+    title: formatRequestName(processInfo.value.requestName) || referenceNumber,
+    submittedBy: processInfo.value.creatorName || '-',
+    submittedDate: formatDate(processInfo.value.createTime),
+    requestDate: formatDate(processInfo.value.createTime),
+    portfolio: workflowBaseInfo.value.workflowTypeName || workflowBaseInfo.value.workflowName || '-',
+    businessUnit: getWorkflowText('bu') || '-',
+    workflowName: workflowBaseInfo.value.workflowName || '-',
+  }
+})
+
+const statusClass = computed(() => {
+  const status = approvalSummary.value.status.toLowerCase()
+
+  if (status.includes('reject')) {
+    return 'is-rejected'
+  }
+
+  if (status.includes('approv') || status.includes('complete')) {
+    return 'is-approved'
+  }
+
+  return 'is-pending'
+})
+
+const statusBarLabel = computed(() => approvalSummary.value.status || 'Pending')
+
+const statusBarColor = computed(() => {
+  if (statusClass.value === 'is-rejected') {
+    return '#d53535'
+  }
+
+  if (statusClass.value === 'is-approved') {
+    return '#139222'
+  }
+
+  return '#d8a300'
+})
+
+const formFields = computed(() => [
+  {
+    label: t('mobile.approval.fields.contractName'),
+    value: getWorkflowText('TitleReferenceNoOfContract') || '-',
+  },
+  {
+    label: t('mobile.approval.fields.dchSigningEntity'),
+    value: getWorkflowText('dchsigningentity1') || '-',
+  },
+  {
+    label: t('mobile.approval.fields.counterpartyName'),
+    value: getWorkflowText('CounterpartyName_MultiLine') || '-',
+  },
+  {
+    label: t('mobile.approval.fields.contractAmountHkd'),
+    value: getWorkflowText('ContractAmountHKD') || '-',
+  },
+  {
+    label: t('mobile.approval.fields.contractStartDate'),
+    value: getWorkflowText('contractstartdate') || '-',
+  },
+  {
+    label: t('mobile.approval.fields.contractEndDate'),
+    value: getWorkflowText('contractenddate') || '-',
+  },
+])
+
+const attachments = computed(() => {
+  return requestId.value ? todosStore.workflowFormAttachments[requestId.value] || [] : []
+})
+
+const getAttachmentName = (attachment: WorkflowFormAttachment) => {
+  return stripHtml(attachment.name || attachment.filename || attachment.fileName || String(attachment.id))
+}
+
+const getAttachmentUrl = (attachment: WorkflowFormAttachment) => {
+  return attachment.downloadUrl || attachment.url || attachment.fileUrl || ''
+}
+
+const getApproverStatusClass = (action: string) => {
+  const normalizedAction = action.toLowerCase()
+
+  if (normalizedAction.includes('reject')) {
+    return 'is-rejected'
+  }
+
+  if (normalizedAction.includes('pending')) {
+    return 'is-pending'
+  }
+
+  return 'is-approved'
+}
+
+const timelineItems = computed<TimelineItem[]>(() => {
+  if (!requestId.value) {
+    return []
+  }
+
+  return (todosStore.currentWorkflowOperators[requestId.value] || []).map(item => ({
+    id: String(item.id),
+    nodeName: stripHtml(item.nodeName || ''),
+    action: stripHtml(item.userName || ''),
+    date: formatDateTime(item.receivedate, item.receivetime),
+  }))
+})
+
+const visibleTimelineItems = computed(() => {
+  return showAllApprovers.value ? timelineItems.value : timelineItems.value.slice(0, 2)
+})
+
+const currentNodeType = computed(() => {
+  return String(workflowDetail.value?.formInfo?.params?.currentnodetype || '')
+})
+const actionMode = computed<'approveReject' | 'submit' | 'viewOnly'>(() => {
+  if (currentNodeType.value === '1') {
+    return 'approveReject'
+  }
+
+  if (currentNodeType.value === '0' || currentNodeType.value === '2') {
+    return 'submit'
+  }
+
+  return 'viewOnly'
+})
+const confirmButtonLabel = computed(() => {
+  return workflowDetail.value?.processInfo?.submitButtonName || t('mobile.approval.actions.submit')
+})
+const isConfirmDisabled = computed(() => {
+  return submittingAction.value || (actionMode.value === 'approveReject' && selectedAction.value !== 'Approve')
+})
+const approvePayload = computed(() => {
+  const params = workflowDetail.value?.formInfo?.params
+
+  return {
+    requestId: requestId.value,
+    nodeId: String(params?.nodeid ?? params?.currentnodeid ?? ''),
+    workflowId: String(params?.workflowid ?? ''),
+    remark: actionComment.value,
+  }
+})
+
+const rejectWorkflow = async () => {
+  if (!requestId.value || submittingAction.value) {
+    return
+  }
+
+  submittingAction.value = true
+  try {
+    const response = await todosStore.rejectWorkflowRequest(requestId.value)
+    if (response?.code === 'SUCCESS') {
+      showTodoToast(approvalSummary.value.referenceNumber, 'rejected')
+      await navigateTo('/desktop/todo')
+    }
+  }
+  catch (error) {
+    console.error('Failed to reject approval action:', error)
+  }
+  finally {
+    submittingAction.value = false
+  }
+}
+
+const handleActionChange = () => {
+  if (selectedAction.value === 'Reject') {
+    void rejectWorkflow()
+  }
+}
+
+const handleConfirm = async () => {
+  if (submittingAction.value) {
+    return
+  }
+
+  if (actionMode.value === 'approveReject' && selectedAction.value === 'Reject') {
+    await rejectWorkflow()
+    return
+  }
+
+  if (actionMode.value === 'approveReject' && selectedAction.value !== 'Approve') {
+    return
+  }
+
+  submittingAction.value = true
+  try {
+    const response = await todosStore.approveWorkflowRequest(approvePayload.value)
+    if (response?.code === 'SUCCESS') {
+      showTodoToast(approvalSummary.value.referenceNumber, 'approved')
+      selectedAction.value = ''
+      actionComment.value = ''
+      await navigateTo('/desktop/todo')
+    }
+  }
+  catch (error) {
+    console.error('Failed to submit approval action:', error)
+  }
+  finally {
+    submittingAction.value = false
+  }
+}
+
+watch(
+  requestId,
+  (targetId) => {
+    if (!targetId) {
+      return
+    }
+
+    void todosStore.fetchWorkflowForm(targetId)
+    void todosStore.fetchCurrentWorkflowOperators(targetId)
+    void todosStore.fetchWorkflowFormAttachments(targetId)
+  },
+  { immediate: true },
+)
+</script>
 
 <style scoped>
 .todo-detail {

@@ -192,7 +192,7 @@ export const useNotification = () => {
     serverUnreadCount.value = localUnreadCount.value
 
     if (import.meta.client) {
-      await db.markNotificationAsRead(target.id, readAt)
+      await db.markNotificationAsRead(String(target.id), readAt)
     }
 
     try {

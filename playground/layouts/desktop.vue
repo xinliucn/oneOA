@@ -87,17 +87,7 @@
           v-if="!isLayoutReady"
           class="desktop__main-loading"
         >
-          <div class="desktop__loading-content">
-            <div class="desktop__loading-title">
-              {{ t('common.loading') }}
-            </div>
-            <div
-              class="desktop__loading-track"
-              aria-hidden="true"
-            >
-              <span class="desktop__loading-bar" />
-            </div>
-          </div>
+          <CommonLoadingScreen :title="t('common.loading')" />
         </div>
       </main>
     </div>
@@ -402,54 +392,6 @@ onBeforeUnmount(() => {
     align-items: center;
     justify-content: center;
     background: #FFFFFF;
-}
-
-.desktop__loading-content {
-    width: 260px;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    transform: translateY(-24px);
-}
-
-.desktop__loading-title {
-    margin-bottom: 28px;
-    color: #000000;
-    font-size: 14px;
-    font-weight: 700;
-    line-height: 1;
-}
-
-.desktop__loading-track {
-    width: 252px;
-    height: 6px;
-    overflow: hidden;
-    border-radius: 999px;
-    background: #E3E3E3;
-}
-
-.desktop__loading-bar {
-    display: block;
-    width: 74px;
-    height: 100%;
-    border-radius: inherit;
-    background: #A60A3A;
-    animation: desktop-loading-slide 1.1s ease-in-out infinite;
-}
-
-@keyframes desktop-loading-slide {
-    0% {
-        transform: translateX(-74px);
-    }
-
-    45%,
-    55% {
-        transform: translateX(0);
-    }
-
-    100% {
-        transform: translateX(252px);
-    }
 }
 
 :deep(.el-dropdown-menu__item:hover) {

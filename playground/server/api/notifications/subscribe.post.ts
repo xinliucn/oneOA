@@ -1,5 +1,6 @@
-import { getNotificationApiPrefix } from '../../utils/requestProxy'
 import { proxyWindmill } from '../../utils/windmillProxy'
+
+const NOTIFICATION_API_PREFIX = '/api/r/notification'
 
 export default defineEventHandler(async (event) => {
   const config = useRuntimeConfig()
@@ -26,7 +27,7 @@ export default defineEventHandler(async (event) => {
   try {
     // 读取前端上报的订阅信息，兼容扁平结构和嵌套 subscription 结构
     const body = await readBody<Record<string, any>>(event)
-    const response = await proxyWindmill<any>(event, `${getNotificationApiPrefix()}/subscribe`, {
+    const response = await proxyWindmill<any>(event, `${NOTIFICATION_API_PREFIX}/subscribe`, {
       method: 'POST',
       body,
     })

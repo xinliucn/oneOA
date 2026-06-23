@@ -19,8 +19,8 @@
             v-for="tab in tabs"
             :key="tab.value"
             type="button"
-            :class="['todo-page__tab', { 'is-active': activeTab === tab.value }]"
-            @click="activeTab = tab.value"
+            :class="['todo-page__tab', { 'is-active': todosStore.activeListKey === tab.value }]"
+            @click="selectTab(tab.value)"
           >
             {{ tab.label }}
           </button>
@@ -54,7 +54,7 @@
                 :aria-expanded="openFilterKey === filter.key"
                 @click="toggleFilter(filter.key)"
               >
-                <span>{{ selectedFilters[filter.key] }}</span>
+                <span>{{ getSelectedFilterLabel(filter.key) }}</span>
                 <IconCustom
                   name="chevron-right"
                   :size="18"
@@ -68,12 +68,12 @@
               >
                 <button
                   v-for="option in filter.options"
-                  :key="option"
+                  :key="option.value"
                   type="button"
-                  :class="['todo-page__select-option', { 'is-selected': selectedFilters[filter.key] === option }]"
-                  @click="selectFilter(filter.key, option)"
+                  :class="['todo-page__select-option', { 'is-selected': selectedFilters[filter.key] === option.value }]"
+                  @click="selectFilter(filter.key, option.value)"
                 >
-                  {{ option }}
+                  {{ option.label }}
                 </button>
               </div>
             </div>
@@ -119,7 +119,7 @@
         <template v-else>
           <div
             v-for="item in tableRows"
-            :key="item.id"
+            :key="item.cid || item.requestId"
             class="todo-table__row todo-table__row--body"
             @click="handleRowClick(item)"
           >
@@ -128,24 +128,24 @@
               class="todo-table__link"
               @click.stop="handleRowClick(item)"
             >
-              {{ item.approvalNo }}
+              {{ getTaskReference(item) || '-' }}
             </button>
-            <span>{{ item.subject }}</span>
-            <span>{{ item.submittedBy }}</span>
+            <span>{{ formatRequestName(item.requestName) || '-' }}</span>
+            <span>{{ item.creatorName || '-' }}</span>
             <button
               type="button"
               class="todo-table__link"
               @click.stop="handleRowClick(item)"
             >
-              {{ item.platform }}
+              {{ item.workflowBaseInfo?.workflowName || item.workflowBaseInfo?.workflowTypeName || '-' }}
             </button>
             <span
               class="todo-table__status"
-              :class="item.statusClass"
+              :class="getTaskStatusClass(getTaskStatus(item))"
             >
-              {{ item.status }}
+              {{ getTaskStatus(item) }}
             </span>
-            <span>{{ item.dateSubmitted }}</span>
+            <span>{{ formatTaskDate(item.createTime) }}</span>
           </div>
         </template>
       </div>
@@ -216,49 +216,56 @@
 </template>
 
 <script setup lang="ts">
-import type { TodoView } from '~/composables/useToDoData'
+import type { TodoListKey, WorkflowTodoItem } from '~/types/todo'
 import { formatRequestName } from '~/utils/todo'
+import {
+  createTodoFilterOptions,
+  getTodoCategoryLabel,
+  getTodoStatusLabel,
+  normalizeTodoFilterValue,
+} from '~/utils/todoFilters'
 
 definePageMeta({
   layout: 'desktop',
   middleware: 'auth',
 })
 
-type TodoRecord = Record<string, any>
-type TableRow = {
-  id: string
-  requestId: string
-  approvalNo: string
-  subject: string
-  submittedBy: string
-  platform: string
-  status: string
-  statusClass: string
-  dateSubmitted: string
-  raw: any
-}
+const { t } = useAppI18n()
+const todosStore = useTodosStore()
+const activeTodo = useState<WorkflowTodoItem | null>('desktop:todo:active', () => null)
+const legacyTodoForm = useState<WorkflowTodoItem | null>('mobile:todo-form', () => null)
 
-const { list, loading, fetchByView } = useToDoData()
-const toDoFrom = useState<any>('mobile:todo-form', () => null)
+const tabs = computed(() => [
+  { label: t('tasks.tabs.approval'), value: 'myApproval' as const },
+  { label: t('tasks.tabs.requests'), value: 'myRequests' as const },
+  { label: t('tasks.tabs.tasks'), value: 'myTasks' as const },
+  { label: t('tasks.tabs.approved'), value: 'approved' as const },
+])
 
-const tabs = [
-  { label: 'My Approvals', value: 'approvals' },
-  { label: 'My Requests', value: 'requests' },
-  { label: 'My Tasks', value: 'tasks' },
-] as const
-
-const activeTab = ref<TodoView>('approvals')
-const activeTabLabel = computed(() => tabs.find(tab => tab.value === activeTab.value)?.label || 'My Approvals')
+const activeTabLabel = computed(() => tabs.value.find(tab => tab.value === todosStore.activeListKey)?.label || t('tasks.tabs.approval'))
+const loading = computed(() => todosStore.activeLoading)
 const filters = computed(() => [
   {
     key: 'filter1',
     label: `${activeTabLabel.value} Business`,
-    options: ['All', 'IT (14)', 'Finance (3)', 'Legal (20)', 'Motor (2)'],
+    options: [
+      { label: t('mobile.todo.filters.all'), value: 'all' },
+      ...createTodoFilterOptions(todosStore.activeTodoList, getTodoCategoryLabel).map(option => ({
+        label: option.label,
+        value: option.value,
+      })),
+    ],
   },
   {
     key: 'filter2',
     label: `${activeTabLabel.value} Status`,
-    options: ['All', 'Pending', 'Approved', 'Rejected'],
+    options: [
+      { label: t('mobile.todo.filters.all'), value: 'all' },
+      ...createTodoFilterOptions(categoryFilteredTasks.value, getTodoStatusLabel).map(option => ({
+        label: option.label,
+        value: option.value,
+      })),
+    ],
   },
 ] as const)
 type FilterKey = 'filter1' | 'filter2'
@@ -266,8 +273,8 @@ type FilterKey = 'filter1' | 'filter2'
 const openFilterKey = ref<FilterKey | null>(null)
 const searchQuery = ref('')
 const selectedFilters = reactive<Record<FilterKey, string>>({
-  filter1: 'All',
-  filter2: 'All',
+  filter1: 'all',
+  filter2: 'all',
 })
 
 const searchPlaceholder = computed(() => `Search ${activeTabLabel.value.replace(/^My\s+/, '')}`)
@@ -281,48 +288,24 @@ const selectFilter = (key: FilterKey, option: string) => {
   openFilterKey.value = null
 }
 
-const isRecord = (value: any): value is TodoRecord => {
-  return !!value && typeof value === 'object' && !Array.isArray(value)
-}
-
-const getStringValue = (record: TodoRecord, key: string) => {
-  const value = record[key]
-
-  if (typeof value === 'string' || typeof value === 'number') {
-    return String(value).trim()
-  }
-
-  return ''
-}
-
-const getNestedStringValue = (record: TodoRecord, parentKey: string, key: string) => {
-  const parent = record[parentKey]
-
-  if (!isRecord(parent)) {
-    return ''
-  }
-
-  return getStringValue(parent, key)
+const getSelectedFilterLabel = (key: FilterKey) => {
+  return filters.value
+    .find(filter => filter.key === key)
+    ?.options.find(option => option.value === selectedFilters[key])
+    ?.label || t('mobile.todo.filters.all')
 }
 
 const normalizeFilterValue = (value?: string | number | null) => {
-  return String(value || '')
-    .replace(/\s*\(\d+\)\s*$/, '')
-    .trim()
-    .toLowerCase()
+  return normalizeTodoFilterValue(String(value || '').replace(/\s*\(\d+\)\s*$/, ''))
 }
 
-const getTaskReference = (task: TodoRecord) => {
-  return getStringValue(task, 'requestmark')
-    || getStringValue(task, 'requestId')
-    || getStringValue(task, 'referenceNo')
-    || getStringValue(task, 'code')
-    || getStringValue(task, 'id')
+const getTaskReference = (task: WorkflowTodoItem) => {
+  return task.requestmark || task.requestId || task.cid
 }
 
-const getTaskStatus = (task: TodoRecord) => {
-  return getStringValue(task, 'status')
-    || getStringValue(task, 'currentNodeName')
+const getTaskStatus = (task: WorkflowTodoItem) => {
+  return task.status
+    || task.currentNodeName
     || 'Pending'
 }
 
@@ -344,76 +327,54 @@ const formatTaskDate = (date: string) => {
   return date.length > 10 ? date.slice(0, 10) : date
 }
 
-const getSearchFields = (row: TableRow) => {
+const getSearchFields = (task: WorkflowTodoItem) => {
   return [
-    row.approvalNo,
-    row.subject,
-    row.submittedBy,
-    row.platform,
-    row.status,
-    row.dateSubmitted,
+    getTaskReference(task),
+    task.requestName,
+    task.creatorName,
+    task.workflowBaseInfo?.workflowName,
+    task.workflowBaseInfo?.workflowTypeName,
+    getTaskStatus(task),
+    task.createTime,
   ].map(field => normalizeFilterValue(field))
 }
 
-const matchesCategoryFilter = (row: TableRow) => {
+const categoryFilteredTasks = computed(() => {
   const selectedCategory = normalizeFilterValue(selectedFilters.filter1)
 
   if (selectedCategory === 'all') {
-    return true
+    return todosStore.activeTodoList
   }
 
-  return [row.approvalNo, row.subject, row.platform]
-    .map(field => normalizeFilterValue(field))
-    .some(field => field.includes(selectedCategory))
-}
+  return todosStore.activeTodoList.filter((task) => {
+    return normalizeFilterValue(getTodoCategoryLabel(task)) === selectedCategory
+  })
+})
 
-const matchesStatusFilter = (row: TableRow) => {
+const statusFilteredTasks = computed(() => {
   const selectedStatus = normalizeFilterValue(selectedFilters.filter2)
 
   if (selectedStatus === 'all') {
-    return true
+    return categoryFilteredTasks.value
   }
 
-  return normalizeFilterValue(row.status).includes(selectedStatus)
-}
+  return categoryFilteredTasks.value.filter((task) => {
+    return normalizeFilterValue(getTodoStatusLabel(task)) === selectedStatus
+  })
+})
 
-const matchesSearchFilter = (row: TableRow) => {
+const matchesSearchFilter = (task: WorkflowTodoItem) => {
   const keyword = normalizeFilterValue(searchQuery.value)
 
   if (!keyword) {
     return true
   }
 
-  return getSearchFields(row).some(field => field.includes(keyword))
+  return getSearchFields(task).some(field => field.includes(keyword))
 }
 
-const allRows = computed<TableRow[]>(() => {
-  return list.value.map((item, index) => {
-    const task = isRecord(item) ? item : {}
-    const status = getTaskStatus(task)
-    const workflowName = getNestedStringValue(task, 'workflowBaseInfo', 'workflowName')
-    const workflowTypeName = getNestedStringValue(task, 'workflowBaseInfo', 'workflowTypeName')
-    const reference = getTaskReference(task)
-
-    return {
-      id: getStringValue(task, 'id') || getStringValue(task, 'requestId') || reference || String(index),
-      requestId: getStringValue(task, 'requestId') || getStringValue(task, 'id') || reference,
-      approvalNo: reference || '-',
-      subject: formatRequestName(getStringValue(task, 'requestName') || getStringValue(task, 'title')) || '-',
-      submittedBy: getStringValue(task, 'creatorName') || getStringValue(task, 'submittedBy') || '-',
-      platform: workflowName || workflowTypeName || getStringValue(task, 'platform') || '-',
-      status,
-      statusClass: getTaskStatusClass(status),
-      dateSubmitted: formatTaskDate(getStringValue(task, 'createTime') || getStringValue(task, 'date') || getStringValue(task, 'submitDate')),
-      raw: item,
-    }
-  })
-})
-
 const tableRows = computed(() => {
-  return allRows.value.filter((row) => {
-    return matchesSearchFilter(row) && matchesCategoryFilter(row) && matchesStatusFilter(row)
-  })
+  return statusFilteredTasks.value.filter(matchesSearchFilter)
 })
 
 const recordCountText = computed(() => {
@@ -424,35 +385,37 @@ const recordCountText = computed(() => {
   return `1 to ${tableRows.value.length} of ${tableRows.value.length} records`
 })
 
-const handleRowClick = (row: TableRow) => {
-  toDoFrom.value = row.raw
-  const targetId = row.approvalNo && row.approvalNo !== '-'
-    ? row.approvalNo
-    : row.requestId
+const handleRowClick = (task: WorkflowTodoItem) => {
+  activeTodo.value = task
+  legacyTodoForm.value = task
 
-  if (!targetId) {
+  if (!task.requestId) {
     return
   }
 
   return navigateTo({
-    path: `/desktop/todo/${encodeURIComponent(targetId)}`,
+    path: `/desktop/todo/${encodeURIComponent(task.requestId)}`,
     query: {
-      requestId: row.requestId || targetId,
+      requestId: task.requestId,
     },
   })
 }
 
-watch(
-  activeTab,
-  async (view) => {
-    searchQuery.value = ''
-    selectedFilters.filter1 = 'All'
-    selectedFilters.filter2 = 'All'
-    openFilterKey.value = null
-    await fetchByView(view)
-  },
-  { immediate: true },
-)
+const resetFilters = () => {
+  searchQuery.value = ''
+  selectedFilters.filter1 = 'all'
+  selectedFilters.filter2 = 'all'
+  openFilterKey.value = null
+}
+
+const selectTab = (listKey: TodoListKey) => {
+  resetFilters()
+  void todosStore.selectTodoList(listKey, { query: { pageSize: 100 } })
+}
+
+onMounted(() => {
+  void todosStore.selectTodoList('myApproval', { query: { pageSize: 100 } })
+})
 </script>
 
 <style scoped>

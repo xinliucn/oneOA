@@ -224,9 +224,20 @@ const { t } = useAppI18n()
 const route = useRoute()
 const todosStore = useTodosStore()
 const { openGuardedUrl } = useNetworkGuard()
+const { showToast } = useMobileToast()
 const requestId = computed(() => String(route.params.id || '').trim())
 const isAttachmentRoute = computed(() => route.path.includes('/attachments'))
 const headerTitle = computed(() => {
+  const notificationReference = typeof route.query.notificationReference === 'string'
+    ? route.query.notificationReference.trim()
+    : ''
+
+  if (notificationReference) {
+    return t('mobile.approval.notificationTitleWithReference', {
+      reference: notificationReference,
+    })
+  }
+
   const title = typeof route.query.title === 'string' ? route.query.title : 'approval'
   return t(`tasks.tabs.${title}`)
 })
@@ -307,16 +318,74 @@ const confirmButtonLabel = computed(() => {
   return workflowDetail.value?.processInfo?.submitButtonName || t('mobile.approval.actions.submit')
 })
 const isConfirmDisabled = computed(() => {
-  return submittingAction.value || (actionMode.value === 'approveReject' && !selectedAction.value)
+  return submittingAction.value || (actionMode.value === 'approveReject' && selectedAction.value !== 'Approve')
+})
+const approvePayload = computed(() => {
+  const params = workflowDetail.value?.formInfo?.params
+
+  return {
+    requestId: requestId.value,
+    nodeId: String(params?.nodeid ?? params?.currentnodeid ?? ''),
+    workflowId: String(params?.workflowid ?? ''),
+    remark: actionComment.value,
+  }
 })
 
 const handleBack = () => navigateTo('/mobile/todo')
 
-const selectAction = (action: ApprovalAction) => {
-  selectedAction.value = action
+const rejectWorkflow = async () => {
+  if (!requestId.value || submittingAction.value) {
+    return
+  }
+
+  submittingAction.value = true
+  try {
+    const response = await todosStore.rejectWorkflowRequest(requestId.value)
+    showToast(response?.code === 'SUCCESS' ? t('mobile.approval.actions.rejected') : t('mobile.approval.actions.rejectFailed'), response?.code === 'SUCCESS' ? 'reject' : 'error')
+    if (response?.code === 'SUCCESS') {
+      await navigateTo('/mobile/todo')
+    }
+  }
+  catch {
+    showToast(t('mobile.approval.actions.rejectFailed'), 'error')
+  }
+  finally {
+    submittingAction.value = false
+  }
 }
 
-const handleConfirm = () => { }
+const selectAction = (action: ApprovalAction) => {
+  selectedAction.value = action
+
+  if (action === 'Reject') {
+    void rejectWorkflow()
+  }
+}
+
+const handleConfirm = async () => {
+  if (submittingAction.value) {
+    return
+  }
+
+  if (actionMode.value === 'approveReject' && selectedAction.value !== 'Approve') {
+    return
+  }
+
+  submittingAction.value = true
+  try {
+    const response = await todosStore.approveWorkflowRequest(approvePayload.value)
+    showToast(response?.code === 'SUCCESS' ? t('mobile.approval.actions.submitted') : t('mobile.approval.actions.submitFailed'), response?.code === 'SUCCESS' ? 'success' : 'error')
+    if (response?.code === 'SUCCESS') {
+      await navigateTo('/mobile/todo')
+    }
+  }
+  catch {
+    showToast(t('mobile.approval.actions.submitFailed'), 'error')
+  }
+  finally {
+    submittingAction.value = false
+  }
+}
 
 const openWorkflowDetail = async () => {
   if (!requestId.value) {

@@ -1,5 +1,3 @@
-import { getNotificationApiPrefix } from '../../utils/requestProxy'
-import { proxyWindmill } from '../../utils/windmillProxy'
 import { normalizeNotification } from '../../utils/notification'
 
 export default defineEventHandler(async (event) => {
@@ -46,17 +44,7 @@ export default defineEventHandler(async (event) => {
     }
   }
 
-  const notificationApiPrefix = getNotificationApiPrefix()
-  const params = new URLSearchParams({ id })
-
-  const response = await proxyWindmill<Record<string, any>>(event, `${notificationApiPrefix}/detail?${params.toString()}`, {
-    method: 'GET',
-    errorMessage: '获取通知详情失败',
-  })
-
-  const candidate = response?.item ?? response?.data?.item ?? response?.data ?? response
-
   return {
-    item: candidate ? normalizeNotification(candidate) : null,
+    item: null,
   }
 })

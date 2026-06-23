@@ -1,12 +1,34 @@
+import type { IncomingNotificationItem } from '~/types/notification'
+
 export default defineNuxtPlugin((nuxtApp) => {
   if (!import.meta.client) {
     return
   }
 
-  const { bootstrap, handleServiceWorkerMessage, startPolling, stopPolling } = useNotification()
+  const notificationsStore = useNotificationsStore()
+
+  const isIncomingNotificationItem = (value: unknown): value is IncomingNotificationItem => {
+    return !!value
+      && typeof value === 'object'
+      && 'id' in value
+      && 'title' in value
+      && 'content' in value
+  }
+
+  const handleServiceWorkerMessage = (payload: unknown) => {
+    if (!payload || typeof payload !== 'object') {
+      return
+    }
+
+    const message = payload as { type?: string, item?: unknown }
+    if (message.type === 'notification:push' && isIncomingNotificationItem(message.item)) {
+      void notificationsStore.ingestNotification(message.item)
+    }
+  }
 
   const registerServiceWorker = async () => {
-    await bootstrap()
+    await notificationsStore.hydrateFromCache()
+    await notificationsStore.fetchNotificationList()
 
     if (!('serviceWorker' in navigator)) {
       return
@@ -16,7 +38,7 @@ export default defineNuxtPlugin((nuxtApp) => {
       await navigator.serviceWorker.register('/sw.js')
 
       navigator.serviceWorker.addEventListener('message', (event) => {
-        void handleServiceWorkerMessage(event.data)
+        handleServiceWorkerMessage(event.data)
       })
     }
     catch (error) {
@@ -26,10 +48,5 @@ export default defineNuxtPlugin((nuxtApp) => {
 
   nuxtApp.hook('app:mounted', () => {
     void registerServiceWorker()
-    startPolling()
-  })
-
-  nuxtApp.hook('app:beforeMount', () => {
-    stopPolling()
   })
 })

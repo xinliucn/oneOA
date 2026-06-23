@@ -15,12 +15,12 @@ definePageMeta({
 .desktop-notifications {
   height: 100%;
   background: #f5f5f5;
-  overflow-y: auto;
+  overflow: hidden;
   padding: 0;
 }
 
 .desktop-notifications :deep(.notification-panel) {
-  min-height: 100%;
+  height: 100%;
   max-width: 960px;
   margin: 0 auto;
   background: #ffffff;

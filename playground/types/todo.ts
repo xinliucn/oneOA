@@ -69,7 +69,10 @@ export interface TodoListFetchOptions {
 
 export interface TodoListApiResponse {
   success?: boolean
-  data?: WorkflowTodoList
+  data?: WorkflowTodoList | {
+    data?: WorkflowTodoList
+    [key: string]: unknown
+  }
   myApprovalList?: WorkflowTodoList
   myRequestList?: WorkflowTodoList
   myTaskList?: WorkflowTodoList
@@ -290,6 +293,45 @@ export interface WorkflowFormAttachmentsProxyResponse {
 export interface WorkflowFormAttachmentsApiResponse {
   success: boolean
   data: WorkflowFormAttachment[]
+}
+
+export interface RejectWorkflowRequestProxyResponse {
+  code: string
+  errMsg: Record<string, unknown>
+  reqFailMsg: {
+    msgInfo?: Record<string, unknown>
+    otherParams?: Record<string, unknown>
+    keyParameters?: Record<string, unknown>
+    [key: string]: unknown
+  }
+}
+
+export interface RejectWorkflowRequestApiResponse {
+  success: boolean
+  data: RejectWorkflowRequestProxyResponse
+}
+
+export interface ApproveWorkflowRequestPayload {
+  requestId: string
+  nodeId: string
+  workflowId: string
+  remark?: string
+}
+
+export interface ApproveWorkflowRequestProxyResponse {
+  code: string
+  errMsg: Record<string, unknown>
+  reqFailMsg: {
+    msgInfo?: Record<string, unknown>
+    otherParams?: Record<string, unknown>
+    keyParameters?: Record<string, unknown>
+    [key: string]: unknown
+  }
+}
+
+export interface ApproveWorkflowRequestApiResponse {
+  success: boolean
+  data: ApproveWorkflowRequestProxyResponse
 }
 
 export interface CurrentWorkflowOperator {

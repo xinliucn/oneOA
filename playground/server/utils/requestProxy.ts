@@ -22,7 +22,6 @@ type RuntimeConfigWithProxy = {
   trustedProxyIps?: string | string[]
   public: {
     apiBase?: string
-    notificationApiPrefix?: string
   }
 }
 
@@ -186,15 +185,6 @@ export const forwardSetCookieHeaders = (event: H3Event, response: { headers: Hea
         .map(cookie => normalizeSetCookieForCurrentHost(event, cookie)),
     )
   }
-}
-
-/**
- * 获取通知模块的 API 路径前缀。
- * 优先读取 config.public.notificationApiPrefix，未配置时使用默认值。
- */
-export const getNotificationApiPrefix = () => {
-  const config = useRuntimeConfig() as unknown as RuntimeConfigWithProxy
-  return config.public.notificationApiPrefix || '/api/r/weaver/notifications'
 }
 
 export const proxyRequest = async <T>(event: H3Event, path: string, options: ProxyRequestOptions = {}): Promise<T> => {

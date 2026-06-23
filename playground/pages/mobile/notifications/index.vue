@@ -15,13 +15,13 @@ definePageMeta({
 .mobile-notifications {
   height: 100%;
   background: #ffffff;
-  overflow-y: auto;
+  overflow: hidden;
 }
 
 .mobile-notifications :deep(.notification-panel) {
   max-width: none;
   max-height: none;
-  min-height: 100%;
+  height: 100%;
   background: #ffffff;
   box-sizing: border-box;
 }

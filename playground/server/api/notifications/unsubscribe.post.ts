@@ -1,5 +1,6 @@
-import { getNotificationApiPrefix } from '../../utils/requestProxy'
 import { proxyWindmill } from '../../utils/windmillProxy'
+
+const NOTIFICATION_API_PREFIX = '/api/r/notification'
 
 export default defineEventHandler(async (event) => {
   const config = useRuntimeConfig()
@@ -17,7 +18,7 @@ export default defineEventHandler(async (event) => {
   }
   try {
     const body = await readBody<Record<string, any>>(event)
-    const response = await proxyWindmill<any>(event, `${getNotificationApiPrefix()}/unsubscribe`, {
+    const response = await proxyWindmill<any>(event, `${NOTIFICATION_API_PREFIX}/unsubscribe`, {
       method: 'POST',
       body,
     })

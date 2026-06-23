@@ -1,7 +1,10 @@
 import { defineStore } from 'pinia'
 import type {
+  ApproveWorkflowRequestApiResponse,
+  ApproveWorkflowRequestPayload,
   CurrentWorkflowOperator,
   CurrentWorkflowOperatorsApiResponse,
+  RejectWorkflowRequestApiResponse,
   TodoListApiResponse,
   TodoListFetchOptions,
   TodoListKey,
@@ -45,7 +48,19 @@ const getTodoListFromResponse = (
     return response
   }
 
-  return response[field] ?? response.data ?? []
+  if (Array.isArray(response[field])) {
+    return response[field]
+  }
+
+  if (Array.isArray(response.data)) {
+    return response.data
+  }
+
+  if (response.data && typeof response.data === 'object' && Array.isArray(response.data.data)) {
+    return response.data.data
+  }
+
+  return []
 }
 
 const getErrorMessage = (error: unknown) => {
@@ -79,6 +94,8 @@ export const useTodosStore = defineStore('todos', () => {
   const currentWorkflowOperators = reactive<Record<string, CurrentWorkflowOperator[]>>({})
   const currentWorkflowOperatorsLoadingById = reactive<Record<string, boolean>>({})
   const currentWorkflowOperatorsErrorById = reactive<Record<string, string | null>>({})
+  const workflowActionLoadingById = reactive<Record<string, boolean>>({})
+  const workflowActionErrorById = reactive<Record<string, string | null>>({})
 
   const activeTodoList = computed(() => todoLists[activeListKey.value])
   const activeLoading = computed(() => loadingByList[activeListKey.value])
@@ -263,6 +280,65 @@ export const useTodosStore = defineStore('todos', () => {
     }
   }
 
+  const approveWorkflowRequest = async (payload: ApproveWorkflowRequestPayload) => {
+    const normalizedRequestId = String(payload.requestId || '').trim()
+    if (!normalizedRequestId) {
+      return null
+    }
+
+    workflowActionLoadingById[normalizedRequestId] = true
+    workflowActionErrorById[normalizedRequestId] = null
+
+    try {
+      const response = await $fetch<ApproveWorkflowRequestApiResponse>('/api/todos/approveRequest', {
+        method: 'POST',
+        body: {
+          requestId: normalizedRequestId,
+          nodeId: payload.nodeId,
+          workflowId: payload.workflowId,
+          remark: payload.remark || '',
+        },
+      })
+
+      return response.data
+    }
+    catch (error) {
+      workflowActionErrorById[normalizedRequestId] = getErrorMessage(error)
+      throw error
+    }
+    finally {
+      workflowActionLoadingById[normalizedRequestId] = false
+    }
+  }
+
+  const rejectWorkflowRequest = async (requestId: string | number) => {
+    const normalizedRequestId = String(requestId || '').trim()
+    if (!normalizedRequestId) {
+      return null
+    }
+
+    workflowActionLoadingById[normalizedRequestId] = true
+    workflowActionErrorById[normalizedRequestId] = null
+
+    try {
+      const response = await $fetch<RejectWorkflowRequestApiResponse>('/api/todos/rejectRequest', {
+        method: 'POST',
+        body: {
+          requestId: normalizedRequestId,
+        },
+      })
+
+      return response.data
+    }
+    catch (error) {
+      workflowActionErrorById[normalizedRequestId] = getErrorMessage(error)
+      throw error
+    }
+    finally {
+      workflowActionLoadingById[normalizedRequestId] = false
+    }
+  }
+
   const clearTodoLists = () => {
     const listKeys = Object.keys(todoLists) as TodoListKey[]
 
@@ -278,6 +354,7 @@ export const useTodosStore = defineStore('todos', () => {
     activeListKey,
     activeLoading,
     activeTodoList,
+    approveWorkflowRequest,
     clearTodoLists,
     currentWorkflowOperators,
     currentWorkflowOperatorsErrorById,
@@ -291,6 +368,7 @@ export const useTodosStore = defineStore('todos', () => {
     fetchWorkflowFormWeaverUrl,
     loadedByList,
     loadingByList,
+    rejectWorkflowRequest,
     selectTodoList,
     setActiveListKey,
     todoLists,
@@ -303,5 +381,7 @@ export const useTodosStore = defineStore('todos', () => {
     workflowFormWeaverUrlLoadingById,
     workflowFormWeaverUrls,
     workflowForms,
+    workflowActionErrorById,
+    workflowActionLoadingById,
   }
 })

@@ -43,25 +43,72 @@
       </div>
       <div
         v-else
+        ref="listRef"
         class="notification-panel__list"
       >
-        <NotificationItem
-          v-for="item in filteredNotifications"
-          :key="item.id"
-          :item="item"
-          :variant="props.variant"
-          @select="handleSelect"
-        />
+        <FixedSizeList
+          v-if="virtualListHeight > 0"
+          ref="virtualListRef"
+          class-name="notification-panel__virtual-list"
+          :data="filteredNotifications"
+          :height="virtualListHeight"
+          :item-size="itemHeight"
+          :total="filteredNotifications.length"
+          :cache="6"
+          :scrollbar-always-on="false"
+          @item-rendered="handleItemRendered"
+        >
+          <template #default="{ data, index, style }">
+            <div
+              v-if="data[index]"
+              :style="style"
+            >
+              <button
+                :key="data[index].id"
+                :class="['notification-panel__item', `notification-panel__item--${props.variant}`, { unread: isNotificationUnread(data[index]) }]"
+                type="button"
+                @click="handleSelect(data[index])"
+              >
+                <div class="notification-panel__item-main">
+                  <div class="notification-panel__item-top">
+                    <span class="notification-panel__item-title">
+                      {{ formatNotificationListTitle(data[index], locale) }}
+                    </span>
+                    <span class="notification-panel__item-time">
+                      {{ formatNotificationTime(data[index]) }}
+                    </span>
+                  </div>
+
+                  <p
+                    v-if="formatNotificationSubtitle(data[index])"
+                    class="notification-panel__item-subtitle"
+                  >
+                    {{ formatNotificationSubtitle(data[index]) }}
+                  </p>
+                </div>
+
+                <span
+                  v-if="isNotificationUnread(data[index])"
+                  class="notification-panel__item-dot"
+                />
+              </button>
+            </div>
+          </template>
+        </FixedSizeList>
       </div>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
+import { FixedSizeList } from 'element-plus/es/components/virtual-list'
+import type { FixedSizeListInstance } from 'element-plus/es/components/virtual-list'
 import type { NotificationItem } from '~/types/notification'
 import {
   formatNotificationLocalizedText,
-  formatNotificationTitle,
+  formatNotificationListTitle,
+  formatNotificationSubtitle,
+  getNotificationTimestamp,
   isNotificationUnread,
   sortNotificationsForDisplay,
 } from '~/utils/notification'
@@ -72,27 +119,41 @@ const props = withDefaults(defineProps<{
   variant: 'page',
 })
 
-const emit = defineEmits<{
-  close: []
-}>()
-
-const {
-  notifications,
-  unreadCount,
-  loading,
-  bootstrap,
-  markAsRead,
-} = useNotification()
+const notificationsStore = useNotificationsStore()
 const route = useRoute()
-const toDoFrom: any = useState('mobile:todo-form', () => null)
+const { openGuardedUrl } = useNetworkGuard()
 const { locale, t } = useAppI18n()
 
+const ITEM_HEIGHT_BY_VARIANT = {
+  page: 86,
+  desktopPopover: 86,
+}
+const LOAD_MORE_THRESHOLD = 5
+
 const activeFilter = ref('all')
+const listRef = shallowRef<HTMLElement>()
+const listHeight = ref(0)
+const virtualListRef = ref<FixedSizeListInstance>()
+let resizeObserver: ResizeObserver | null = null
+const notifications = computed(() => notificationsStore.notificationItems)
+const unreadCount = computed(() => notificationsStore.unreadCount)
+const loading = computed(() => notificationsStore.loading)
+const itemHeight = computed(() => props.variant === 'desktop-popover'
+  ? ITEM_HEIGHT_BY_VARIANT.desktopPopover
+  : ITEM_HEIGHT_BY_VARIANT.page)
+const virtualListHeight = computed(() => {
+  if (listHeight.value > 0) {
+    return listHeight.value
+  }
+
+  return props.variant === 'desktop-popover' ? 480 : 0
+})
 
 const getNotificationCategoryText = (item: NotificationItem) => {
   return [
     formatNotificationLocalizedText(item.category, locale.value),
-    formatNotificationLocalizedText(getPayloadString(item.payload, ['msgCategory', 'msg_category', 'category', 'type']), locale.value),
+    formatNotificationLocalizedText(item.msg_category || '', locale.value),
+    formatNotificationLocalizedText(getPayloadString(item.payload_json, ['msgCategory', 'msg_category', 'category', 'type']), locale.value),
     item.source,
   ]
     .filter(Boolean)
@@ -154,16 +215,41 @@ const filteredNotifications = computed(() => {
   return sortedNotifications
 })
 
-const isExternalLink = (link: string) => /^https?:\/\//i.test(link)
+const handleItemRendered = (_cacheStart: number, _cacheEnd: number, _visibleStart: number, visibleEnd: number) => {
+  if (!notificationsStore.hasMore || notificationsStore.loading) {
+    return
+  }
 
-const isApiLink = (link: string) => {
-  try {
-    const parsed = new URL(link, 'https://superapp.local')
-    return parsed.pathname.startsWith('/api/')
+  if (visibleEnd >= filteredNotifications.value.length - LOAD_MORE_THRESHOLD) {
+    void notificationsStore.loadMore()
   }
-  catch {
-    return link.startsWith('/api/')
+}
+
+const updateListHeight = () => {
+  listHeight.value = listRef.value?.clientHeight || 0
+}
+
+const formatNotificationTime = (item: NotificationItem) => {
+  const timestamp = getNotificationTimestamp(item)
+
+  if (!timestamp) {
+    return ''
   }
+
+  const diff = Math.max(0, Date.now() - timestamp)
+  const minute = 60 * 1000
+  const hour = 60 * minute
+  const day = 24 * hour
+
+  if (diff < hour) {
+    return `${Math.max(1, Math.floor(diff / minute))}m ago`
+  }
+
+  if (diff < day) {
+    return `${Math.floor(diff / hour)}h ago`
+  }
+
+  return `${Math.floor(diff / day)}d ago`
 }
 
 const getPayloadString = (payload: Record<string, any> | null | undefined, keys: string[]) => {
@@ -184,102 +270,77 @@ const getPayloadString = (payload: Record<string, any> | null | undefined, keys:
   return ''
 }
 
-const getRequestIdFromLink = (link?: string) => {
-  if (!link) {
-    return ''
-  }
-
-  try {
-    const parsed = new URL(link, 'https://superapp.local')
-    return parsed.searchParams.get('requestId')
-      || parsed.searchParams.get('requestid')
-      || parsed.searchParams.get('request_id')
-      || ''
-  }
-  catch {
-    return ''
-  }
-}
-
 const getNotificationRequestId = (item: NotificationItem) => {
-  return item.requestId?.trim()
-    || getPayloadString(item.payload, ['requestId', 'requestid', 'request_id'])
-    || getRequestIdFromLink(item.link)
+  return getPayloadString(item.payload_json, ['requestId', 'requestid', 'request_id'])
+    || item.request_id?.trim()
+    || item.requestId?.trim()
     || ''
 }
 
-const getNotificationReference = (item: NotificationItem, requestId: string) => {
-  return getPayloadString(item.payload, ['requestMark', 'requestmark', 'requestNo', 'request_no', 'referenceNo', 'referenceId'])
-    || item.referenceId?.trim()
-    || requestId
-}
-
 const handleSelect = async (item: NotificationItem) => {
-  void markAsRead(item.id)
-
-  const isMobileRoute = route.path.startsWith('/mobile')
+  console.log('Selected notification:', item)
+  await notificationsStore.markAsReadLocal(item.id)
 
   const requestId = getNotificationRequestId(item)
+  const numericRequestId = Number(requestId)
 
-  if (requestId) {
-    const reference = getNotificationReference(item, requestId)
-    toDoFrom.value = {
-      requestId,
-      requestmark: reference,
-      requestName: formatNotificationTitle(item.title, locale.value),
-      status: formatNotificationLocalizedText(item.category, locale.value) || 'Pending',
-      creatorName: item.creator || item.source,
-      createTime: item.createdAt,
-      receiveTime: item.createdAt,
-      workflowBaseInfo: {
-        workflowName: item.sourceSystem || item.summary,
-      },
-    }
-
-    emit('close')
-
-    await navigateTo({
-      path: isMobileRoute
-        ? `/mobile/approval/${encodeURIComponent(reference)}`
-        : `/desktop/todo/${encodeURIComponent(reference)}`,
-      query: {
-        requestId,
-        source: 'notification',
-        notificationId: item.id,
-      },
-    })
+  if (!Number.isInteger(numericRequestId) || numericRequestId === 0) {
     return
   }
 
-  const fallback = isMobileRoute
-    ? `/mobile/notifications/${encodeURIComponent(item.id)}`
-    : `/desktop/notification/${encodeURIComponent(item.id)}`
-  const itemLink = item.link?.trim() || ''
-  const target = itemLink && !isApiLink(itemLink) ? itemLink : fallback
+  if (numericRequestId < 0) {
+    const workflowUrl = `https://platform-uat.dchbi.app/workflow/request/ViewRequestForwardSPA.jsp?requestid=${encodeURIComponent(String(numericRequestId))}`
+    void openGuardedUrl(workflowUrl, '_self')
+    return
+  }
 
-  emit('close')
-
-  await navigateTo(target, {
-    external: isExternalLink(target),
+  return navigateTo({
+    path: route.path.startsWith('/mobile')
+      ? `/mobile/todo/${encodeURIComponent(String(numericRequestId))}`
+      : `/desktop/todo/${encodeURIComponent(String(numericRequestId))}`,
+    query: route.path.startsWith('/mobile')
+      ? { notificationReference: String(numericRequestId) }
+      : undefined,
   })
 }
 
 onMounted(async () => {
-  await bootstrap()
+  await notificationsStore.hydrateFromCache()
+  await notificationsStore.fetchNotificationList({ force: true })
+  await nextTick()
+  updateListHeight()
+
+  if (import.meta.client && listRef.value) {
+    resizeObserver = new ResizeObserver(updateListHeight)
+    resizeObserver.observe(listRef.value)
+  }
 })
+
+onBeforeUnmount(() => {
+  resizeObserver?.disconnect()
+  resizeObserver = null
+})
+
+watch(
+  activeFilter,
+  () => {
+    virtualListRef.value?.resetScrollTop()
+  },
+)
 </script>
 
 <style scoped>
 .notification-panel {
-  min-height: 100%;
+  height: 100%;
+  min-height: 0;
   display: flex;
   flex-direction: column;
   background: #ffffff;
 }
 
 .notification-panel--desktop-popover {
-  min-height: auto;
-  max-height: min(72vh, 680px);
+  max-height: 72vh;
+  min-height: 420px;
   width: 100%;
   background: #ffffff;
 }
@@ -377,11 +438,13 @@ onMounted(async () => {
 }
 
 .notification-panel__body {
+  min-height: 0;
   flex: 1;
   display: flex;
   flex-direction: column;
   padding-bottom: 0;
   background: #ffffff;
+  overflow: hidden;
 }
 
 .notification-panel__state {
@@ -391,9 +454,128 @@ onMounted(async () => {
 }
 
 .notification-panel__list {
-  display: flex;
-  flex-direction: column;
+  min-height: 0;
+  flex: 1;
   background: #ffffff;
+}
+
+.notification-panel__list :deep(.el-vl__wrapper),
+.notification-panel__list :deep(.notification-panel__virtual-list) {
+  height: 100%;
+}
+
+.notification-panel__list :deep(.el-virtual-scrollbar) {
+  display: none !important;
+}
+
+.notification-panel__list :deep(.el-vl__window) {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.notification-panel__list :deep(.el-vl__window)::-webkit-scrollbar {
+  width: 0;
+  height: 0;
+  display: none;
+}
+
+.notification-panel__item {
+  width: 100%;
+  height: 86px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  box-sizing: border-box;
+  border: 0;
+  border-bottom: 1px solid #ece7ea;
+  background: #ffffff;
+  padding: 12px 14px;
+  text-align: left;
+  transition: background-color 0.2s ease;
+}
+
+.notification-panel__item:hover {
+  background: #faf7f8;
+}
+
+.notification-panel__item.unread {
+  background: #fbf4f7;
+}
+
+.notification-panel__item-main {
+  min-width: 0;
+  flex: 1;
+}
+
+.notification-panel__item-top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.notification-panel__item-title {
+  flex: 1;
+  min-width: 0;
+  font-size: 15px;
+  line-height: 1.35;
+  font-weight: 600;
+  color: #171717;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
+}
+
+.notification-panel__item-time {
+  flex-shrink: 0;
+  font-size: 12px;
+  line-height: 1.3;
+  color: #9b97a0;
+  white-space: nowrap;
+}
+
+.notification-panel__item-subtitle {
+  margin: 2px 0 0;
+  font-size: 13px;
+  line-height: 1.28;
+  color: #1c1c1c;
+  font-weight: 500;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 1;
+  overflow: hidden;
+}
+
+.notification-panel__item-dot {
+  flex-shrink: 0;
+  width: 13px;
+  height: 13px;
+  border-radius: 999px;
+  background: #b10f49;
+}
+
+.notification-panel__item--desktop-popover {
+  padding: 12px 16px;
+}
+
+.notification-panel__item--desktop-popover .notification-panel__item-title {
+  font-size: 16px;
+  line-height: 1.32;
+}
+
+.notification-panel__item--desktop-popover .notification-panel__item-subtitle {
+  font-size: 12px;
+  margin-top: 3px;
+}
+
+.notification-panel__item--desktop-popover .notification-panel__item-time {
+  font-size: 11px;
+}
+
+.notification-panel__item--desktop-popover .notification-panel__item-dot {
+  width: 13px;
+  height: 13px;
 }
 
 :global(.notification-panel__dropdown-popper.el-popper),
@@ -404,28 +586,37 @@ onMounted(async () => {
 }
 
 .notification-panel--desktop-popover .notification-panel__header {
-  padding: 18px 14px 12px;
+  padding: 14px 16px 12px;
   background: #ffffff;
   border-bottom: 1px solid #eadfe3;
 }
 
 .notification-panel--desktop-popover .notification-panel__title-row {
-  margin-bottom: 12px;
+  margin-bottom: 10px;
 }
 
 .notification-panel--desktop-popover .notification-panel__title {
-  font-size: 18px;
+  font-size: 16px;
+  line-height: 1.25;
 }
 
 .notification-panel--desktop-popover .notification-panel__filters {
-  gap: 6px;
-  padding-bottom: 2px;
+  flex-wrap: wrap;
+  gap: 8px;
+  overflow: visible;
+  padding-bottom: 0;
 }
 
 .notification-panel--desktop-popover .notification-panel__filter {
-  padding: 8px 13px;
+  flex-shrink: 1;
+  min-height: 32px;
+  padding: 6px 12px;
   font-size: 12px;
   color: #7a7477;
+}
+
+.notification-panel--desktop-popover .notification-panel__filter-label {
+  font-size: 14px;
 }
 
 .notification-panel--desktop-popover .notification-panel__filter.is-active {
@@ -438,12 +629,14 @@ onMounted(async () => {
 }
 
 .notification-panel--desktop-popover .notification-panel__body {
-  overflow-y: auto;
   padding-bottom: 0;
   background: #ffffff;
 }
 
 .notification-panel--desktop-popover .notification-panel__list {
   background: #ffffff;
+}
+.el-scrollbar__thumb {
+  background-color: none !important;
 }
 </style>

@@ -31,7 +31,7 @@ const parseNotificationTimestamp = (value: unknown) => {
 }
 
 export const getNotificationTimestamp = (item: NotificationItem) => {
-  const raw = item.payload?.msgPublishAt || item.updated_at || item.created_at || item.createdAt
+  const raw = item.payload_json?.msgPublishAt || item.msg_publish_at || item.updated_at || item.created_at || item.createdAt
   const timestamp = parseNotificationTimestamp(raw)
 
   return Number.isFinite(timestamp) ? timestamp : 0
@@ -215,18 +215,20 @@ const getPayloadString = (payload: NotificationItem['payload'], keys: string[]) 
 
 const getNotificationBusinessName = (item: NotificationItem, locale: string) => {
   return formatNotificationLocalizedText(item.businessName, locale)
-    || formatNotificationLocalizedText(getPayloadString(item.payload, ['BusinessName', 'businessName', 'business_name', 'business', 'businessUnit']), locale)
+    || formatNotificationLocalizedText(getPayloadString(item.payload_json, ['BusinessName', 'businessName', 'business_name', 'business', 'businessUnit']), locale)
 }
 
 export const formatNotificationListTitle = (item: NotificationItem, locale: string) => {
-  const requestNo = getPayloadString(item.payload, [
+  const requestNo = getPayloadString(item.payload_json, [
     'requestNo',
     'request_no',
     'requestMark',
     'requestmark',
     'referenceNo',
   ])
-  const body = formatNotificationLocalizedText(item.content, locale)
+  || item.request_id?.trim()
+  || item.requestId?.trim()
+  const body = formatNotificationLocalizedText(item.content || item.body, locale)
   const businessName = getNotificationBusinessName(item, locale)
 
   if (businessName) {
@@ -244,9 +246,14 @@ export const formatNotificationListTitle = (item: NotificationItem, locale: stri
 }
 
 export const formatNotificationSubtitle = (item: NotificationItem) => {
-  return getPayloadString(item.payload, [
+  return getPayloadString(item.payload_json, [
     'referenceId',
-  ]) || item.referenceId?.trim() || ''
+  ])
+  || item.referenceId?.trim()
+  || item.request_id?.trim()
+  || item.requestId?.trim()
+  || item.subtitle?.trim()
+  || ''
 }
 
 export const getLatestNotificationId = (items: NotificationItem[]) => {
@@ -267,7 +274,7 @@ export const getLatestNotificationId = (items: NotificationItem[]) => {
 }
 
 export const isNotificationUnread = (item: NotificationItem) => {
-  if (item.readAt) {
+  if (item.readAt || String(item.is_read) === '1') {
     return false
   }
 

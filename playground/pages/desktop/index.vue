@@ -37,7 +37,7 @@
       <DesktopApplications />
       <div class="desktop__bottom-row">
         <GroupNews />
-        <TasksList />
+        <DesktopTasksList />
       </div>
     </div>
 

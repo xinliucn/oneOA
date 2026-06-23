@@ -4,7 +4,7 @@
     v-model:visible="isDesktopPopoverOpen"
     trigger="click"
     placement="bottom-end"
-    :width="360"
+    :width="420"
     popper-class="notification-bell-popover notification-bell-popover--desktop"
   >
     <template #reference>
@@ -66,8 +66,8 @@ const props = withDefaults(defineProps<{
 })
 
 const route = useRoute()
+const notificationsStore = useNotificationsStore()
 const mobileReturnPath = useState<string>('mobile:notification:return-path', () => '/mobile')
-const { unreadCount, bootstrap, startPolling, stopPolling } = useNotification()
 const buttonSizePx = computed(() => `${props.buttonSize}px`)
 const isMobileContext = computed(() => route.path.startsWith('/mobile'))
 const isDesktopPopoverOpen = ref(false)
@@ -80,10 +80,11 @@ const isActive = computed(() => {
 })
 
 const badgeValue = computed(() => {
-  if (unreadCount.value > 99) {
+  if (notificationsStore.unreadCount > 99) {
     return '99+'
   }
-  return unreadCount.value
+
+  return notificationsStore.unreadCount || ''
 })
 
 const badgeRenderKey = computed(() => `${isMobileContext.value ? 'mobile' : 'desktop'}-${badgeValue.value}`)
@@ -111,14 +112,14 @@ watch(
   },
 )
 
-onMounted(async () => {
-  await bootstrap()
-  startPolling()
-})
-
-onBeforeUnmount(() => {
-  stopPolling()
-})
+watch(
+  isDesktopPopoverOpen,
+  async (isOpen) => {
+    if (isOpen) {
+      await notificationsStore.fetchNotificationList({ force: true })
+    }
+  },
+)
 </script>
 
 <style scoped>

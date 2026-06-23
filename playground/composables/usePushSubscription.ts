@@ -335,8 +335,8 @@ export const usePushSubscription = () => {
 
     client.onMessage(client.messaging, (payload: any) => {
       try {
-        const { ingestNotification } = useNotification()
-        void ingestNotification(normalizeIncomingNotification(payload))
+        const notificationsStore = useNotificationsStore()
+        void notificationsStore.ingestNotification(normalizeIncomingNotification(payload))
       }
       catch (error) {
         console.error('Handle FCM foreground message failed:', error)

@@ -231,11 +231,5 @@ const mockServices: TioTopic[] = [
 ]
 
 export default defineEventHandler(() => {
-  const config = useRuntimeConfig()
-
-  if (config.mockEnabled) {
     return mockServices
-  }
-
-  return []
 })
