@@ -79,25 +79,21 @@
 </template>
 
 <script setup lang="ts">
+import { usePushSubscriptionStore } from '~/stores/pushSubscription'
+
 const { user, logout } = useAuth()
 
 definePageMeta({ layout: 'mobile', middleware: 'auth' })
-const {
-  status: pushStatus,
-  errorMessage: pushErrorMessage,
-  subscribe,
-  unsubscribe,
-  init: initPushSubscription,
-} = usePushSubscription()
+const pushSubscriptionStore = usePushSubscriptionStore()
 const { t } = useAppI18n()
 const { showToast } = useMobileToast()
 
-const isPushToggleLoading = ref(false)
 const subscriptionPrompt = reactive({
   visible: false,
   type: 'enabled' as 'enabled' | 'disabled',
 })
-const pushToggleOn = computed(() => pushStatus.value === 'subscribed')
+const pushToggleOn = computed(() => pushSubscriptionStore.isSubscribed)
+const isPushToggleLoading = computed(() => pushSubscriptionStore.toggling)
 
 const displayName = computed(() => {
   return user.value?.name || user.value?.displayName || user.value?.username || t('user.profile')
@@ -130,33 +126,19 @@ const togglePushSubscription = async () => {
     return
   }
 
-  isPushToggleLoading.value = true
+  const result = await pushSubscriptionStore.setEnabled(!pushToggleOn.value)
 
-  try {
-    if (pushToggleOn.value) {
-      const success = await unsubscribe()
-
-      if (success) {
-        showSubscriptionResultPrompt(false)
-        return
-      }
-
-      showToast(pushErrorMessage.value || t('notification.push.subscribeFailed'), 'error', 4500)
-      return
-    }
-
-    const nextSubscription = await subscribe()
-
-    if (nextSubscription) {
-      showSubscriptionResultPrompt(true)
-      return
-    }
-
-    showToast(pushErrorMessage.value || t('notification.push.subscribeFailed'), 'error', 4500)
+  if (result === 'enabled') {
+    showSubscriptionResultPrompt(true)
+    return
   }
-  finally {
-    isPushToggleLoading.value = false
+
+  if (result === 'disabled') {
+    showSubscriptionResultPrompt(false)
+    return
   }
+
+  showToast(pushSubscriptionStore.error || t('notification.push.subscribeFailed'), 'error', 4500)
 }
 
 const handleLogout = async () => {
@@ -164,7 +146,7 @@ const handleLogout = async () => {
 }
 
 onMounted(async () => {
-  await initPushSubscription()
+  await pushSubscriptionStore.init()
 })
 </script>
 

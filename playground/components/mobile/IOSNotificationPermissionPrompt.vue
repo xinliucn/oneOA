@@ -2,7 +2,7 @@
   <ClientOnly>
     <Teleport to="body">
       <div
-        v-if="iosPermissionPrompt.visible"
+        v-if="pushSubscriptionStore.iosPermissionPrompt.visible"
         class="mobile-ios-notification-prompt"
       >
         <section class="mobile-ios-notification-prompt__dialog">
@@ -16,14 +16,14 @@
             <button
               type="button"
               class="mobile-ios-notification-prompt__action"
-              @click="denyIOSPermissionPrompt"
+              @click="pushSubscriptionStore.denyIOSPermissionPrompt"
             >
               {{ t('notification.push.iosPermissionPromptDeny') }}
             </button>
             <button
               type="button"
               class="mobile-ios-notification-prompt__action"
-              @click="allowIOSPermissionPrompt"
+              @click="pushSubscriptionStore.allowIOSPermissionPrompt"
             >
               {{ t('notification.push.iosPermissionPromptAllow') }}
             </button>
@@ -35,11 +35,9 @@
 </template>
 
 <script setup lang="ts">
-const {
-  iosPermissionPrompt,
-  allowIOSPermissionPrompt,
-  denyIOSPermissionPrompt,
-} = usePushSubscription()
+import { usePushSubscriptionStore } from '~/stores/pushSubscription'
+
+const pushSubscriptionStore = usePushSubscriptionStore()
 const { t } = useAppI18n()
 </script>
 

@@ -1,4 +1,5 @@
 import type { AuthUser, AuthUserResponse } from '../types/auth'
+import { usePushSubscriptionStore } from '~/stores/pushSubscription'
 
 export type User = AuthUser
 
@@ -92,8 +93,8 @@ const initPushAfterAuth = () => {
     return
   }
 
-  const { init } = usePushSubscription()
-  void init().catch((error) => {
+  const pushSubscriptionStore = usePushSubscriptionStore()
+  void pushSubscriptionStore.init().catch((error) => {
     console.error('Init push subscription after auth failed:', error)
   })
 }
@@ -120,11 +121,11 @@ export const useAuth = () => {
   const clearLocalData = async () => {
     if (import.meta.client) {
       const { stopPolling } = useNotification()
-      const { unsubscribe } = usePushSubscription()
+      const pushSubscriptionStore = usePushSubscriptionStore()
       const db = useNotificationDB()
 
       stopPolling()
-      await unsubscribe().catch((error) => {
+      await pushSubscriptionStore.unsubscribe().catch((error) => {
         console.error('Clear local push subscription failed:', error)
       })
       await db.clearAll()

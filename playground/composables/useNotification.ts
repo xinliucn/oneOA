@@ -162,7 +162,7 @@ export const useNotification = () => {
 
   silentRefreshHandler = checkNotifications
 
-  // 接收推送或前台 FCM 消息，写入内存状态和 IndexedDB
+  // 接收 Web Push 消息，写入内存状态和 IndexedDB
   const ingestNotification = async (item: NotificationItem) => {
     notifications.value = mergeNotifications(notifications.value, [item])
     serverUnreadCount.value = localUnreadCount.value

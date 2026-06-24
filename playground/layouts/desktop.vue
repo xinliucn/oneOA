@@ -95,11 +95,12 @@
 </template>
 
 <script setup lang="ts">
+import { usePushSubscriptionStore } from '~/stores/pushSubscription'
 import { createUserWatermark, removeWatermark } from '~/utils/watermark'
 import { getDepartmentIntranetUrl, getEShopUrl } from '~/utils/departmentIntranet'
 
 const { logout, user } = useAuth()
-const { unsubscribe } = usePushSubscription()
+const pushSubscriptionStore = usePushSubscriptionStore()
 const { locale, t } = useAppI18n()
 const { openGuardedUrl } = useNetworkGuard()
 const route = useRoute()
@@ -160,7 +161,7 @@ const handleCommand = async (command: string) => {
   }
   else if (command === 'logout') {
     try {
-      await unsubscribe()
+      await pushSubscriptionStore.unsubscribe()
       await logout()
       await navigateTo('/')
     }

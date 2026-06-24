@@ -5,7 +5,26 @@
         <h1 class="notification-panel__title">
           {{ t('notification.title') }}
         </h1>
+        <el-switch
+          v-if="!isMobileRoute"
+          class="notification-panel__push-toggle"
+          :model-value="pushToggleOn"
+          :loading="isPushToggleLoading"
+          :disabled="isPushToggleLoading || !pushToggleEnabled"
+          :active-value="true"
+          :inactive-value="false"
+          active-color="#a60a3a"
+          inactive-color="#d8d2d5"
+          :aria-label="t('notification.push.title')"
+          :before-change="handlePushSwitchBeforeChange"
+        />
       </div>
+      <p
+        v-if="!isMobileRoute && pushInlineError"
+        class="notification-panel__push-error"
+      >
+        {{ pushInlineError }}
+      </p>
 
       <div class="notification-panel__filters">
         <button
@@ -48,6 +67,7 @@
       >
         <FixedSizeList
           v-if="virtualListHeight > 0"
+          :key="virtualListKey"
           ref="virtualListRef"
           class-name="notification-panel__virtual-list"
           :data="filteredNotifications"
@@ -103,6 +123,7 @@
 <script setup lang="ts">
 import { FixedSizeList } from 'element-plus/es/components/virtual-list'
 import type { FixedSizeListInstance } from 'element-plus/es/components/virtual-list'
+import { usePushSubscriptionStore } from '~/stores/pushSubscription'
 import type { NotificationItem } from '~/types/notification'
 import {
   formatNotificationLocalizedText,
@@ -120,9 +141,11 @@ const props = withDefaults(defineProps<{
 })
 
 const notificationsStore = useNotificationsStore()
+const pushSubscriptionStore = usePushSubscriptionStore()
 const route = useRoute()
 const { openGuardedUrl } = useNetworkGuard()
 const { locale, t } = useAppI18n()
+const { showToast } = useMobileToast()
 
 const ITEM_HEIGHT_BY_VARIANT = {
   page: 86,
@@ -134,13 +157,19 @@ const activeFilter = ref('all')
 const listRef = shallowRef<HTMLElement>()
 const listHeight = ref(0)
 const virtualListRef = ref<FixedSizeListInstance>()
+const pushInlineError = ref('')
 let resizeObserver: ResizeObserver | null = null
 const notifications = computed(() => notificationsStore.notificationItems)
 const unreadCount = computed(() => notificationsStore.unreadCount)
 const loading = computed(() => notificationsStore.loading)
+const pushToggleOn = computed(() => pushSubscriptionStore.isSubscribed)
+const isPushToggleLoading = computed(() => pushSubscriptionStore.toggling)
+const pushToggleEnabled = computed(() => pushSubscriptionStore.canToggle)
+const isMobileRoute = computed(() => route.path.startsWith('/mobile'))
 const itemHeight = computed(() => props.variant === 'desktop-popover'
   ? ITEM_HEIGHT_BY_VARIANT.desktopPopover
   : ITEM_HEIGHT_BY_VARIANT.page)
+const virtualListKey = computed(() => `notifications:${activeFilter.value}`)
 const virtualListHeight = computed(() => {
   if (listHeight.value > 0) {
     return listHeight.value
@@ -225,6 +254,34 @@ const handleItemRendered = (_cacheStart: number, _cacheEnd: number, _visibleStar
   }
 }
 
+const showPushError = () => {
+  const message = pushSubscriptionStore.error || t('notification.push.subscribeFailed')
+
+  if (route.path.startsWith('/mobile')) {
+    showToast(message, 'error', 4500)
+    return
+  }
+
+  pushInlineError.value = message
+}
+
+const handlePushSwitchBeforeChange = async () => {
+  if (isPushToggleLoading.value || !pushToggleEnabled.value) {
+    return false
+  }
+
+  pushInlineError.value = ''
+
+  const result = await pushSubscriptionStore.setEnabled(!pushToggleOn.value)
+
+  if (result === 'failed') {
+    showPushError()
+    return false
+  }
+
+  return true
+}
+
 const updateListHeight = () => {
   listHeight.value = listRef.value?.clientHeight || 0
 }
@@ -278,7 +335,6 @@ const getNotificationRequestId = (item: NotificationItem) => {
 }
 
 const handleSelect = async (item: NotificationItem) => {
-  console.log('Selected notification:', item)
   await notificationsStore.markAsReadLocal(item.id)
 
   const requestId = getNotificationRequestId(item)
@@ -305,6 +361,7 @@ const handleSelect = async (item: NotificationItem) => {
 }
 
 onMounted(async () => {
+  void pushSubscriptionStore.init()
   await notificationsStore.hydrateFromCache()
   await notificationsStore.fetchNotificationList({ force: true })
   await nextTick()
@@ -323,9 +380,12 @@ onBeforeUnmount(() => {
 
 watch(
   activeFilter,
-  () => {
+  async () => {
+    await nextTick()
+    updateListHeight()
     virtualListRef.value?.resetScrollTop()
   },
+  { flush: 'post' },
 )
 </script>
 
@@ -370,6 +430,19 @@ watch(
 
 .notification-panel__title-row .notification-panel__title {
   flex: 1;
+}
+
+.notification-panel__push-toggle {
+  flex: 0 0 auto;
+  --el-switch-on-color: #a60a3a;
+  --el-switch-off-color: #d8d2d5;
+}
+
+.notification-panel__push-error {
+  margin: -4px 0 8px;
+  color: #a60a3a;
+  font-size: 12px;
+  line-height: 1.35;
 }
 
 .notification-panel__accent {
