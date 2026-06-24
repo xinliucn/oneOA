@@ -56,9 +56,6 @@ const withTimeout = async <T>(task: Promise<T>, message: string, timeoutMs = 800
 }
 
 export const createPushSubscriptionClient = (options: PushSubscriptionClientOptions) => {
-  const log = (stage: string, detail: Record<string, unknown> = {}) => {
-    console.info('[push-subscription]', stage, detail)
-  }
 
   const isIOS = () => import.meta.client && /iPhone|iPad|iPod/i.test(navigator.userAgent)
 
@@ -111,62 +108,30 @@ export const createPushSubscriptionClient = (options: PushSubscriptionClientOpti
   }
 
   const ensureServiceWorkerRegistration = async () => {
-    log('service-worker:checking')
     const existing = await navigator.serviceWorker.getRegistration()
 
     if (existing?.active) {
-      log('service-worker:active-existing', {
-        scope: existing.scope,
-        scriptURL: existing.active.scriptURL,
-      })
       return existing
     }
-
-    log('service-worker:registering', {
-      hasExistingRegistration: Boolean(existing),
-      existingScope: existing?.scope,
-    })
     const registration = existing || await navigator.serviceWorker.register('/sw.js')
 
     if (registration.active) {
-      log('service-worker:active-after-register', {
-        scope: registration.scope,
-        scriptURL: registration.active.scriptURL,
-      })
       return registration
     }
 
     const installingWorker = registration.installing || registration.waiting
 
     if (!installingWorker) {
-      log('service-worker:no-installing-worker', {
-        scope: registration.scope,
-      })
       return registration
     }
 
-    log('service-worker:waiting-activation', {
-      scope: registration.scope,
-      state: installingWorker.state,
-      scriptURL: installingWorker.scriptURL,
-    })
     await new Promise<void>((resolve, reject) => {
       const timeout = window.setTimeout(() => {
         installingWorker.removeEventListener('statechange', handleStateChange)
-        log('service-worker:activation-timeout', {
-          scope: registration.scope,
-          state: installingWorker.state,
-          scriptURL: installingWorker.scriptURL,
-        })
         reject(new Error('Service Worker 激活超时'))
       }, 8000)
 
       const handleStateChange = () => {
-        log('service-worker:state-change', {
-          scope: registration.scope,
-          state: installingWorker.state,
-          scriptURL: installingWorker.scriptURL,
-        })
 
         if (installingWorker.state !== 'activated') {
           return
@@ -182,28 +147,16 @@ export const createPushSubscriptionClient = (options: PushSubscriptionClientOpti
 
     const activeWorker = registration.active as ServiceWorker | null
 
-    log('service-worker:ready', {
-      scope: registration.scope,
-      activeScriptURL: activeWorker?.scriptURL,
-    })
     return registration
   }
 
   const getApplicationServerKey = () => {
-    log('subscribe:application-server-key:start', {
-      hasVapidPublicKey: Boolean(options.vapidPublicKey),
-      vapidPublicKeyLength: options.vapidPublicKey.length,
-    })
 
     if (!options.vapidPublicKey) {
       throw new Error('未配置 Web Push VAPID 公钥')
     }
 
     const applicationServerKey = urlBase64ToUint8Array(options.vapidPublicKey)
-
-    log('subscribe:application-server-key:done', {
-      byteLength: applicationServerKey.byteLength,
-    })
 
     return applicationServerKey
   }
@@ -223,12 +176,6 @@ export const createPushSubscriptionClient = (options: PushSubscriptionClientOpti
   }
 
   const subscribe = async (): Promise<PushClientSubscription | null> => {
-    log('subscribe:start', {
-      permission: getPermission(),
-      supported: isSupported(),
-      hasVapidPublicKey: Boolean(options.vapidPublicKey),
-      vapidPublicKeyLength: options.vapidPublicKey.length,
-    })
 
     if (!isSupported()) {
       throw new Error('当前浏览器不支持 Web Push')
@@ -238,22 +185,12 @@ export const createPushSubscriptionClient = (options: PushSubscriptionClientOpti
       throw new Error('通知权限未允许')
     }
 
-    log('subscribe:permission-granted')
     const registration = await ensureServiceWorkerRegistration()
-    log('subscribe:registration-ready', {
-      scope: registration.scope,
-      activeScriptURL: registration.active?.scriptURL,
-    })
 
-    log('subscribe:get-existing-start')
     const existingSubscription = await withTimeout(
       registration.pushManager.getSubscription(),
       '读取 Web Push 订阅超时',
     )
-    log('subscribe:get-existing-done', {
-      hasExistingSubscription: Boolean(existingSubscription),
-      endpoint: existingSubscription?.endpoint,
-    })
 
     if (existingSubscription) {
       return existingSubscription.toJSON()
@@ -265,23 +202,14 @@ export const createPushSubscriptionClient = (options: PushSubscriptionClientOpti
       applicationServerKey,
     })
 
-    log('subscribe:push-permission-state', {
-      state: pushPermissionState,
-    })
 
     if (pushPermissionState === 'denied') {
       throw new Error('浏览器拒绝创建 Web Push 订阅')
     }
 
-    log('subscribe:create-start', {
-      note: '等待浏览器创建 Web Push subscription；该浏览器动作不可取消',
-    })
     const subscription = await registration.pushManager.subscribe({
       userVisibleOnly: true,
       applicationServerKey,
-    })
-    log('subscribe:create-done', {
-      endpoint: subscription.endpoint,
     })
 
     return subscription.toJSON()
