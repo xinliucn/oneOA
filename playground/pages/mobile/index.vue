@@ -341,7 +341,7 @@ const { t, locale } = useAppI18n()
 const { requestApplicationCatalogData } = useApplicationCatalog()
 const { newsList, fetchNewsList } = useNewsList()
 const { items: recentItems, hydrate: hydrateRecentItems, addRecentItem } = useRecentItems()
-const applicationsStore = useApplicationsStore()
+const _applicationsStore = useApplicationsStore()
 const { openGuardedUrl } = useNetworkGuard()
 const {
   getFavourite,
@@ -428,8 +428,8 @@ const greetingLabel = computed(() => {
   return t('home.greetings.evening')
 })
 
-const regionOrder = ['HK', 'CN', 'SEA']
-const detailRouteTypes = ['Group']
+const _regionOrder = ['HK', 'CN', 'SEA']
+const _detailRouteTypes = ['Group']
 
 const normalizeString = (value?: any) => {
   if (typeof value === 'string') {
@@ -554,14 +554,14 @@ const getCatalogIcon = (item?: ApplicationCatalogItem) => {
   return 'apps'
 }
 
-const splitMultiValue = (value?: string | null) => {
+const _splitMultiValue = (value?: string | null) => {
   return normalizeString(value)
     .split(/[/,]/)
     .map(item => item.trim())
     .filter(Boolean)
 }
 
-const sortByKnownOrder = (items: string[], order: string[]) => {
+const _sortByKnownOrder = (items: string[], order: string[]) => {
   return [...items].sort((left, right) => {
     const leftIndex = order.indexOf(left)
     const rightIndex = order.indexOf(right)
@@ -823,7 +823,7 @@ const getBusinessAccentColor = (name?: string, color?: string) => {
   return '#a60a3a'
 }
 
-const applicationItems = computed(() => {
+const _applicationItems = computed(() => {
   return businessEntries.value.slice(0, 4).map((item) => {
     const businessName = item.mainTable?.name_en || item.mainTable?.business
 
@@ -890,7 +890,6 @@ const newsItems = computed(() => {
 
   return [...selectedItems, ...fallbackItems].slice(0, 2)
 })
-
 
 const recordRecentItem = (item: Omit<RecentItem, 'visitedAt'>) => {
   addRecentItem(item)

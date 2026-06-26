@@ -184,7 +184,7 @@ type FavouriteItem = {
 
 type ShortcutItem = Pick<RecentItem, 'id' | 'label' | 'subtitle' | 'icon' | 'url' | 'path'>
 
-const { t } = useAppI18n()
+const { t: _t } = useAppI18n()
 const { requestApplicationCatalogData } = useApplicationCatalog()
 const { items: recentItems, hydrate: hydrateRecentItems, addRecentItem } = useRecentItems('desktop')
 const { openGuardedUrl } = useNetworkGuard()
@@ -193,8 +193,8 @@ const {
   saveFavourite,
   items: favouriteItems,
   itemidList: favouriteItemIds,
-  loading: favouriteLoading,
-  saving: favouriteSaving,
+  loading: _favouriteLoading,
+  saving: _favouriteSaving,
 } = useFavourite()
 
 const maxSelected = 8
@@ -398,15 +398,15 @@ const apps = computed(() => {
     .filter((item): item is FavouriteItem => Boolean(item))
 })
 
-const visibleApps = computed<ShortcutItem[]>(() => {
+const _visibleApps = computed<ShortcutItem[]>(() => {
   return activeView.value === 'recents'
     ? recentItems.value.slice(0, maxSelected)
     : apps.value
 })
 
-const isMaxSelected = computed(() => draftSelectedItemIds.value.length >= maxSelected)
+const _isMaxSelected = computed(() => draftSelectedItemIds.value.length >= maxSelected)
 
-const editableFavourites = computed(() => {
+const _editableFavourites = computed(() => {
   const keyword = searchQuery.value.trim().toLowerCase()
   const matchesKeyword = (item: FavouriteItem) => {
     if (!keyword) {
@@ -436,7 +436,7 @@ const isDraftSelected = (itemId: number) => {
   return draftSelectedItemIds.value.includes(itemId)
 }
 
-const openEditModal = () => {
+const _openEditModal = () => {
   draftSelectedItemIds.value = [...selectedItemIds.value].slice(0, maxSelected)
   searchQuery.value = ''
   sortBy.value = 'recent'
@@ -448,7 +448,7 @@ const closeEditModal = () => {
   isEditModalOpen.value = false
 }
 
-const toggleDraftSelection = (itemId: number) => {
+const _toggleDraftSelection = (itemId: number) => {
   if (isDraftSelected(itemId)) {
     draftSelectedItemIds.value = draftSelectedItemIds.value.filter(currentItemId => currentItemId !== itemId)
     return
@@ -461,7 +461,7 @@ const toggleDraftSelection = (itemId: number) => {
   draftSelectedItemIds.value = [...draftSelectedItemIds.value, itemId]
 }
 
-const saveFavourites = async () => {
+const _saveFavourites = async () => {
   try {
     await saveFavourite(draftSelectedItemIds.value)
     closeEditModal()
@@ -471,7 +471,7 @@ const saveFavourites = async () => {
   }
 }
 
-const handleClick = async (app: ShortcutItem) => {
+const _handleClick = async (app: ShortcutItem) => {
   addRecentItem({
     id: app.id,
     type: 'application',

@@ -56,7 +56,6 @@ const withTimeout = async <T>(task: Promise<T>, message: string, timeoutMs = 800
 }
 
 export const createPushSubscriptionClient = (options: PushSubscriptionClientOptions) => {
-
   const isIOS = () => import.meta.client && /iPhone|iPad|iPod/i.test(navigator.userAgent)
 
   const isSafari = () => {
@@ -132,7 +131,6 @@ export const createPushSubscriptionClient = (options: PushSubscriptionClientOpti
       }, 8000)
 
       const handleStateChange = () => {
-
         if (installingWorker.state !== 'activated') {
           return
         }
@@ -145,13 +143,12 @@ export const createPushSubscriptionClient = (options: PushSubscriptionClientOpti
       installingWorker.addEventListener('statechange', handleStateChange)
     })
 
-    const activeWorker = registration.active as ServiceWorker | null
+    const _activeWorker = registration.active as ServiceWorker | null
 
     return registration
   }
 
   const getApplicationServerKey = () => {
-
     if (!options.vapidPublicKey) {
       throw new Error('未配置 Web Push VAPID 公钥')
     }
@@ -176,7 +173,6 @@ export const createPushSubscriptionClient = (options: PushSubscriptionClientOpti
   }
 
   const subscribe = async (): Promise<PushClientSubscription | null> => {
-
     if (!isSupported()) {
       throw new Error('当前浏览器不支持 Web Push')
     }
@@ -201,7 +197,6 @@ export const createPushSubscriptionClient = (options: PushSubscriptionClientOpti
       userVisibleOnly: true,
       applicationServerKey,
     })
-
 
     if (pushPermissionState === 'denied') {
       throw new Error('浏览器拒绝创建 Web Push 订阅')

@@ -231,5 +231,5 @@ const mockServices: TioTopic[] = [
 ]
 
 export default defineEventHandler(() => {
-    return mockServices
+  return mockServices
 })

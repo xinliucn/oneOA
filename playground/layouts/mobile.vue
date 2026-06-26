@@ -2,23 +2,50 @@
   <div class="mobile">
     <header class="mobile__header">
       <div class="mobile__header-left">
-        <IconCustom name="menu" :size="24" class="menu-icon" @click="openMenu" />
-        <button type="button" class="mobile__logo" :aria-label="t('common.home')" @click="handleLogoClick">
-          <img src="~/assets/images/dchLogo.png" alt="SuperApp Logo" width="160" height="32">
+        <IconCustom
+          name="menu"
+          :size="24"
+          class="menu-icon"
+          @click="openMenu"
+        />
+        <button
+          type="button"
+          class="mobile__logo"
+          :aria-label="t('common.home')"
+          @click="handleLogoClick"
+        >
+          <img
+            src="~/assets/images/dchLogo.png"
+            alt="SuperApp Logo"
+            width="160"
+            height="32"
+          >
         </button>
       </div>
       <div class="mobile__header-right">
-        <LocaleDropdown variant="mobile" placement="bottom-end" />
-        <NotificationBell :button-size="36" :icon-size="20" />
+        <LocaleDropdown
+          variant="mobile"
+          placement="bottom-end"
+        />
+        <NotificationBell
+          :button-size="36"
+          :icon-size="20"
+        />
       </div>
     </header>
     <main class="mobile__main">
-      <div v-if="!isLayoutReady" class="mobile__main-loading">
+      <div
+        v-if="!isLayoutReady"
+        class="mobile__main-loading"
+      >
         <div class="mobile__loading-content">
           <div class="mobile__loading-title">
             {{ t('common.loading') }}
           </div>
-          <div class="mobile__loading-track" aria-hidden="true">
+          <div
+            class="mobile__loading-track"
+            aria-hidden="true"
+          >
             <span class="mobile__loading-bar" />
           </div>
         </div>
@@ -27,15 +54,22 @@
     </main>
     <footer class="mobile__footer">
       <div class="tab-bar">
-        <div v-for="tab in tabs" :key="tab.index" :class="['tab-item', { active: displayActiveTab === tab.index }]"
-          @click="handleTabClick(tab.index)">
+        <div
+          v-for="tab in tabs"
+          :key="tab.index"
+          :class="['tab-item', { active: displayActiveTab === tab.index }]"
+          @click="handleTabClick(tab.index)"
+        >
           <template v-if="tab.type === 'profile'">
             <div class="tab-item__profile-avatar">
               {{ profileInitials }}
             </div>
           </template>
           <template v-else>
-            <IconCustom :name="tab.icon" :size="24" />
+            <IconCustom
+              :name="tab.icon"
+              :size="24"
+            />
           </template>
           <span class="tab-label">{{ tab.label }}</span>
         </div>
@@ -70,11 +104,11 @@ const profileInitials = computed(() => {
 })
 
 const tabs = computed(() => [
-  { index: 1, icon: 'home', label: t('mobile.tabs.home'), value: 'home'},
-  { index: 2, icon: 'todo', label: t('mobile.tabs.todo'), value: 'todo'},
-  { index: 3, icon: 'service-dots', label: t('mobile.tabs.applications'), value: 'applications'},
-  { index: 4, icon: 'service-briefcase', label: t('mobile.services.titlePlural'), value: 'services'},
-  { index: 5, icon: 'search', label: t('user.profile'), type: 'profile', value: 'profile'},
+  { index: 1, icon: 'home', label: t('mobile.tabs.home'), value: 'home' },
+  { index: 2, icon: 'todo', label: t('mobile.tabs.todo'), value: 'todo' },
+  { index: 3, icon: 'service-dots', label: t('mobile.tabs.applications'), value: 'applications' },
+  { index: 4, icon: 'service-briefcase', label: t('mobile.services.titlePlural'), value: 'services' },
+  { index: 5, icon: 'search', label: t('user.profile'), type: 'profile', value: 'profile' },
 ])
 
 const displayActiveTab = computed<number | null>(() => {
