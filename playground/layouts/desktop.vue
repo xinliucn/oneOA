@@ -65,8 +65,8 @@
         >
           <el-menu-item
             v-for="item in menuItems"
-            :key="item.index"
-            :index="item.index"
+            :key="item.key"
+            :index="item.key"
           >
             <template #title>
               <IconCustom
@@ -95,9 +95,9 @@
 </template>
 
 <script setup lang="ts">
+import { resolveSidebarMenuPath, sidebarMenuConfig } from '~/constants/sidebarMenu'
 import { usePushSubscriptionStore } from '~/stores/pushSubscription'
 import { createUserWatermark, removeWatermark } from '~/utils/watermark'
-import { getDepartmentIntranetUrl, getEShopUrl } from '~/utils/departmentIntranet'
 
 const { logout, user } = useAuth()
 const pushSubscriptionStore = usePushSubscriptionStore()
@@ -108,48 +108,37 @@ const isLayoutReady = ref(false)
 const desktopMainRef = ref<HTMLElement | null>(null)
 let loadingVersion = 0
 
-const menuRoutes: Record<string, string> = {
-  1: '/desktop/news',
-  2: '/desktop/company-information',
-  3: '/desktop/company-documents',
-  4: '/desktop/applications',
-  5: '/desktop/department-intranets',
-  // 6: '/desktop/dashboards',
-  7: '/desktop/todo',
-  // 8: '/desktop/elearning',
-  9: '/desktop/eshop',
-}
-
-const menuItems = computed(() => [
-  { index: '1', icon: 'document', label: t('nav.news') },
-  { index: '2', icon: 'info', label: t('nav.companyInformation') },
-  { index: '3', icon: 'download', label: t('nav.companyDocuments') },
-  { index: '4', icon: 'apps', label: t('nav.applications') },
-  { index: '5', icon: 'building', label: t('nav.departmentIntranets') },
-  // { index: '6', icon: 'dashboard', label: t('nav.dashboards') },
-  { index: '7', icon: 'document', label: t('nav.todo') },
-  // { index: '8', icon: 'education', label: t('nav.eLearning') },
-  { index: '9', icon: 'shop', label: t('nav.eShop') },
-])
-
-const activeMenu = computed(() => {
-  const matched = Object.entries(menuRoutes).find(([, path]) => route.path.startsWith(path))
-  return matched?.[0] ?? ''
+const menuItems = computed(() => {
+  return sidebarMenuConfig.map(item => ({
+    ...item,
+    label: t(item.labelKey),
+  }))
 })
 
-const handleMenuSelect = async (index: string) => {
-  if (index === '5') {
-    await openGuardedUrl(getDepartmentIntranetUrl(locale.value), '_blank')
+const activeMenu = computed(() => {
+  const matched = sidebarMenuConfig.find((item) => {
+    if (item.desktop.type !== 'route') {
+      return false
+    }
+
+    return route.path.startsWith(resolveSidebarMenuPath(item.desktop, locale.value))
+  })
+
+  return matched?.key ?? ''
+})
+
+const handleMenuSelect = async (key: string) => {
+  const item = sidebarMenuConfig.find(menuItem => menuItem.key === key)
+  if (!item) {
     return
   }
 
-  if (index === '9') {
-    await openGuardedUrl(getEShopUrl(locale.value), '_blank')
+  if (item.desktop.type === 'link') {
+    await openGuardedUrl(resolveSidebarMenuPath(item.desktop, locale.value), '_blank')
     return
   }
 
-  const path = menuRoutes[index]
-  if (path) navigateTo(path)
+  return navigateTo(resolveSidebarMenuPath(item.desktop, locale.value))
 }
 
 const handleLogoClick = () => navigateTo('/')

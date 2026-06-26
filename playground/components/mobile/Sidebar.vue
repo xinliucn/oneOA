@@ -49,8 +49,8 @@
 
 <script setup lang="ts">
 import { computed } from 'vue'
-import { sidebarMenuConfig, type SidebarMenuConfigItem } from '~/constants/sidebarMenu'
-import { getDepartmentIntranetUrl, getEShopUrl } from '~/utils/departmentIntranet'
+import { resolveSidebarMenuPath, sidebarMenuConfig } from '~/constants/sidebarMenu'
+import type { SidebarMenuConfigItem } from '~/types/sidebarMenu'
 
 type SidebarMenuItem = SidebarMenuConfigItem & {
   label: string
@@ -72,25 +72,16 @@ const menuItems = computed<SidebarMenuItem[]>(() => {
 const onNavigateTo = async (item: SidebarMenuItem) => {
   emit('update:modelValue', false)
 
-  if (item.key === 'department-intranets') {
-    await openGuardedUrl(getDepartmentIntranetUrl(locale.value), '_blank')
+  if (item.mobile.type === 'link') {
+    await openGuardedUrl(resolveSidebarMenuPath(item.mobile, locale.value), '_blank')
     return
   }
 
-  if (item.key === 'e-shop') {
-    await openGuardedUrl(getEShopUrl(locale.value), '_blank')
-    return
+  if (typeof item.mobile.tabIndex === 'number') {
+    activeTab.value = item.mobile.tabIndex
   }
 
-  if (!item.path) {
-    return
-  }
-
-  if (typeof item.tabIndex === 'number') {
-    activeTab.value = item.tabIndex
-  }
-
-  return navigateTo(item.path)
+  return navigateTo(resolveSidebarMenuPath(item.mobile, locale.value))
 }
 </script>
 
