@@ -6,7 +6,7 @@ import type {
   NotificationListApiResponse,
   NotificationMarkReadResponse,
 } from '~/types/notification'
-import { getLatestNotificationId, isNotificationUnread, sortNotificationsForDisplay } from '~/utils/notification'
+import { getLatestNotificationId, isNotificationUnread, resolveNotificationUnreadCount, sortNotificationsForDisplay } from '~/utils/notification'
 
 const DEFAULT_PAGE = 1
 const DEFAULT_PAGE_SIZE = 20
@@ -57,7 +57,6 @@ export const useNotificationsStore = defineStore('notifications', () => {
     ])
 
     notificationItems.value = cachedNotifications
-    unreadCount.value = localUnreadCount.value
     lastSyncedAt.value = cachedLastSyncedAt
     isHydrated.value = true
 
@@ -114,7 +113,7 @@ export const useNotificationsStore = defineStore('notifications', () => {
       page.value = response.data.page
       pageSize.value = response.data.page_size
       hasMore.value = response.data.has_more
-      unreadCount.value = response.data.total_unread
+      unreadCount.value = resolveNotificationUnreadCount(response.data.total_unread)
       loaded.value = true
       isHydrated.value = true
 
@@ -166,7 +165,6 @@ export const useNotificationsStore = defineStore('notifications', () => {
         is_read: '1',
       }
     })
-    unreadCount.value = localUnreadCount.value
 
     if (import.meta.client) {
       await db.markNotificationAsRead(String(targetItem.id), readAt)
@@ -181,6 +179,15 @@ export const useNotificationsStore = defineStore('notifications', () => {
     catch (markReadError) {
       error.value = getErrorMessage(markReadError)
       console.error('Mark notification as read failed:', markReadError)
+      return
+    }
+
+    try {
+      await fetchNotificationList({ force: true })
+    }
+    catch (refreshError) {
+      error.value = getErrorMessage(refreshError)
+      console.error('Refresh notification list after mark read failed:', refreshError)
     }
   }
 
@@ -188,7 +195,6 @@ export const useNotificationsStore = defineStore('notifications', () => {
     const nextItems = mergeNotifications(notificationItems.value, [item])
 
     notificationItems.value = nextItems
-    unreadCount.value = localUnreadCount.value
     loaded.value = true
     isHydrated.value = true
     await saveNotificationsToCache(nextItems)

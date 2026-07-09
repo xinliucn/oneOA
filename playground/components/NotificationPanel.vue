@@ -129,6 +129,7 @@ import {
   formatNotificationLocalizedText,
   formatNotificationListTitle,
   formatNotificationSubtitle,
+  getNotificationRequestId,
   getNotificationTimestamp,
   isNotificationUnread,
   sortNotificationsForDisplay,
@@ -325,13 +326,6 @@ const getPayloadString = (payload: Record<string, any> | null | undefined, keys:
   }
 
   return ''
-}
-
-const getNotificationRequestId = (item: NotificationItem) => {
-  return getPayloadString(item.payload_json, ['requestId', 'requestid', 'request_id'])
-    || item.request_id?.trim()
-    || item.requestId?.trim()
-    || ''
 }
 
 const handleSelect = async (item: NotificationItem) => {

@@ -24,6 +24,13 @@ const openDatabase = () => {
 const normalizePushPayload = (payload) => {
   const now = new Date().toISOString()
 
+  const nestedPayload = payload.payload && typeof payload.payload === 'object' ? payload.payload : null
+  const requestId = String(
+    payload.requestId || payload.request_id
+    || (nestedPayload && (nestedPayload.requestId || nestedPayload.requestid || nestedPayload.request_id))
+    || '',
+  )
+
   return {
     id: String(payload.id || payload.notification_id || Date.now()),
     title: String(payload.title || payload.subject || '消息通知'),
@@ -33,7 +40,9 @@ const normalizePushPayload = (payload) => {
     category: String(payload.category || payload.type || ''),
     createdAt: String(payload.createdAt || payload.created_at || now),
     readAt: payload.readAt || payload.read_at || null,
-    payload: payload.payload && typeof payload.payload === 'object' ? payload.payload : null,
+    requestId: requestId || undefined,
+    request_id: requestId || null,
+    payload: nestedPayload,
   }
 }
 
@@ -133,6 +142,7 @@ self.addEventListener('push', (event) => {
         data: {
           link: item.link,
           id: item.id,
+          requestId: item.requestId || item.request_id || undefined,
         },
       })
 
@@ -156,7 +166,18 @@ self.addEventListener('notificationclick', (event) => {
 
   event.waitUntil(
     (async () => {
-      const target = event.notification.data?.link || '/desktop'
+      const notificationId = event.notification.data?.id
+      const notificationRequestId = event.notification.data?.requestId
+      const params = new URLSearchParams()
+      if (notificationId) {
+        params.set('id', String(notificationId))
+      }
+      if (notificationRequestId) {
+        params.set('requestId', String(notificationRequestId))
+      }
+      const target = params.toString()
+        ? `/notification/redirect?${params.toString()}`
+        : '/desktop'
       const targetUrl = new URL(target, self.location.origin).toString()
       const clientList = await self.clients.matchAll({
         type: 'window',

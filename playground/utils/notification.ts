@@ -285,6 +285,31 @@ export const isNotificationUnread = (item: NotificationItem) => {
   return !READ_FLAGS.has(String(item.is_read).toLowerCase())
 }
 
+export const resolveNotificationUnreadCount = (value: unknown) => {
+  const count = Number(value)
+  return Number.isFinite(count) && count > 0 ? count : 0
+}
+
+export const getNotificationRequestId = (item: NotificationItem) => {
+  for (const payload of [item.payload_json, item.payload]) {
+    if (!payload) {
+      continue
+    }
+
+    for (const key of ['requestId', 'requestid', 'request_id']) {
+      const value = payload[key]
+      if (typeof value === 'string' || typeof value === 'number') {
+        const normalized = String(value).trim()
+        if (normalized) {
+          return normalized
+        }
+      }
+    }
+  }
+
+  return item.request_id?.trim() || item.requestId?.trim() || ''
+}
+
 export const sortNotificationsForDisplay = (items: NotificationItem[]) => {
   return [...items].sort((left, right) => {
     const leftUnread = isNotificationUnread(left)
