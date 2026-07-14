@@ -48,40 +48,15 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
-import { resolveSidebarMenuPath, sidebarMenuConfig } from '~/constants/sidebarMenu'
-import type { SidebarMenuConfigItem } from '~/types/sidebarMenu'
-
-type SidebarMenuItem = SidebarMenuConfigItem & {
-  label: string
-}
+import type { SidebarMenuResolvedItem } from '~/types/sidebarMenu'
 
 defineProps<{ modelValue: boolean }>()
 const emit = defineEmits(['update:modelValue'])
-const { locale, t } = useAppI18n()
-const { openGuardedUrl } = useNetworkGuard()
-const activeTab = useState('mobile:activeTab', () => 1)
+const { menuItems, navigateByMenuItem } = useSidebarMenu('mobile')
 
-const menuItems = computed<SidebarMenuItem[]>(() => {
-  return sidebarMenuConfig.map(item => ({
-    ...item,
-    label: t(item.labelKey),
-  }))
-})
-
-const onNavigateTo = async (item: SidebarMenuItem) => {
+const onNavigateTo = async (item: SidebarMenuResolvedItem) => {
   emit('update:modelValue', false)
-
-  if (item.mobile.type === 'link') {
-    await openGuardedUrl(resolveSidebarMenuPath(item.mobile, locale.value), '_blank')
-    return
-  }
-
-  if (typeof item.mobile.tabIndex === 'number') {
-    activeTab.value = item.mobile.tabIndex
-  }
-
-  return navigateTo(resolveSidebarMenuPath(item.mobile, locale.value))
+  return navigateByMenuItem(item)
 }
 </script>
 
