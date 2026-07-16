@@ -45,7 +45,7 @@
             </div>
 
             <div
-              v-if="item.key === 'department-intranets'"
+              v-if="item.key === 'department-intranets' && isExpanded(item.key)"
               class="sidebar__intranets"
             >
               <template
@@ -56,13 +56,13 @@
                   type="button"
                   class="sidebar__intranets-item"
                   :class="{ 'is-active': isIntranetsItemActive(intranetsItem) }"
-                  @click="onNavigateToIntranets(intranetsItem.path)"
+                  @click="onNavigateToIntranets(intranetsItem)"
                 >
                   {{ t(intranetsItem.labelKey) }}
                 </button>
 
                 <div
-                  v-if="intranetsItem.children?.length"
+                  v-if="intranetsItem.children?.length && isExpanded(`intranets:${intranetsItem.key}`)"
                   class="sidebar__intranets-children"
                 >
                   <button
@@ -71,7 +71,7 @@
                     type="button"
                     class="sidebar__intranets-child"
                     :class="{ 'is-active': route.path === childItem.path }"
-                    @click="onNavigateToIntranets(childItem.path)"
+                    @click="onNavigateToIntranetsPath(childItem.path)"
                   >
                     {{ t(childItem.labelKey) }}
                   </button>
@@ -94,13 +94,40 @@ const emit = defineEmits(['update:modelValue'])
 const { menuItems, navigateByMenuItem } = useSidebarMenu('mobile')
 const { t } = useAppI18n()
 const route = useRoute()
+const expandedKeys = ref<string[]>([])
+
+const isExpanded = (key: string) => expandedKeys.value.includes(key)
+
+const toggleExpanded = (key: string) => {
+  expandedKeys.value = isExpanded(key)
+    ? expandedKeys.value.filter(expandedKey => expandedKey !== key)
+    : [...expandedKeys.value, key]
+}
+
+const isExpandableMenuItem = (item: SidebarMenuResolvedItem) => {
+  return item.key === 'department-intranets'
+}
 
 const onNavigateTo = async (item: SidebarMenuResolvedItem) => {
+  if (isExpandableMenuItem(item)) {
+    toggleExpanded(item.key)
+    return
+  }
+
   emit('update:modelValue', false)
   return navigateByMenuItem(item)
 }
 
-const onNavigateToIntranets = async (path: string) => {
+const onNavigateToIntranets = async (item: IntranetsNavigationItem) => {
+  if (item.children?.length) {
+    toggleExpanded(`intranets:${item.key}`)
+    return
+  }
+
+  return onNavigateToIntranetsPath(item.path)
+}
+
+const onNavigateToIntranetsPath = async (path: string) => {
   emit('update:modelValue', false)
   return navigateTo(path)
 }

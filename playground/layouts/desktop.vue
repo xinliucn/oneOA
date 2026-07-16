@@ -95,50 +95,37 @@
 </template>
 
 <script setup lang="ts">
-import { resolveSidebarMenuPath, sidebarMenuConfig } from '~/constants/sidebarMenu'
 import { usePushSubscriptionStore } from '~/stores/pushSubscription'
 import { createUserWatermark, removeWatermark } from '~/utils/watermark'
 
 const { logout, user } = useAuth()
 const pushSubscriptionStore = usePushSubscriptionStore()
-const { locale, t } = useAppI18n()
-const { openGuardedUrl } = useNetworkGuard()
+const { t } = useAppI18n()
+const { menuItems, getMenuItem, navigateByMenuItem } = useSidebarMenu('desktop')
 const route = useRoute()
 const isLayoutReady = ref(false)
 const desktopMainRef = ref<HTMLElement | null>(null)
 let loadingVersion = 0
 
-const menuItems = computed(() => {
-  return sidebarMenuConfig.map(item => ({
-    ...item,
-    label: t(item.labelKey),
-  }))
-})
-
 const activeMenu = computed(() => {
-  const matched = sidebarMenuConfig.find((item) => {
-    if (item.desktop.type !== 'route') {
+  const matched = menuItems.value.find((item) => {
+    if (item.target.type !== 'route') {
       return false
     }
 
-    return route.path.startsWith(resolveSidebarMenuPath(item.desktop, locale.value))
+    return route.path.startsWith(item.resolvedPath)
   })
 
   return matched?.key ?? ''
 })
 
 const handleMenuSelect = async (key: string) => {
-  const item = sidebarMenuConfig.find(menuItem => menuItem.key === key)
+  const item = getMenuItem(key)
   if (!item) {
     return
   }
 
-  if (item.desktop.type === 'link') {
-    await openGuardedUrl(resolveSidebarMenuPath(item.desktop, locale.value), '_blank')
-    return
-  }
-
-  return navigateTo(resolveSidebarMenuPath(item.desktop, locale.value))
+  return navigateByMenuItem(item)
 }
 
 const handleLogoClick = () => navigateTo('/')

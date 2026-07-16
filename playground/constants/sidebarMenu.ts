@@ -1,6 +1,8 @@
 import { getDepartmentIntranetUrl, getEShopUrl } from '~/utils/departmentIntranet'
 import type { SidebarMenuConfigItem, SidebarMenuPathConfig } from '~/types/sidebarMenu'
 
+// 权限点必须与 Weaver 返回的 user.permissions 保持一致；新增或调整菜单时同步更新权限中心。
+
 export const resolveSidebarMenuPath = (config: SidebarMenuPathConfig, locale: string) => {
   return typeof config.path === 'function' ? config.path(locale) : config.path
 }

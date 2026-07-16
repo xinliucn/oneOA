@@ -1,85 +1,20 @@
-import type { AuthUser, AuthUserResponse } from '../types/auth'
+import type {
+  AuthHttpError,
+  AuthLoginResponse,
+  AuthLogoutResponse,
+  AuthUser,
+  AuthUserResponse,
+} from '../types/auth'
 import { usePushSubscriptionStore } from '~/stores/pushSubscription'
 
-export type User = AuthUser
-
-type AuthErrorType = 'unauthenticated' | 'forbidden' | 'network' | 'invalid-response' | 'unknown'
-
-interface AuthErrorAction {
-  type: AuthErrorType
-  shouldClearLocalData: boolean
-  shouldRedirectHome: boolean
-}
-
-const isRecord = (value: unknown): value is Record<string, unknown> => {
-  return !!value && typeof value === 'object' && !Array.isArray(value)
-}
-
 const getErrorStatusCode = (error: unknown) => {
-  if (isRecord(error)) {
-    const statusCode = error.statusCode ?? error.status
-    if (typeof statusCode === 'number') {
-      return statusCode
-    }
-  }
+  const authError = error as AuthHttpError | null | undefined
+  const statusCode = authError?.statusCode ?? authError?.status
 
-  return undefined
+  return typeof statusCode === 'number' ? statusCode : undefined
 }
 
-const isValidAuthUserResponse = (value: unknown): value is AuthUserResponse => {
-  return isRecord(value)
-    && (value.code === 0 || value.code === 1)
-    && typeof value.authenticated === 'boolean'
-    && (value.user === null || isRecord(value.user))
-    && isRecord(value.token)
-    && typeof value.token.valid === 'boolean'
-}
-
-const createInvalidAuthResponseError = () => {
-  return Object.assign(new Error('Invalid auth user response'), {
-    authErrorType: 'invalid-response' satisfies AuthErrorType,
-  })
-}
-
-export const normalizeUser = (response: AuthUserResponse): User | null => {
-  return response.authenticated ? response.user : null
-}
-
-export const isAuthenticated = (response: AuthUserResponse): boolean => {
-  return response.authenticated && response.code === 1 && !!response.user && response.token.valid
-}
-
-const classifyAuthError = (error: unknown): AuthErrorType => {
-  if (isRecord(error) && error.authErrorType === 'invalid-response') {
-    return 'invalid-response'
-  }
-
-  const statusCode = getErrorStatusCode(error)
-
-  if (statusCode === 401) return 'unauthenticated'
-  if (statusCode === 403) return 'forbidden'
-  if (statusCode === 0 || statusCode === 408 || statusCode === 502 || statusCode === 503 || statusCode === 504) {
-    return 'network'
-  }
-
-  if (isRecord(error) && error.name === 'FetchError' && !statusCode) {
-    return 'network'
-  }
-
-  return 'unknown'
-}
-
-const handleAuthError = (error: unknown): AuthErrorAction => {
-  const type = classifyAuthError(error)
-
-  return {
-    type,
-    shouldClearLocalData: type === 'forbidden',
-    shouldRedirectHome: type === 'forbidden',
-  }
-}
-
-const identifyAuthUser = (user: User) => {
+const identifyAuthUser = (user: AuthUser) => {
   if (!import.meta.client) {
     return
   }
@@ -100,13 +35,13 @@ const initPushAfterAuth = () => {
 }
 
 export const useAuth = () => {
-  const user = useState<User | null>('auth:user', () => null)
+  const user = useState<AuthUser | null>('auth:user', () => null)
   const isLoggedIn = useState<boolean>('auth:isLoggedIn', () => false)
   const lastCheckTime = useState<number>('auth:lastCheckTime', () => 0)
 
   const CACHE_DURATION = 5 * 60 * 1000
 
-  const setAuthState = (authUser: User, checkedAt = Date.now()) => {
+  const setAuthState = (authUser: AuthUser, checkedAt = Date.now()) => {
     user.value = authUser
     isLoggedIn.value = true
     lastCheckTime.value = checkedAt
@@ -138,28 +73,18 @@ export const useAuth = () => {
     }
   }
 
-  const afterLoginSuccess = (authUser: User) => {
+  const afterLoginSuccess = (authUser: AuthUser) => {
     identifyAuthUser(authUser)
     initPushAfterAuth()
   }
 
-  const cleanupAfterAuthFailed = async (action: AuthErrorAction) => {
-    if (action.shouldClearLocalData) {
-      await clearLocalData()
-    }
-
-    if (action.shouldRedirectHome) {
-      await redirectHome()
-    }
-  }
-
   const login = async () => {
     try {
-      const response = await $fetch<{ authorization_url: string }>('/api/auth/login', {
+      const response = await $fetch<AuthLoginResponse>('/api/auth/login', {
         method: 'POST',
       })
 
-      if (response?.authorization_url) {
+      if (response.authorization_url) {
         if (import.meta.client) {
           window.location.href = response.authorization_url
         }
@@ -174,16 +99,6 @@ export const useAuth = () => {
     }
   }
 
-  const handleCallback = async () => {
-    try {
-      return await checkAuth(true)
-    }
-    catch (error) {
-      console.error('Callback handling failed:', error)
-      throw error
-    }
-  }
-
   const checkAuth = async (forceRefresh = false) => {
     try {
       const now = Date.now()
@@ -191,15 +106,10 @@ export const useAuth = () => {
         return true
       }
 
-      const response = await $fetch<unknown>('/api/auth/user')
+      const response = await $fetch<AuthUserResponse>('/api/auth/user')
+      const responseUser = response.user
 
-      if (!isValidAuthUserResponse(response)) {
-        throw createInvalidAuthResponseError()
-      }
-
-      const responseUser = normalizeUser(response)
-
-      if (isAuthenticated(response) && responseUser) {
+      if (response.authenticated === true && responseUser) {
         setAuthState(responseUser, now)
         afterLoginSuccess(responseUser)
         return true
@@ -211,22 +121,28 @@ export const useAuth = () => {
     catch (error: unknown) {
       console.error('Check auth failed:', error)
       resetAuthState()
-      await cleanupAfterAuthFailed(handleAuthError(error))
+
+      if (getErrorStatusCode(error) === 403) {
+        await clearLocalData()
+        await redirectHome()
+      }
 
       return false
     }
   }
 
+  const handleCallback = () => checkAuth(true)
+
   const logout = async () => {
     try {
-      const response = await $fetch<{ code: number, logout_url?: string, message: string }>('/api/auth/logout', {
+      const response = await $fetch<AuthLogoutResponse>('/api/auth/logout', {
         method: 'POST',
       })
 
       resetAuthState()
       await clearLocalData()
 
-      if (response?.code === 1 && response?.logout_url) {
+      if (response.code === 1 && response.logout_url) {
         if (import.meta.client) {
           window.location.href = response.logout_url
         }

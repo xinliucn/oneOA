@@ -1,3 +1,5 @@
+import type { AuthRolePriority } from './auth'
+
 export type SidebarMenuPathResolver = string | ((locale: string) => string)
 export type SidebarMenuPlatform = 'mobile' | 'desktop'
 
@@ -10,6 +12,7 @@ export interface SidebarMenuPathConfig {
 export interface SidebarMenuPermissionConfig {
   permissionKey?: string
   allowedRoles?: string[]
+  minimumRolePriority?: AuthRolePriority
 }
 
 export interface SidebarMenuConfigItem extends SidebarMenuPermissionConfig {
