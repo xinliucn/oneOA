@@ -62,7 +62,7 @@ const getMobileTargetPath = (path: string) => {
   }
 
   if (path.startsWith('/desktop/department-intranets')) {
-    return path.replace('/desktop/department-intranets', '/mobile/departmentIntranets')
+    return path.replace('/desktop/department-intranets', '/mobile/intranets')
   }
 
   if (path.startsWith('/desktop/notification/')) {
@@ -103,6 +103,10 @@ const getDesktopTargetPath = (path: string) => {
 
   if (path.startsWith('/mobile/companyDocuments')) {
     return path.replace('/mobile/companyDocuments', '/desktop/company-documents')
+  }
+
+  if (path.startsWith('/mobile/intranets')) {
+    return path.replace('/mobile/intranets', '/desktop/department-intranets')
   }
 
   if (path.startsWith('/mobile/departmentIntranets')) {

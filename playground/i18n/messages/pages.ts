@@ -71,6 +71,23 @@ export const pageMessages = {
       departmentIntranets: {
         title: '部门内网',
         placeholder: '部门内网内容区域',
+        actions: {
+          readMore: '阅读更多',
+        },
+        carousel: {
+          title: '精选内容',
+          previous: '上一页',
+          next: '下一页',
+        },
+        footerPanel: {
+          departmentTitle: '部门入口',
+          eShopTitle: 'eShop 品牌',
+          departmentItems: {
+            groupHumanResources: '集团人力资源',
+            greenOffice: '绿色办公室',
+            groupLegalAndCompliance: '集团法务及合规',
+          },
+        },
       },
       eLearning: {
         title: '在线学习',
@@ -162,6 +179,23 @@ export const pageMessages = {
       departmentIntranets: {
         title: '部門內網',
         placeholder: '部門內網內容區域',
+        actions: {
+          readMore: '閱讀更多',
+        },
+        carousel: {
+          title: '精選內容',
+          previous: '上一頁',
+          next: '下一頁',
+        },
+        footerPanel: {
+          departmentTitle: '部門入口',
+          eShopTitle: 'eShop 品牌',
+          departmentItems: {
+            groupHumanResources: '集團人力資源',
+            greenOffice: '綠色辦公室',
+            groupLegalAndCompliance: '集團法務及合規',
+          },
+        },
       },
       eLearning: {
         title: '線上學習',
@@ -253,6 +287,23 @@ export const pageMessages = {
       departmentIntranets: {
         title: 'Department Intranets',
         placeholder: 'Department intranet content area',
+        actions: {
+          readMore: 'Read more',
+        },
+        carousel: {
+          title: 'Recommended',
+          previous: 'Previous',
+          next: 'Next',
+        },
+        footerPanel: {
+          departmentTitle: 'Department Intranet',
+          eShopTitle: 'eShop',
+          departmentItems: {
+            groupHumanResources: 'Group Human Resources',
+            greenOffice: 'Green Office',
+            groupLegalAndCompliance: 'Group Legal and Compliance',
+          },
+        },
       },
       eLearning: {
         title: 'eLearning',

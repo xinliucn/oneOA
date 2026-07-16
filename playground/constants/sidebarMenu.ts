@@ -43,7 +43,7 @@ export const sidebarMenuConfig = [
     icon: 'building',
     labelKey: 'nav.departmentIntranets',
     permissionKey: 'sidebar:departmentIntranets',
-    mobile: { type: 'link', path: getDepartmentIntranetUrl },
+    mobile: { type: 'route', path: '/mobile/intranets' },
     desktop: { type: 'link', path: getDepartmentIntranetUrl },
   },
   {
