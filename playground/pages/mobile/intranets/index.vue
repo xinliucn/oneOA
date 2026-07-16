@@ -150,110 +150,17 @@
       </div>
     </section>
 
-    <section class="mobile-intranets-home__links-panel">
-      <div class="mobile-intranets-home__links-group">
-        <h2 class="mobile-intranets-home__links-title">
-          {{ t('pages.departmentIntranets.footerPanel.departmentTitle') }}
-        </h2>
-
-        <button
-          v-for="item in departmentItems"
-          :key="item.label"
-          type="button"
-          class="mobile-intranets-home__links-item"
-          @click="openFooterLink(item.url)"
-        >
-          <span class="mobile-intranets-home__links-chevron">›</span>
-          <span>{{ item.label }}</span>
-        </button>
-      </div>
-
-      <div class="mobile-intranets-home__links-divider" />
-
-      <div class="mobile-intranets-home__links-group">
-        <h2 class="mobile-intranets-home__links-title">
-          {{ t('pages.departmentIntranets.footerPanel.eShopTitle') }}
-        </h2>
-
-        <button
-          v-for="item in eShopItems"
-          :key="item.label"
-          type="button"
-          class="mobile-intranets-home__links-item"
-          @click="openFooterLink(item.url)"
-        >
-          <span class="mobile-intranets-home__links-chevron">›</span>
-          <span>{{ item.label }}</span>
-        </button>
-      </div>
-    </section>
-
-    <section class="mobile-intranets-home__carousel-section">
-      <button
-        v-if="brandCarouselItems.length > 1"
-        type="button"
-        class="mobile-intranets-home__carousel-control mobile-intranets-home__carousel-control--previous"
-        :aria-label="t('pages.departmentIntranets.carousel.previous')"
-        :disabled="!canScrollCarouselLeft"
-        @click="scrollCarousel('previous')"
-      >
-        <IconCustom
-          name="arrow-right"
-          :size="14"
-          :rotate="180"
-        />
-      </button>
-
-      <div
-        ref="carouselTrack"
-        class="mobile-intranets-home__carousel-track"
-        @scroll="updateCarouselControls"
-      >
-        <div
-          v-for="item in brandCarouselItems"
-          :key="item.id"
-          class="mobile-intranets-home__carousel-card"
-        >
-          <div
-            class="mobile-intranets-home__carousel-card-media"
-            :class="{ 'mobile-intranets-home__carousel-card-media--fallback': !item.imageUrl }"
-          >
-            <img
-              v-if="item.imageUrl"
-              :src="item.imageUrl"
-              :alt="item.name"
-              class="mobile-intranets-home__carousel-card-image"
-            >
-          </div>
-        </div>
-      </div>
-
-      <button
-        v-if="brandCarouselItems.length > 1"
-        type="button"
-        class="mobile-intranets-home__carousel-control mobile-intranets-home__carousel-control--next"
-        :aria-label="t('pages.departmentIntranets.carousel.next')"
-        :disabled="!canScrollCarouselRight"
-        @click="scrollCarousel('next')"
-      >
-        <IconCustom
-          name="arrow-right"
-          :size="14"
-        />
-      </button>
-    </section>
+    <IntranetsSharedFooter />
   </div>
 </template>
 
 <script setup lang="ts">
 import { storeToRefs } from 'pinia'
-import { nextTick } from 'vue'
 import type { NewsItem } from '~/types/news'
 import newsImage1 from '~/assets/images/news/news1.png'
 import newsImage2 from '~/assets/images/news/news2.png'
 import newsImage3 from '~/assets/images/news/news3.png'
 import newsImage4 from '~/assets/images/news/news4.png'
-import { getEShopUrl } from '~/utils/departmentIntranet'
 
 definePageMeta({
   layout: 'mobile',
@@ -267,8 +174,6 @@ const { newsList, loading, error, fetchNewsList } = useNewsList()
 const { openGuardedUrl } = useNetworkGuard()
 const intranetsBannerStore = useIntranetsBannerStore()
 const { bannerItems } = storeToRefs(intranetsBannerStore)
-const intranetsBrandCarouselStore = useIntranetsBrandCarouselStore()
-const { brandCarouselItems } = storeToRefs(intranetsBrandCarouselStore)
 
 const pageTitle = computed(() => t('pages.departmentIntranets.title'))
 const readMoreLabel = computed(() => {
@@ -291,48 +196,8 @@ const readMoreLabel = computed(() => {
 const activeFilter = ref<NewsFilterValue>('all')
 const activeHeroIndex = ref(0)
 
-const departmentItems = computed(() => [
-  {
-    label: t('pages.departmentIntranets.footerPanel.departmentItems.groupHumanResources'),
-    url: 'https://group-hr.dch.com.hk/',
-  },
-  {
-    label: t('pages.departmentIntranets.footerPanel.departmentItems.greenOffice'),
-    url: 'https://environment.dch.com.hk/',
-  },
-  {
-    label: t('pages.departmentIntranets.footerPanel.departmentItems.groupLegalAndCompliance'),
-    url: 'https://dchapps.dchbi.com/wui/index.html#/main/portal/portal-38-1',
-  },
-])
-const eShopItems = computed(() => {
-  const eShopUrl = getEShopUrl(locale.value)
-
-  return [
-    'Ahaa',
-    'Auriga',
-    'DCHEA',
-    'DCH EA Butler',
-    'DCH living',
-    'DCH Motor Leasing',
-    'Hong Kong Motor Club',
-    'Gilman',
-    'IGF',
-    'IMSA',
-    'Sims',
-    'UCC',
-    'YOKOHAMA',
-  ].map(label => ({
-    label,
-    url: eShopUrl,
-  }))
-})
-
 let heroTimer: ReturnType<typeof setInterval> | null = null
 const mockNewsImages = [newsImage1, newsImage2, newsImage3, newsImage4] as const
-const carouselTrack = ref<HTMLElement | null>(null)
-const canScrollCarouselLeft = ref(false)
-const canScrollCarouselRight = ref(false)
 
 const newsFilters = computed(() => [
   { label: t('pages.news.filters.all'), value: 'all' as const },
@@ -383,31 +248,6 @@ const filteredNewsItems = computed(() => {
 
   return source.slice(0, 8)
 })
-const updateCarouselControls = () => {
-  const track = carouselTrack.value
-
-  if (!track) {
-    return
-  }
-
-  const maxScrollLeft = track.scrollWidth - track.clientWidth
-  canScrollCarouselLeft.value = track.scrollLeft > 1
-  canScrollCarouselRight.value = track.scrollLeft < maxScrollLeft - 1
-}
-
-const scrollCarousel = (direction: 'previous' | 'next') => {
-  const track = carouselTrack.value
-
-  if (!track) {
-    return
-  }
-
-  const scrollAmount = Math.max(track.clientWidth - 32, 1)
-  track.scrollBy({
-    left: direction === 'next' ? scrollAmount : -scrollAmount,
-    behavior: 'smooth',
-  })
-}
 
 const getCategoryLabel = (category?: string) => {
   if (!category) {
@@ -488,10 +328,6 @@ const handleNewsClick = async (item: NewsItem) => {
 
   await navigateTo('/mobile/news')
 }
-const openFooterLink = async (url: string) => {
-  await openGuardedUrl(url, '_blank')
-}
-
 onMounted(() => {
   intranetsBannerStore.fetchBanners().catch((fetchError) => {
     console.error('Get intranets banner failed:', fetchError)
@@ -501,17 +337,7 @@ onMounted(() => {
     console.error('Get intranets home news failed:', fetchError)
   })
 
-  intranetsBrandCarouselStore.fetchBrandCarousel().catch((fetchError) => {
-    console.error('Get intranets brand carousel failed:', fetchError)
-  })
-
-  nextTick(updateCarouselControls)
   restartHeroRotation()
-})
-
-watch(brandCarouselItems, async () => {
-  await nextTick()
-  updateCarouselControls()
 })
 
 watch(heroSlides, (slides) => {
@@ -875,201 +701,5 @@ onBeforeUnmount(() => {
   color: #cf4d6e;
   font-size: 13px;
   font-weight: 700;
-}
-
-.mobile-intranets-home__links-panel {
-  padding: 20px 16px 22px;
-  background:
-    linear-gradient(180deg, rgba(109, 123, 136, 0.98) 0%, rgba(91, 106, 118, 0.98) 100%),
-    #738593;
-  color: #ffffff;
-}
-
-.mobile-intranets-home__links-group + .mobile-intranets-home__links-group {
-  margin-top: 18px;
-}
-
-.mobile-intranets-home__links-title {
-  margin: 0 0 14px;
-  color: #ffffff;
-  font-size: 18px;
-  line-height: 1.15;
-  font-weight: 700;
-}
-
-.mobile-intranets-home__links-item {
-  width: 100%;
-  display: flex;
-  align-items: flex-start;
-  gap: 8px;
-  border: 0;
-  padding: 0;
-  background: transparent;
-  color: #ffffff;
-  text-align: left;
-  font-size: 15px;
-  line-height: 1.35;
-}
-
-.mobile-intranets-home__links-item + .mobile-intranets-home__links-item {
-  margin-top: 12px;
-}
-
-.mobile-intranets-home__links-chevron {
-  flex-shrink: 0;
-  font-size: 16px;
-  line-height: 1.1;
-}
-
-.mobile-intranets-home__links-divider {
-  height: 1px;
-  margin: 18px 0;
-  background: rgba(255, 255, 255, 0.18);
-}
-
-.mobile-intranets-home__carousel-section {
-  padding: 8px 0 24px;
-}
-
-.mobile-intranets-home__carousel-header {
-  padding: 0 16px;
-}
-
-.mobile-intranets-home__carousel-title {
-  margin: 0;
-  font-size: 20px;
-  line-height: 1.15;
-  font-weight: 700;
-  color: #4d4d4d;
-}
-
-.mobile-intranets-home__carousel-section {
-  position: relative;
-}
-
-.mobile-intranets-home__carousel-track {
-  display: flex;
-  gap: 12px;
-  padding: 14px 16px 0;
-  overflow-x: auto;
-  scrollbar-width: none;
-  -ms-overflow-style: none;
-}
-
-.mobile-intranets-home__carousel-track::-webkit-scrollbar {
-  display: none;
-}
-
-.mobile-intranets-home__carousel-control {
-  position: absolute;
-  top: 50%;
-  z-index: 1;
-  width: 28px;
-  height: 28px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  border: 0;
-  border-radius: 50%;
-  padding: 0;
-  background: rgba(0, 0, 0, 0.64);
-  color: #ffffff;
-  transform: translateY(-50%);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.16);
-}
-
-.mobile-intranets-home__carousel-control:disabled {
-  opacity: 0.35;
-}
-
-.mobile-intranets-home__carousel-control--previous {
-  left: 4px;
-}
-
-.mobile-intranets-home__carousel-control--next {
-  right: 4px;
-}
-
-.mobile-intranets-home__carousel-card {
-  width: 202px;
-  min-width: 202px;
-  display: flex;
-  flex-direction: column;
-  border: 0;
-  padding: 0;
-  border-radius: 18px;
-  background: #ffffff;
-  box-shadow: 0 10px 22px rgba(24, 24, 24, 0.06);
-  text-align: left;
-  overflow: hidden;
-}
-
-.mobile-intranets-home__carousel-card-media {
-  width: 100%;
-  height: 124px;
-  background: #f7f7f7;
-  overflow: hidden;
-}
-
-.mobile-intranets-home__carousel-card-media--fallback {
-  background:
-    radial-gradient(circle at 72% 18%, rgba(255, 230, 166, 0.92), transparent 24%),
-    linear-gradient(140deg, rgba(255, 255, 255, 0.18) 0%, rgba(255, 255, 255, 0.02) 38%, rgba(0, 0, 0, 0.16) 100%);
-}
-
-.mobile-intranets-home__carousel-card-image {
-  width: 100%;
-  height: 100%;
-  display: block;
-  object-fit: cover;
-}
-
-.mobile-intranets-home__carousel-card-body {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 8px;
-  padding: 12px 14px 16px;
-}
-
-.mobile-intranets-home__carousel-card-tag {
-  display: inline-flex;
-  align-items: center;
-  min-height: 24px;
-  padding: 0 10px;
-  border-radius: 999px;
-  background: #a60a3a;
-  color: #ffffff;
-  font-size: 11px;
-  font-weight: 700;
-}
-
-.mobile-intranets-home__carousel-card-tag--group {
-  background: #a60a3a;
-}
-
-.mobile-intranets-home__carousel-card-tag--internal {
-  background: #ef7e48;
-}
-
-.mobile-intranets-home__carousel-card-tag--promotion {
-  background: #d8a337;
-}
-
-.mobile-intranets-home__carousel-card-date {
-  font-size: 11px;
-  color: #a0a0a0;
-}
-
-.mobile-intranets-home__carousel-card-title {
-  margin: 0;
-  font-size: 14px;
-  line-height: 1.3;
-  font-weight: 700;
-  color: #292929;
-  display: -webkit-box;
-  -webkit-box-orient: vertical;
-  -webkit-line-clamp: 2;
-  overflow: hidden;
 }
 </style>
