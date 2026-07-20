@@ -1,76 +1,25 @@
-import { resolveSidebarMenuPath, sidebarMenuConfig } from '~/constants/sidebarMenu'
+import { sidebarMenuConfig } from '~/constants/sidebarMenu'
 import type {
-  SidebarMenuConfigItem,
   SidebarMenuPlatform,
   SidebarMenuResolvedItem,
 } from '~/types/sidebarMenu'
-import type { AuthUser } from '~/types/auth'
-
-const normalizeRoles = (roles?: string[]) => {
-  return (roles || [])
-    .map(role => role.trim().toLowerCase())
-    .filter(Boolean)
-}
-
-const normalizePermissions = (permissions?: string[]) => {
-  return new Set(
-    (permissions || [])
-      .map(permission => permission.trim())
-      .filter(Boolean),
-  )
-}
-
-export const canAccessSidebarMenuItem = (item: SidebarMenuConfigItem, user?: AuthUser | null) => {
-  if (user?.is_admin === true) {
-    return true
-  }
-
-  if (item.permissionKey && !normalizePermissions(user?.permissions).has(item.permissionKey)) {
-    return false
-  }
-
-  if (item.minimumRolePriority && (user?.role_priority || 0) < item.minimumRolePriority) {
-    return false
-  }
-
-  if (!item.allowedRoles?.length) {
-    return true
-  }
-
-  const normalizedRoles = new Set(normalizeRoles([
-    ...(user?.roles || []),
-    ...(user?.role_level ? [user.role_level] : []),
-  ]))
-  return item.allowedRoles.some(role => normalizedRoles.has(role.trim().toLowerCase()))
-}
+import { resolveSidebarMenuItems } from '~/utils/sidebarMenu'
 
 export const useSidebarMenu = (platform: SidebarMenuPlatform = 'mobile') => {
-  const { user } = useAuth()
   const { locale, t } = useAppI18n()
   const { openGuardedUrl } = useNetworkGuard()
   const activeTab = useState('mobile:activeTab', () => 1)
 
-  const userRoles = computed(() => normalizeRoles(user.value?.roles))
-  const userPermissions = computed(() => normalizePermissions(user.value?.permissions))
-
   const menuItems = computed<SidebarMenuResolvedItem[]>(() => {
-    return sidebarMenuConfig
-      .filter(item => canAccessSidebarMenuItem(item, user.value))
-      .map((item) => {
-        const target = item[platform]
-
-        return {
-          ...item,
-          label: t(item.labelKey),
-          platform,
-          target,
-          resolvedPath: resolveSidebarMenuPath(target, locale.value),
-        }
-      })
+    return resolveSidebarMenuItems(sidebarMenuConfig, platform, locale.value, t)
   })
 
   const menuItemMap = computed(() => {
-    return new Map(menuItems.value.map(item => [item.key, item]))
+    const flattenMenuItems = (items: SidebarMenuResolvedItem[]): SidebarMenuResolvedItem[] => {
+      return items.flatMap(item => [item, ...flattenMenuItems(item.children || [])])
+    }
+
+    return new Map(flattenMenuItems(menuItems.value).map(item => [item.key, item]))
   })
 
   const getMenuItem = (key: string) => {
@@ -103,8 +52,6 @@ export const useSidebarMenu = (platform: SidebarMenuPlatform = 'mobile') => {
   }
 
   return {
-    userRoles,
-    userPermissions,
     menuItems,
     getMenuItem,
     hasMenuAccess,

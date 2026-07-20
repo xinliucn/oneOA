@@ -57,25 +57,47 @@
       <div class="desktop__sidebar">
         <el-menu
           :default-active="activeMenu"
-          class="el-menu-vertical-demo"
-          background-color="#F5F5F5"
-          text-color="#000000"
-          active-text-color="#A60A3A"
+          :default-openeds="openMenuKeys"
           @select="handleMenuSelect"
         >
-          <el-menu-item
+          <template
             v-for="item in menuItems"
             :key="item.key"
-            :index="item.key"
           >
-            <template #title>
-              <IconCustom
-                :name="item.icon"
-                :size="26"
-              />
-              {{ item.label }}
-            </template>
-          </el-menu-item>
+            <el-sub-menu
+              v-if="item.children?.length"
+              :index="item.key"
+            >
+              <template #title>
+                <span class="desktop__menu-icon">
+                  <IconCustom
+                    :name="item.icon"
+                    :size="24"
+                  />
+                </span>
+                <span>{{ item.label }}</span>
+              </template>
+              <el-menu-item
+                v-for="childItem in item.children"
+                :key="childItem.key"
+                :index="childItem.key"
+              >
+                {{ childItem.label }}
+              </el-menu-item>
+            </el-sub-menu>
+            <el-menu-item
+              v-else
+              :index="item.key"
+            >
+              <span class="desktop__menu-icon">
+                <IconCustom
+                  :name="item.icon"
+                  :size="24"
+                />
+              </span>
+              <span>{{ item.label }}</span>
+            </el-menu-item>
+          </template>
         </el-menu>
       </div>
       <main
@@ -108,15 +130,28 @@ const desktopMainRef = ref<HTMLElement | null>(null)
 let loadingVersion = 0
 
 const activeMenu = computed(() => {
-  const matched = menuItems.value.find((item) => {
-    if (item.target.type !== 'route') {
-      return false
+  const findActiveMenuKey = (items: typeof menuItems.value): string => {
+    for (const item of items) {
+      const childMenuKey = findActiveMenuKey(item.children || [])
+      if (childMenuKey) {
+        return childMenuKey
+      }
+
+      if (item.target.type === 'route' && route.path.startsWith(item.resolvedPath)) {
+        return item.key
+      }
     }
 
-    return route.path.startsWith(item.resolvedPath)
-  })
+    return ''
+  }
 
-  return matched?.key ?? ''
+  return findActiveMenuKey(menuItems.value)
+})
+
+const openMenuKeys = computed(() => {
+  return menuItems.value
+    .filter(item => item.children?.some(child => child.key === activeMenu.value))
+    .map(item => item.key)
 })
 
 const handleMenuSelect = async (key: string) => {
@@ -298,6 +333,7 @@ onBeforeUnmount(() => {
 }
 
 .desktop__sidebar {
+    width: 220px;
     height: 100%;
     border-right: 1px solid #D9D9D9;
     background-color: #F5F5F5;
@@ -306,42 +342,46 @@ onBeforeUnmount(() => {
 }
 
 .desktop__sidebar :deep(.el-menu) {
-    background-color: #F5F5F5;
+    min-height: 100%;
     border-right: 0;
+    --el-menu-bg-color: #F5F5F5;
+    --el-menu-text-color: #000000;
+    --el-menu-active-color: #A60A3A;
+    --el-menu-hover-bg-color: #EEEEEE;
 }
 
-.desktop__sidebar :deep(.el-menu-item) {
-    display: flex;
-    align-items: center;
+.desktop__sidebar :deep(.el-menu-item),
+.desktop__sidebar :deep(.el-sub-menu__title) {
     height: 48px;
     padding-left: 22px !important;
-    background-color: #F5F5F5;
     color: #000000;
     font-size: 13px;
     font-weight: 600;
 }
 
-.desktop__sidebar :deep(.el-menu-item svg) {
-    margin-right: 14px;
-    flex-shrink: 0;
-    color: #A60A3A;
-}
-
-.desktop__sidebar :deep(.el-menu-item:hover) {
-    background-color: #eeeeee;
+.desktop__sidebar :deep(.el-sub-menu .el-menu-item) {
+    min-width: 0;
+    padding-left: 56px !important;
+    font-weight: 500;
 }
 
 .desktop__sidebar :deep(.el-menu-item.is-active) {
-    position: relative;
     padding-left: 18px !important;
     border-left: 4px solid #A60A3A;
-    background-color: #d9d9d9 !important;
-    color: #A60A3A !important;
+    background-color: #E7E7E7;
+    color: #A60A3A;
     font-weight: 700;
 }
 
-.desktop__sidebar :deep(.el-menu-item.is-active svg) {
-    color: #A60A3A !important;
+.desktop__sidebar :deep(.el-sub-menu .el-menu-item.is-active) {
+    padding-left: 52px !important;
+}
+
+.desktop__menu-icon {
+    display: inline-flex;
+    align-items: center;
+    margin-right: 10px;
+    color: #A60A3A;
 }
 
 .desktop__main {

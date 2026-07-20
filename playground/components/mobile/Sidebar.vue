@@ -33,6 +33,7 @@
           >
             <div
               class="sidebar__item"
+              :class="{ 'is-active': isMenuItemActive(item) }"
               @click="onNavigateTo(item)"
             >
               <div class="sidebar__icon">
@@ -45,38 +46,19 @@
             </div>
 
             <div
-              v-if="item.key === 'department-intranets' && isExpanded(item.key)"
-              class="sidebar__intranets"
+              v-if="item.children?.length && isExpanded(item.key)"
+              class="sidebar__submenu"
             >
-              <template
-                v-for="intranetsItem in intranetsNavigationItems"
-                :key="intranetsItem.key"
+              <button
+                v-for="childItem in item.children"
+                :key="childItem.key"
+                type="button"
+                class="sidebar__submenu-item"
+                :class="{ 'is-active': isMenuItemActive(childItem) }"
+                @click="onNavigateTo(childItem)"
               >
-                <button
-                  type="button"
-                  class="sidebar__intranets-item"
-                  :class="{ 'is-active': isIntranetsItemActive(intranetsItem) }"
-                  @click="onNavigateToIntranets(intranetsItem)"
-                >
-                  {{ t(intranetsItem.labelKey) }}
-                </button>
-
-                <div
-                  v-if="intranetsItem.children?.length && isExpanded(`intranets:${intranetsItem.key}`)"
-                  class="sidebar__intranets-children"
-                >
-                  <button
-                    v-for="childItem in intranetsItem.children"
-                    :key="childItem.key"
-                    type="button"
-                    class="sidebar__intranets-child"
-                    :class="{ 'is-active': route.path === childItem.path }"
-                    @click="onNavigateToIntranetsPath(childItem.path)"
-                  >
-                    {{ t(childItem.labelKey) }}
-                  </button>
-                </div>
-              </template>
+                {{ childItem.label }}
+              </button>
             </div>
           </template>
         </nav>
@@ -86,13 +68,11 @@
 </template>
 
 <script setup lang="ts">
-import { intranetsNavigationItems, type IntranetsNavigationItem } from '~/constants/intranetsNavigation'
 import type { SidebarMenuResolvedItem } from '~/types/sidebarMenu'
 
 defineProps<{ modelValue: boolean }>()
 const emit = defineEmits(['update:modelValue'])
 const { menuItems, navigateByMenuItem } = useSidebarMenu('mobile')
-const { t } = useAppI18n()
 const route = useRoute()
 const expandedKeys = ref<string[]>([])
 
@@ -104,12 +84,8 @@ const toggleExpanded = (key: string) => {
     : [...expandedKeys.value, key]
 }
 
-const isExpandableMenuItem = (item: SidebarMenuResolvedItem) => {
-  return item.key === 'department-intranets'
-}
-
 const onNavigateTo = async (item: SidebarMenuResolvedItem) => {
-  if (isExpandableMenuItem(item)) {
+  if (item.children?.length) {
     toggleExpanded(item.key)
     return
   }
@@ -118,22 +94,8 @@ const onNavigateTo = async (item: SidebarMenuResolvedItem) => {
   return navigateByMenuItem(item)
 }
 
-const onNavigateToIntranets = async (item: IntranetsNavigationItem) => {
-  if (item.children?.length) {
-    toggleExpanded(`intranets:${item.key}`)
-    return
-  }
-
-  return onNavigateToIntranetsPath(item.path)
-}
-
-const onNavigateToIntranetsPath = async (path: string) => {
-  emit('update:modelValue', false)
-  return navigateTo(path)
-}
-
-const isIntranetsItemActive = (item: IntranetsNavigationItem) => {
-  return route.path === item.path || item.children?.some(child => route.path === child.path)
+const isMenuItemActive = (item: SidebarMenuResolvedItem) => {
+  return route.path === item.resolvedPath || item.children?.some(isMenuItemActive)
 }
 </script>
 
@@ -224,12 +186,18 @@ const isIntranetsItemActive = (item: IntranetsNavigationItem) => {
   color: #111111;
 }
 
-.sidebar__intranets {
+.sidebar__item.is-active {
+  .sidebar__label {
+    color: #a60a3a;
+  }
+}
+
+.sidebar__submenu {
   margin: -4px 16px 8px 56px;
   border-top: 1px solid #e6e6e6;
 }
 
-.sidebar__intranets-item {
+.sidebar__submenu-item {
   width: 100%;
   min-height: 46px;
   display: flex;
@@ -244,31 +212,7 @@ const isIntranetsItemActive = (item: IntranetsNavigationItem) => {
   text-align: left;
 }
 
-.sidebar__intranets-item.is-active {
-  color: #a60a3a;
-  font-weight: 600;
-}
-
-.sidebar__intranets-children {
-  margin: 0 0 4px 16px;
-  border-left: 2px solid #cf365d;
-}
-
-.sidebar__intranets-child {
-  width: 100%;
-  min-height: 40px;
-  display: flex;
-  align-items: center;
-  border: 0;
-  padding: 8px 12px;
-  background: transparent;
-  color: #5a5a5a;
-  font-size: 14px;
-  line-height: 1.4;
-  text-align: left;
-}
-
-.sidebar__intranets-child.is-active {
+.sidebar__submenu-item.is-active {
   color: #a60a3a;
   font-weight: 600;
 }
